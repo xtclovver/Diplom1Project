@@ -1,0 +1,150 @@
+.admin-page {
+  background-color: #f7f9fc;
+  min-height: calc(100vh - 80px);
+}
+
+.admin-container {
+  display: flex;
+  height: calc(100vh - 80px);
+}
+
+.admin-sidebar {
+  width: 280px;
+  background-color: #2c3e50;
+  color: #ecf0f1;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+}
+
+.admin-title {
+  font-size: 1.6rem;
+  margin-bottom: 2rem;
+  font-weight: 600;
+  color: white;
+}
+
+.admin-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.admin-nav-item {
+  padding: 0.8rem 1rem;
+  border-radius: 6px;
+  color: #ecf0f1;
+  text-decoration: none;
+  transition: background-color 0.2s;
+  font-weight: 500;
+}
+
+.admin-nav-item:hover {
+  background-color: #34495e;
+}
+
+.admin-nav-item.active {
+  background-color: #3498db;
+}
+
+.admin-content {
+  flex: 1;
+  padding: 2rem;
+  overflow-y: auto;
+}
+
+.admin-loading {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 100vh;
+  font-size: 1.2rem;
+  color: #666;
+}
+
+.admin-section {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  padding: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.admin-section-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 1.5rem;
+}
+
+.admin-section-title {
+  font-size: 1.4rem;
+  font-weight: 600;
+  color: #333;
+}
+
+.admin-button {
+  padding: 0.6rem 1.2rem;
+  background-color: #3498db;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.admin-button:hover {
+  background-color: #2980b9;
+}
+
+.admin-button.danger {
+  background-color: #e74c3c;
+}
+
+.admin-button.danger:hover {
+  background-color: #c0392b;
+}
+
+.admin-table {
+  width: 100%;
+  border-collapse: collapse;
+}
+
+.admin-table th,
+.admin-table td {
+  padding: 1rem;
+  text-align: left;
+  border-bottom: 1px solid #eee;
+}
+
+.admin-table th {
+  font-weight: 600;
+  color: #555;
+}
+
+.admin-actions {
+  display: flex;
+  gap: 0.5rem;
+}
+
+@media (max-width: 768px) {
+  .admin-container {
+    flex-direction: column;
+    height: auto;
+  }
+  
+  .admin-sidebar {
+    width: 100%;
+    padding: 1rem;
+  }
+  
+  .admin-title {
+    font-size: 1.4rem;
+    margin-bottom: 1rem;
+  }
+  
+  .admin-content {
+    padding: 1rem;
+  }
+} 

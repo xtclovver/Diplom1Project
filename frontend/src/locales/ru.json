@@ -1,0 +1,302 @@
+{
+  "common": {
+    "loading": "Загрузка...",
+    "error": "Ошибка",
+    "success": "Успешно",
+    "save": "Сохранить",
+    "cancel": "Отмена",
+    "delete": "Удалить",
+    "edit": "Редактировать",
+    "back": "Назад",
+    "next": "Далее",
+    "submit": "Отправить",
+    "yes": "Да",
+    "no": "Нет",
+    "tryAgain": "Попробуйте снова",
+    "search": "Поиск",
+    "filter": "Фильтр",
+    "reset": "Сбросить",
+    "apply": "Применить",
+    "goHome": "На главную",
+    "notFound": "Страница не найдена",
+    "confirm": "Подтвердить",
+    "close": "Закрыть"
+  },
+  "header": {
+    "home": "Главная",
+    "tours": "Туры",
+    "hotels": "Отели",
+    "about": "О нас",
+    "contacts": "Контакты",
+    "login": "Войти",
+    "register": "Регистрация",
+    "profile": "Профиль",
+    "myOrders": "Мои заказы",
+    "support": "Поддержка",
+    "adminPanel": "Админ панель",
+    "logout": "Выйти",
+    "greeting": "Привет, {{username}}!"
+  },
+  "footer": {
+    "company": "Туристическое агентство",
+    "description": "Мы организуем лучшие туры по всему миру с 2010 года. Наша цель - сделать ваш отдых незабываемым!",
+    "navigation": "Навигация",
+    "contacts": "Контакты",
+    "address": "123456, Россия, г. Москва",
+    "street": "ул. Путешественников, д. 10",
+    "email": "Email: info@tour-agency.ru",
+    "phone": "Телефон: +7 (123) 456-78-90",
+    "socialNetworks": "Мы в социальных сетях",
+    "copyright": "© {{year}} Туристическое агентство. Все права защищены."
+  },
+  "auth": {
+    "login": "Вход",
+    "register": "Регистрация",
+    "logout": "Выйти",
+    "email": "Электронная почта",
+    "password": "Пароль",
+    "confirmPassword": "Подтвердите пароль",
+    "forgotPassword": "Забыли пароль?",
+    "alreadyHaveAccount": "Уже есть аккаунт?",
+    "dontHaveAccount": "Нет аккаунта?",
+    "createAccount": "Создать аккаунт",
+    "loginSuccess": "Вход выполнен успешно!",
+    "registerSuccess": "Регистрация выполнена успешно!",
+    "validation": {
+      "usernameRequired": "Имя пользователя обязательно",
+      "emailRequired": "Email обязателен",
+      "invalidEmail": "Некорректный email",
+      "passwordRequired": "Пароль обязателен",
+      "passwordMinLength": "Пароль должен содержать минимум 6 символов",
+      "passwordsNotMatch": "Пароли не совпадают",
+      "fullNameRequired": "ФИО обязательно",
+      "phoneRequired": "Телефон обязателен"
+    },
+    "errors": {
+      "incorrectCredentials": "Неверные учетные данные",
+      "userExists": "Пользователь с таким именем или email уже существует"
+    }
+  },
+  "navigation": {
+    "home": "Главная",
+    "tours": "Туры",
+    "about": "О нас",
+    "contacts": "Контакты",
+    "profile": "Профиль",
+    "settings": "Настройки",
+    "support": "Поддержка"
+  },
+  "tour": {
+    "search": "Поиск тура",
+    "popular": "Популярные туры",
+    "recommended": "Рекомендуемые",
+    "price": "Цена",
+    "duration": "Продолжительность",
+    "location": "Местоположение",
+    "destinations": "Направления",
+    "departure": "Отправление",
+    "arrival": "Прибытие",
+    "book": "Забронировать",
+    "days": "дней",
+    "from": "от",
+    "to": "до",
+    "reviews": "Отзывы",
+    "details": "Подробности",
+    "included": "Включено в тур",
+    "notIncluded": "Не включено в тур",
+    "itinerary": "Маршрут"
+  },
+  "profile": {
+    "title": "Профиль пользователя",
+    "personalInfo": "Личная информация",
+    "name": "Имя",
+    "surname": "Фамилия",
+    "phone": "Телефон",
+    "address": "Адрес",
+    "myBookings": "Мои бронирования",
+    "changePassword": "Изменить пароль",
+    "currentPassword": "Текущий пароль",
+    "newPassword": "Новый пароль",
+    "updateSuccess": "Профиль успешно обновлен"
+  },
+  "tours": {
+    "title": "Туры",
+    "filter": {
+      "title": "Фильтр туров",
+      "country": "Страна",
+      "city": "Город",
+      "dateFrom": "Дата начала",
+      "dateTo": "Дата окончания",
+      "people": "Количество человек",
+      "priceFrom": "Цена от",
+      "priceTo": "Цена до",
+      "applyFilter": "Применить фильтры",
+      "resetFilter": "Сбросить"
+    },
+    "notFound": "Туры не найдены. Попробуйте изменить параметры фильтрации.",
+    "duration": "Продолжительность: {{duration}} {{days}}",
+    "day_one": "день",
+    "day_few": "дня",
+    "day_many": "дней",
+    "priceFrom": "от {{price}} ₽",
+    "details": "Подробнее",
+    "tourDetail": {
+      "title": "Детали тура",
+      "description": "Описание",
+      "destination": "Направление",
+      "duration": "Продолжительность",
+      "price": "Цена",
+      "dates": "Доступные даты",
+      "date": "Дата",
+      "availability": "Доступно мест",
+      "book": "Забронировать"
+    }
+  },
+  "hotels": {
+    "title": "Отели",
+    "filter": {
+      "title": "Фильтр отелей",
+      "country": "Страна",
+      "city": "Город",
+      "category": "Категория (звезды)",
+      "priceFrom": "Цена от",
+      "priceTo": "Цена до"
+    },
+    "notFound": "Отели не найдены. Попробуйте изменить параметры фильтрации.",
+    "category": "{{category}} звезд",
+    "details": "Подробнее",
+    "hotelDetail": {
+      "title": "Детали отеля",
+      "description": "Описание",
+      "address": "Адрес",
+      "category": "Категория",
+      "rooms": "Номера",
+      "roomType": "Тип номера",
+      "beds": "Спальные места",
+      "price": "Цена за ночь",
+      "book": "Забронировать"
+    }
+  },
+  "booking": {
+    "title": "Бронирование",
+    "participants": "Участники",
+    "date": "Дата",
+    "payment": "Оплата",
+    "confirmation": "Подтверждение",
+    "totalPrice": "Итоговая стоимость",
+    "bookingSuccess": "Бронирование выполнено успешно!",
+    "bookingDetails": "Детали бронирования",
+    "bookingId": "ID бронирования",
+    "status": "Статус",
+    "payNow": "Оплатить сейчас",
+    "paymentMethod": "Способ оплаты",
+    "creditCard": "Кредитная карта",
+    "paypal": "PayPal",
+    "bankTransfer": "Банковский перевод"
+  },
+  "orders": {
+    "title": "Мои заказы",
+    "noOrders": "У вас пока нет заказов",
+    "orderNumber": "Заказ №{{number}}",
+    "orderDate": "Дата заказа",
+    "tour": "Тур",
+    "dateRange": "Период",
+    "status": "Статус",
+    "totalPrice": "Общая стоимость",
+    "details": "Детали",
+    "cancel": "Отменить",
+    "orderDetail": {
+      "title": "Детали заказа",
+      "orderInformation": "Информация о заказе",
+      "tourInformation": "Информация о туре",
+      "hotelInformation": "Информация об отеле",
+      "paymentInformation": "Информация об оплате"
+    },
+    "statuses": {
+      "pending": "Ожидает подтверждения",
+      "confirmed": "Подтвержден",
+      "paid": "Оплачен",
+      "cancelled": "Отменен",
+      "completed": "Завершен"
+    }
+  },
+  "support": {
+    "title": "Техническая поддержка",
+    "createTicket": "Создать тикет",
+    "myTickets": "Мои тикеты",
+    "noTickets": "У вас пока нет тикетов",
+    "ticketNumber": "Тикет №{{number}}",
+    "subject": "Тема",
+    "status": "Статус",
+    "created": "Создан",
+    "lastUpdate": "Последнее обновление",
+    "viewTicket": "Просмотреть",
+    "closeTicket": "Закрыть тикет",
+    "newMessage": "Новое сообщение",
+    "sendMessage": "Отправить сообщение",
+    "statuses": {
+      "open": "Открыт",
+      "in_progress": "В обработке",
+      "closed": "Закрыт"
+    },
+    "chat": {
+      "title": "Чат по тикету #{{id}}",
+      "online": "Онлайн",
+      "offline": "Офлайн",
+      "reconnect": "Переподключиться",
+      "emptyChat": "Сообщений пока нет. Напишите первое сообщение!",
+      "messagePlaceholder": "Введите сообщение..."
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Панель администратора",
+      "statistics": "Статистика",
+      "totalUsers": "Всего пользователей",
+      "totalTours": "Всего туров",
+      "totalOrders": "Всего заказов",
+      "pendingOrders": "Заказов в обработке",
+      "totalTickets": "Всего тикетов",
+      "openTickets": "Открытых тикетов"
+    },
+    "users": {
+      "title": "Управление пользователями",
+      "addUser": "Добавить пользователя",
+      "editUser": "Редактировать пользователя",
+      "deleteUser": "Удалить пользователя"
+    },
+    "tours": {
+      "title": "Управление турами",
+      "addTour": "Добавить тур",
+      "editTour": "Редактировать тур",
+      "deleteTour": "Удалить тур",
+      "manageDates": "Управление датами"
+    },
+    "hotels": {
+      "title": "Управление отелями",
+      "addHotel": "Добавить отель",
+      "editHotel": "Редактировать отель",
+      "deleteHotel": "Удалить отель",
+      "manageRooms": "Управление номерами"
+    },
+    "orders": {
+      "title": "Управление заказами",
+      "updateStatus": "Обновить статус"
+    },
+    "support": {
+      "title": "Управление тикетами",
+      "allTickets": "Все тикеты",
+      "updateStatus": "Обновить статус"
+    }
+  },
+  "error": {
+    "requiredField": "Обязательное поле",
+    "invalidEmail": "Некорректный email",
+    "passwordMismatch": "Пароли не совпадают",
+    "passwordLength": "Пароль должен содержать минимум 6 символов",
+    "somethingWentWrong": "Что-то пошло не так, попробуйте позже",
+    "pageNotFound": "Страница не найдена",
+    "unauthorized": "Необходима авторизация",
+    "forbidden": "Доступ запрещен"
+  }
+} 

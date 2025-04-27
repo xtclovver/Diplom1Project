@@ -1,0 +1,166 @@
+.order-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.order-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.08);
+  overflow: hidden;
+}
+
+.order-header {
+  display: flex;
+  justify-content: space-between;
+  padding: 15px;
+  background-color: #f8f9fa;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.order-id {
+  font-weight: 500;
+  color: #333;
+}
+
+.order-date {
+  color: #777;
+  font-size: 14px;
+}
+
+.order-content {
+  display: flex;
+  padding: 15px;
+}
+
+.order-image {
+  width: 120px;
+  height: 90px;
+  margin-right: 15px;
+  border-radius: 4px;
+  overflow: hidden;
+  flex-shrink: 0;
+}
+
+.order-image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.order-details {
+  flex: 1;
+  margin-right: 15px;
+}
+
+.order-tour-name {
+  margin: 0 0 5px;
+  font-size: 16px;
+}
+
+.order-tour-name a {
+  color: #2c3e50;
+  text-decoration: none;
+  transition: color 0.2s;
+}
+
+.order-tour-name a:hover {
+  color: #2196f3;
+}
+
+.order-tour-dates {
+  color: #555;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.order-tourists {
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 5px;
+}
+
+.order-price {
+  font-weight: 500;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.order-status-container {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: space-between;
+  min-width: 140px;
+  flex-shrink: 0;
+}
+
+.cancel-order-button, 
+.view-order-button {
+  padding: 8px 12px;
+  border-radius: 4px;
+  font-size: 13px;
+  text-align: center;
+  transition: all 0.2s;
+  margin-top: 8px;
+  width: 100%;
+  box-sizing: border-box;
+}
+
+.cancel-order-button {
+  background-color: #f5f5f5;
+  color: #e53935;
+  border: 1px solid #e0e0e0;
+  cursor: pointer;
+}
+
+.cancel-order-button:hover {
+  background-color: #ffebee;
+  border-color: #ffcdd2;
+}
+
+.view-order-button {
+  background-color: #f1f8fe;
+  color: #2196f3;
+  border: 1px solid #bbdefb;
+  text-decoration: none;
+  display: block;
+}
+
+.view-order-button:hover {
+  background-color: #e3f2fd;
+  border-color: #90caf9;
+}
+
+@media (max-width: 576px) {
+  .order-content {
+    flex-direction: column;
+  }
+  
+  .order-image {
+    width: 100%;
+    height: 150px;
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  
+  .order-details {
+    margin-right: 0;
+    margin-bottom: 15px;
+  }
+  
+  .order-status-container {
+    width: 100%;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
+  }
+  
+  .cancel-order-button, 
+  .view-order-button {
+    width: auto;
+    flex: 1;
+    margin: 0;
+  }
+} 

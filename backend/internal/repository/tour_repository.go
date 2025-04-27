@@ -1,0 +1,294 @@
+package repository
+
+import (
+	"context"
+	"database/sql"
+	"fmt"
+	"strings"
+
+	"github.com/jmoiron/sqlx"
+	"github.com/usedcvnt/Diplom1Project/backend/internal/domain"
+)
+
+// tourRepository реализация TourRepository из repository.go
+type tourRepository struct {
+	db *sqlx.DB
+}
+
+// NewTourRepository создает новый экземпляр TourRepository
+func NewTourRepository(db *sqlx.DB) TourRepository {
+	return &tourRepository{db: db}
+}
+
+// Create создает новый тур
+func (r *tourRepository) Create(ctx context.Context, tour *domain.Tour) (int64, error) {
+	query := `
+		INSERT INTO tours (city_id, name, description, base_price, image_url, duration, is_active)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
+	`
+
+	result, err := r.db.ExecContext(
+		ctx,
+		query,
+		tour.CityID,
+		tour.Name,
+		tour.Description,
+		tour.BasePrice,
+		tour.ImageURL,
+		tour.Duration,
+		tour.IsActive,
+	)
+
+	if err != nil {
+		return 0, fmt.Errorf("ошибка при создании тура: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("ошибка при получении ID созданного тура: %w", err)
+	}
+
+	return id, nil
+}
+
+// GetByID получает тур по ID
+func (r *tourRepository) GetByID(ctx context.Context, id int64) (*domain.Tour, error) {
+	query := `
+		SELECT id, city_id, name, description, base_price, image_url, duration, is_active, created_at
+		FROM tours
+		WHERE id = ?
+	`
+
+	var tour domain.Tour
+	err := r.db.GetContext(ctx, &tour, query, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("тур с ID %d не найден", id)
+		}
+		return nil, fmt.Errorf("ошибка при поиске тура: %w", err)
+	}
+
+	return &tour, nil
+}
+
+// Update обновляет информацию о туре
+func (r *tourRepository) Update(ctx context.Context, tour *domain.Tour) error {
+	query := `
+		UPDATE tours 
+		SET city_id = ?, name = ?, description = ?, base_price = ?, image_url = ?, duration = ?, is_active = ?
+		WHERE id = ?
+	`
+
+	_, err := r.db.ExecContext(
+		ctx,
+		query,
+		tour.CityID,
+		tour.Name,
+		tour.Description,
+		tour.BasePrice,
+		tour.ImageURL,
+		tour.Duration,
+		tour.IsActive,
+		tour.ID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении тура: %w", err)
+	}
+
+	return nil
+}
+
+// Delete удаляет тур по ID
+func (r *tourRepository) Delete(ctx context.Context, id int64) error {
+	query := "DELETE FROM tours WHERE id = ?"
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("ошибка при удалении тура: %w", err)
+	}
+
+	return nil
+}
+
+// List возвращает список туров с фильтрацией
+func (r *tourRepository) List(ctx context.Context, filters map[string]interface{}, offset, limit int) ([]*domain.Tour, error) {
+	query := `
+		SELECT t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at
+		FROM tours t
+		JOIN cities c ON t.city_id = c.id
+	`
+
+	var conditions []string
+	var args []interface{}
+
+	// Активные туры по умолчанию
+	conditions = append(conditions, "t.is_active = true")
+
+	// Обработка фильтров
+	if filters != nil {
+		if cityID, ok := filters["city_id"]; ok {
+			conditions = append(conditions, "t.city_id = ?")
+			args = append(args, cityID)
+		}
+		if countryID, ok := filters["country_id"]; ok {
+			conditions = append(conditions, "c.country_id = ?")
+			args = append(args, countryID)
+		}
+		if priceMin, ok := filters["price_min"]; ok {
+			conditions = append(conditions, "t.base_price >= ?")
+			args = append(args, priceMin)
+		}
+		if priceMax, ok := filters["price_max"]; ok {
+			conditions = append(conditions, "t.base_price <= ?")
+			args = append(args, priceMax)
+		}
+	}
+
+	// Добавление условий к запросу
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Сортировка и пагинация
+	query += " ORDER BY t.created_at DESC LIMIT ? OFFSET ?"
+	args = append(args, limit, offset)
+
+	var tours []*domain.Tour
+	err := r.db.SelectContext(ctx, &tours, query, args...)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при поиске туров: %w", err)
+	}
+
+	return tours, nil
+}
+
+// Count возвращает количество туров с учетом фильтрации
+func (r *tourRepository) Count(ctx context.Context, filters map[string]interface{}) (int, error) {
+	query := `
+		SELECT COUNT(*)
+		FROM tours t
+		JOIN cities c ON t.city_id = c.id
+	`
+
+	var conditions []string
+	var args []interface{}
+
+	// Активные туры по умолчанию
+	conditions = append(conditions, "t.is_active = true")
+
+	// Обработка фильтров
+	if filters != nil {
+		if cityID, ok := filters["city_id"]; ok {
+			conditions = append(conditions, "t.city_id = ?")
+			args = append(args, cityID)
+		}
+		if countryID, ok := filters["country_id"]; ok {
+			conditions = append(conditions, "c.country_id = ?")
+			args = append(args, countryID)
+		}
+		if priceMin, ok := filters["price_min"]; ok {
+			conditions = append(conditions, "t.base_price >= ?")
+			args = append(args, priceMin)
+		}
+		if priceMax, ok := filters["price_max"]; ok {
+			conditions = append(conditions, "t.base_price <= ?")
+			args = append(args, priceMax)
+		}
+	}
+
+	// Добавление условий к запросу
+	if len(conditions) > 0 {
+		query += " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	var count int
+	err := r.db.GetContext(ctx, &count, query, args...)
+	if err != nil {
+		return 0, fmt.Errorf("ошибка при подсчете туров: %w", err)
+	}
+
+	return count, nil
+}
+
+// AddTourDate добавляет дату проведения тура
+func (r *tourRepository) AddTourDate(ctx context.Context, tourDate *domain.TourDate) (int64, error) {
+	query := `
+		INSERT INTO tour_dates (tour_id, start_date, end_date, availability)
+		VALUES (?, ?, ?, ?)
+	`
+
+	result, err := r.db.ExecContext(
+		ctx,
+		query,
+		tourDate.TourID,
+		tourDate.StartDate,
+		tourDate.EndDate,
+		tourDate.Availability,
+	)
+
+	if err != nil {
+		return 0, fmt.Errorf("ошибка при добавлении даты тура: %w", err)
+	}
+
+	id, err := result.LastInsertId()
+	if err != nil {
+		return 0, fmt.Errorf("ошибка при получении ID даты тура: %w", err)
+	}
+
+	return id, nil
+}
+
+// GetTourDates получает даты проведения тура
+func (r *tourRepository) GetTourDates(ctx context.Context, tourID int64) ([]*domain.TourDate, error) {
+	query := `
+		SELECT id, tour_id, start_date, end_date, availability
+		FROM tour_dates
+		WHERE tour_id = ?
+		ORDER BY start_date
+	`
+
+	var tourDates []*domain.TourDate
+	err := r.db.SelectContext(ctx, &tourDates, query, tourID)
+	if err != nil {
+		return nil, fmt.Errorf("ошибка при получении дат тура: %w", err)
+	}
+
+	return tourDates, nil
+}
+
+// UpdateTourDate обновляет дату проведения тура
+func (r *tourRepository) UpdateTourDate(ctx context.Context, tourDate *domain.TourDate) error {
+	query := `
+		UPDATE tour_dates
+		SET start_date = ?, end_date = ?, availability = ?
+		WHERE id = ?
+	`
+
+	_, err := r.db.ExecContext(
+		ctx,
+		query,
+		tourDate.StartDate,
+		tourDate.EndDate,
+		tourDate.Availability,
+		tourDate.ID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении даты тура: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteTourDate удаляет дату проведения тура
+func (r *tourRepository) DeleteTourDate(ctx context.Context, id int64) error {
+	query := "DELETE FROM tour_dates WHERE id = ?"
+
+	_, err := r.db.ExecContext(ctx, query, id)
+	if err != nil {
+		return fmt.Errorf("ошибка при удалении даты тура: %w", err)
+	}
+
+	return nil
+}

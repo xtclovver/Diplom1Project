@@ -1,0 +1,152 @@
+.tour-detail-page {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.tour-detail-header {
+  margin-bottom: 20px;
+  padding-bottom: 15px;
+  border-bottom: 1px solid #e0e0e0;
+}
+
+.tour-detail-header h1 {
+  margin: 0 0 10px;
+  color: #2c3e50;
+  font-size: 28px;
+}
+
+.tour-location {
+  color: #666;
+  font-size: 16px;
+  display: flex;
+  align-items: center;
+}
+
+.tour-location i {
+  color: #2196f3;
+  margin-right: 5px;
+}
+
+.tour-detail-content {
+  display: flex;
+  gap: 30px;
+  margin-bottom: 30px;
+}
+
+.tour-main-content {
+  flex: 3;
+}
+
+.tour-sidebar {
+  flex: 1;
+  min-width: 280px;
+}
+
+.booking-card {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  position: sticky;
+  top: 20px;
+}
+
+.booking-price {
+  font-size: 16px;
+  color: #555;
+  margin-bottom: 10px;
+}
+
+.booking-price span {
+  font-size: 24px;
+  font-weight: bold;
+  color: #2c3e50;
+}
+
+.booking-duration {
+  display: flex;
+  align-items: center;
+  color: #666;
+  font-size: 14px;
+  margin-bottom: 15px;
+}
+
+.booking-duration i {
+  margin-right: 5px;
+  color: #2196f3;
+}
+
+.booking-button {
+  width: 100%;
+  padding: 12px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 15px;
+}
+
+.booking-button:hover:not(:disabled) {
+  background-color: #1976d2;
+}
+
+.booking-button:disabled {
+  background-color: #cccccc;
+  cursor: not-allowed;
+}
+
+.tour-hotel-rooms {
+  margin-top: 30px;
+}
+
+.tour-hotel-rooms h2 {
+  font-size: 22px;
+  color: #2c3e50;
+  margin-bottom: 20px;
+}
+
+.error-container {
+  max-width: 500px;
+  margin: 50px auto;
+  text-align: center;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.error-container h2 {
+  color: #e53935;
+  margin-top: 0;
+}
+
+.error-container button {
+  padding: 10px 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 15px;
+}
+
+.error-container button:hover {
+  background-color: #1976d2;
+}
+
+@media (max-width: 768px) {
+  .tour-detail-content {
+    flex-direction: column;
+  }
+  
+  .booking-card {
+    position: static;
+  }
+} 

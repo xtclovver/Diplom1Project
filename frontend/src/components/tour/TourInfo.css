@@ -1,0 +1,158 @@
+.tour-info {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  overflow: hidden;
+}
+
+.tour-info-tabs {
+  display: flex;
+  border-bottom: 1px solid #e0e0e0;
+  background-color: #f8f9fa;
+}
+
+.tab-button {
+  padding: 12px 20px;
+  border: none;
+  background: none;
+  font-size: 14px;
+  font-weight: 500;
+  color: #666;
+  cursor: pointer;
+  transition: all 0.2s;
+  border-bottom: 2px solid transparent;
+}
+
+.tab-button:hover {
+  color: #2196f3;
+}
+
+.tab-button.active {
+  color: #2196f3;
+  border-bottom-color: #2196f3;
+  background-color: white;
+}
+
+.tour-info-content {
+  padding: 20px;
+}
+
+.tab-content {
+  animation: fadeIn 0.3s ease-in-out;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+.tab-content h3 {
+  margin-top: 0;
+  margin-bottom: 15px;
+  color: #2c3e50;
+  font-size: 18px;
+}
+
+.tab-content p {
+  margin: 0 0 15px;
+  line-height: 1.6;
+  color: #555;
+}
+
+/* Стили для вкладки отеля */
+.hotel-info h4 {
+  margin: 0 0 5px;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.hotel-rating {
+  margin-bottom: 10px;
+}
+
+.hotel-rating i {
+  color: #ffc107;
+  margin-right: 2px;
+}
+
+.hotel-info h5 {
+  margin: 15px 0 10px;
+  color: #2c3e50;
+  font-size: 15px;
+}
+
+.hotel-amenities {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 8px;
+}
+
+.hotel-amenities li {
+  padding-left: 20px;
+  position: relative;
+}
+
+.hotel-amenities li:before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: #4caf50;
+}
+
+/* Стили для вкладки включено/не включено */
+.included-columns {
+  display: flex;
+  gap: 30px;
+}
+
+.included-column {
+  flex: 1;
+}
+
+.included-column h4 {
+  margin: 0 0 10px;
+  color: #2c3e50;
+  font-size: 16px;
+}
+
+.included-list, .excluded-list {
+  padding-left: 20px;
+  margin: 0;
+}
+
+.included-list li, .excluded-list li {
+  margin-bottom: 5px;
+  line-height: 1.5;
+}
+
+.included-list li {
+  color: #555;
+}
+
+.excluded-list li {
+  color: #777;
+}
+
+@media (max-width: 768px) {
+  .tour-info-tabs {
+    flex-wrap: wrap;
+  }
+  
+  .tab-button {
+    flex: 1 1 auto;
+    text-align: center;
+    padding: 10px;
+  }
+  
+  .included-columns {
+    flex-direction: column;
+    gap: 20px;
+  }
+} 

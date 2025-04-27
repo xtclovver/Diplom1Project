@@ -1,0 +1,26 @@
+{
+    "server": {
+        "port": "8080",
+        "read_timeout": 10,
+        "write_timeout": 10
+    },
+    "database": {
+        "driver": "mysql",
+        "host": "localhost",
+        "port": "3306",
+        "username": "root",
+        "password": "password",
+        "dbname": "tour_agency"
+    },
+    "jwt": {
+        "secret": "your-secret-key-change-in-production",
+        "access_expiration": 15,
+        "refresh_expiration": 168
+    },
+    "redis": {
+        "host": "localhost",
+        "port": "6379",
+        "password": "",
+        "db": 0
+    }
+} 

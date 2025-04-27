@@ -1,0 +1,171 @@
+.booking-page {
+  max-width: 900px;
+  margin: 0 auto;
+  padding: 20px;
+}
+
+.booking-page h1 {
+  text-align: center;
+  margin-bottom: 30px;
+  color: #2c3e50;
+}
+
+.booking-steps {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 30px;
+}
+
+.booking-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  position: relative;
+}
+
+.step-number {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background-color: #e0e0e0;
+  color: #777;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: bold;
+  margin-bottom: 10px;
+  transition: all 0.3s;
+}
+
+.step-text {
+  font-size: 14px;
+  color: #777;
+  transition: color 0.3s;
+}
+
+.booking-step.active .step-number {
+  background-color: #2196f3;
+  color: white;
+}
+
+.booking-step.active .step-text {
+  color: #2196f3;
+  font-weight: 500;
+}
+
+.booking-step-connector {
+  width: 80px;
+  height: 2px;
+  background-color: #e0e0e0;
+  margin: 0 15px;
+  margin-bottom: 10px;
+}
+
+.booking-container {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  padding: 30px;
+}
+
+.booking-form-container {
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.booking-confirm-container {
+  position: relative;
+}
+
+.booking-actions {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 30px;
+  padding-top: 20px;
+  border-top: 1px solid #e0e0e0;
+}
+
+.booking-back-button,
+.booking-submit-button {
+  padding: 12px 24px;
+  border-radius: 4px;
+  font-size: 16px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s;
+  border: none;
+}
+
+.booking-back-button {
+  background-color: #e0e0e0;
+  color: #555;
+}
+
+.booking-back-button:hover {
+  background-color: #d0d0d0;
+}
+
+.booking-submit-button {
+  background-color: #2196f3;
+  color: white;
+}
+
+.booking-submit-button:hover {
+  background-color: #1976d2;
+}
+
+.booking-error {
+  max-width: 500px;
+  margin: 50px auto;
+  text-align: center;
+  padding: 30px;
+  background-color: #f8f9fa;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+.booking-error h2 {
+  color: #e53935;
+  margin-top: 0;
+}
+
+.booking-error button {
+  padding: 10px 16px;
+  background-color: #2196f3;
+  color: white;
+  border: none;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+  margin-top: 15px;
+}
+
+.booking-error button:hover {
+  background-color: #1976d2;
+}
+
+@media (max-width: 768px) {
+  .booking-container {
+    padding: 20px;
+  }
+  
+  .booking-actions {
+    flex-direction: column;
+    gap: 15px;
+  }
+  
+  .booking-back-button,
+  .booking-submit-button {
+    width: 100%;
+  }
+  
+  .booking-back-button {
+    order: 2;
+  }
+  
+  .booking-submit-button {
+    order: 1;
+  }
+} 

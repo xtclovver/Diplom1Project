@@ -1,0 +1,330 @@
+# План проекта туристического агентства
+
+## Общая концепция
+
+Разрабатываем веб-платформу для туристического агентства с четырьмя типами пользователей (администратор, зарегистрированный пользователь, тех-поддержка и гость). Система позволит просматривать, фильтровать и бронировать туры, а также обеспечит техническую поддержку клиентов.
+
+## Архитектура проекта
+
+Проект будет построен на основе микросервисной архитектуры для обеспечения масштабируемости и гибкости:
+
+1. **База данных** - MySQL
+2. **Backend** - Go (с использованием фреймворка Gin/Echo)
+3. **Frontend** - React (с возможным использованием TypeScript)
+4. **Дополнительные технологии:**
+   - Redis для кэширования и управления сессиями
+   - JWT для аутентификации
+   - bcrypt для хеширования паролей
+   - WebSocket для чата тех-поддержки
+   - Docker для контейнеризации
+
+## Структура базы данных (оптимизированная)
+
+```sql
+-- Страны
+CREATE TABLE countries (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(255) NOT NULL,
+    code VARCHAR(3) NOT NULL,
+    UNIQUE KEY (code)
+);
+
+-- Города
+CREATE TABLE cities (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    country_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    FOREIGN KEY (country_id) REFERENCES countries(id) ON DELETE CASCADE
+);
+
+-- Отели
+CREATE TABLE hotels (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    city_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    address VARCHAR(255) NOT NULL,
+    category SMALLINT NOT NULL, -- Количество звезд
+    image_url VARCHAR(255),
+    FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE CASCADE
+);
+
+-- Номера
+CREATE TABLE rooms (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    hotel_id INT NOT NULL,
+    description TEXT,
+    beds SMALLINT NOT NULL, -- Количество спальных мест
+    price DECIMAL(10, 2) NOT NULL,
+    image_url VARCHAR(255),
+    FOREIGN KEY (hotel_id) REFERENCES hotels(id) ON DELETE CASCADE
+);
+
+-- Туры
+CREATE TABLE tours (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    city_id INT NOT NULL,
+    name VARCHAR(255) NOT NULL,
+    description TEXT,
+    base_price DECIMAL(10, 2) NOT NULL,
+    image_url VARCHAR(255),
+    duration SMALLINT NOT NULL DEFAULT 1, -- Стандартная продолжительность в днях
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE CASCADE
+);
+
+-- Доступные даты туров
+CREATE TABLE tour_dates (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    tour_id INT NOT NULL,
+    start_date DATE NOT NULL,
+    end_date DATE NOT NULL,
+    availability INT NOT NULL, -- Количество доступных мест
+    price_modifier DECIMAL(5, 2) DEFAULT 1.0, -- Модификатор цены для сезонов
+    FOREIGN KEY (tour_id) REFERENCES tours(id) ON DELETE CASCADE
+);
+
+-- Роли пользователей
+CREATE TABLE roles (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    name VARCHAR(50) NOT NULL
+);
+
+-- Пользователи
+CREATE TABLE users (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    username VARCHAR(100) NOT NULL,
+    password VARCHAR(255) NOT NULL, -- Хешированный пароль bcrypt
+    email VARCHAR(255) NOT NULL,
+    full_name VARCHAR(255),
+    phone VARCHAR(20),
+    role_id INT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE KEY (username),
+    UNIQUE KEY (email),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+-- Заказы
+CREATE TABLE orders (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    tour_id INT NOT NULL,
+    tour_date_id INT NOT NULL,
+    room_id INT,
+    people_count SMALLINT NOT NULL,
+    total_price DECIMAL(10, 2) NOT NULL,
+    status ENUM('pending', 'confirmed', 'paid', 'cancelled', 'completed') NOT NULL DEFAULT 'pending',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (tour_id) REFERENCES tours(id),
+    FOREIGN KEY (tour_date_id) REFERENCES tour_dates(id),
+    FOREIGN KEY (room_id) REFERENCES rooms(id)
+);
+
+-- Тикеты тех-поддержки
+CREATE TABLE support_tickets (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    user_id INT NOT NULL,
+    subject VARCHAR(255) NOT NULL,
+    status ENUM('open', 'in_progress', 'closed') NOT NULL DEFAULT 'open',
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    closed_at TIMESTAMP NULL,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+
+-- Сообщения в тикетах
+CREATE TABLE ticket_messages (
+    id INT AUTO_INCREMENT PRIMARY KEY,
+    ticket_id INT NOT NULL,
+    user_id INT NOT NULL, -- Может быть и пользователь, и сотрудник тех-поддержки
+    message TEXT NOT NULL,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (ticket_id) REFERENCES support_tickets(id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users(id)
+);
+```
+
+## Функциональные требования по ролям
+
+### Гость
+- Просмотр туров с фильтрацией (по датам, странам, городам, количеству человек)
+- Просмотр детальной информации о турах, отелях, номерах
+- Регистрация в системе
+- Авторизация в системе
+
+### Пользователь (всё, что может гость +)
+- Просмотр и редактирование своего профиля
+- Бронирование туров с выбором номера в отеле
+- Просмотр истории и статуса своих заказов
+- Создание, просмотр и закрытие тикетов тех-поддержки
+- Отправка сообщений в открытые тикеты
+
+### Тех-поддержка
+- Просмотр всех открытых тикетов
+- Изменение статуса тикетов (open, in_progress, closed)
+- Ответы на сообщения пользователей
+
+### Администратор
+- Управление турами (добавление, удаление, редактирование)
+- Управление отелями и номерами
+- Управление доступными датами туров
+- Просмотр и управление заказами всех пользователей
+- Просмотр статистики по продажам и популярности туров
+- Управление пользователями и их ролями
+
+## Техническая реализация
+
+### Backend (Go)
+
+1. **Структура проекта:**
+   ```
+   /cmd
+     /api                   # Точка входа API-сервера
+   /internal
+     /config                # Конфигурация приложения
+     /domain                # Модели домена
+     /repository            # Репозитории для работы с БД
+     /service               # Бизнес-логика
+     /handler               # HTTP-обработчики
+     /middleware            # Middleware (JWT, логгирование, и т.д.)
+   /pkg
+     /auth                  # Аутентификация и авторизация
+     /validator             # Валидация данных
+     /database              # Работа с БД
+     /websocket             # Реализация WebSocket для чата
+   ```
+
+2. **Аутентификация:**
+   - JWT-токены (access и refresh)
+   - Хеширование паролей с bcrypt
+   - Middleware для проверки авторизации и прав доступа
+
+3. **API Endpoints:**
+   - `/api/auth` - Регистрация, авторизация, обновление токенов
+   - `/api/tours` - CRUD операции с турами (фильтрация, поиск)
+   - `/api/hotels` - Управление отелями и номерами
+   - `/api/orders` - Управление заказами
+   - `/api/tickets` - Управление тикетами тех-поддержки
+   - `/api/users` - Управление пользователями и профилями
+   - `/ws/chat/:ticketId` - WebSocket для чата в тикетах
+
+### Frontend (React)
+
+1. **Структура проекта:**
+   ```
+   /src
+     /assets                # Статические ресурсы (изображения, шрифты)
+     /components            # Переиспользуемые компоненты
+       /ui                  # UI компоненты (кнопки, формы и т.д.)
+       /layout              # Компоненты макета
+       /tour                # Компоненты для работы с турами
+       /order               # Компоненты для работы с заказами
+       /support             # Компоненты для тех-поддержки
+     /pages                 # Страницы приложения
+     /hooks                 # Кастомные хуки
+     /services              # Сервисы для работы с API
+     /store                 # Управление состоянием (Redux или Context API)
+     /utils                 # Вспомогательные функции
+     /routes                # Маршрутизация
+     /context               # Контексты React
+   ```
+
+2. **Страницы:**
+   - Главная страница с поиском и фильтрами
+   - Каталог туров
+   - Детальная страница тура
+   - Страница бронирования
+   - Личный кабинет пользователя
+   - Страница заказов пользователя
+   - Страница чата с тех-поддержкой
+   - Админ-панель для управления турами и заказами
+   - Панель для тех-поддержки
+
+3. **UI/UX:**
+   - Минималистичный дизайн с акцентом на удобство пользования
+   - Адаптивная верстка для различных устройств
+   - Анимации для улучшения взаимодействия с пользователем
+   - Компоненты фильтрации и поиска с автодополнением
+   - Интуитивно понятная навигация
+
+## Дополнительные компоненты
+
+1. **Фильтрация и поиск:**
+   - Полнотекстовый поиск по турам
+   - Многоуровневая фильтрация (по странам, городам, датам, цене)
+   - Кэширование результатов поиска в Redis
+
+2. **Система уведомлений:**
+   - Email-уведомления о статусе заказа
+   - Уведомления о новых сообщениях в тикетах
+
+3. **Безопасность:**
+   - Защита от SQL-инъекций (параметризованные запросы)
+   - CORS-политика
+   - Rate limiting для API-запросов
+   - Валидация всех входных данных
+
+4. **Производительность:**
+   - Кэширование частых запросов
+   - Пагинация результатов поиска
+   - Оптимизация загрузки изображений
+
+## План разработки
+
+1. **Этап 1: Проектирование**
+   - Детализация технической спецификации
+   - Проектирование базы данных
+   - Разработка API-контрактов
+   - Создание макетов UI
+
+2. **Этап 2: Разработка базовой функциональности**
+   - Настройка окружения и инфраструктуры
+   - Реализация ядра API (аутентификация, базовые CRUD-операции)
+   - Разработка основных компонентов Frontend
+
+3. **Этап 3: Реализация основного функционала**
+   - Система фильтрации и поиска туров
+   - Система бронирования и управления заказами
+   - Личный кабинет пользователя
+
+4. **Этап 4: Разработка тех-поддержки**
+   - Система тикетов
+   - WebSocket-чат
+   - Интерфейс для агентов поддержки
+
+5. **Этап 5: Разработка административной панели**
+   - Управление турами, отелями, номерами
+   - Управление заказами
+   - Аналитика и отчетность
+
+6. **Этап 6: Тестирование и оптимизация**
+   - Юнит-тестирование
+   - Интеграционное тестирование
+   - Нагрузочное тестирование
+   - Оптимизация производительности
+
+7. **Этап 7: Развертывание**
+   - Настройка CI/CD
+   - Подготовка продакшн-окружения
+   - Развертывание и мониторинг
+
+## Дополнительные улучшения (опционально)
+
+1. **Интеграции:**
+   - Платежные системы для онлайн-оплаты
+   - Сервисы рассылки Email и SMS-уведомлений
+   - Интеграция с API внешних систем бронирования
+
+2. **Расширенная аналитика:**
+   - Дашборды для анализа продаж
+   - Отслеживание поведения пользователей
+   - A/B-тестирование различных элементов сайта
+
+3. **Мобильная версия:**
+   - Адаптивный дизайн или отдельное мобильное приложение (React Native)
+
+4. **Многоязычность:**
+   - Поддержка нескольких языков интерфейса
+   - Локализация контента

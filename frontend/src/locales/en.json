@@ -1,0 +1,301 @@
+{
+  "common": {
+    "loading": "Loading...",
+    "error": "Error",
+    "success": "Success",
+    "save": "Save",
+    "cancel": "Cancel",
+    "delete": "Delete",
+    "edit": "Edit",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "yes": "Yes",
+    "no": "No",
+    "tryAgain": "Try again",
+    "search": "Search",
+    "filter": "Filter",
+    "reset": "Reset",
+    "apply": "Apply",
+    "goHome": "Go to home",
+    "notFound": "Page not found",
+    "confirm": "Confirm",
+    "close": "Close"
+  },
+  "header": {
+    "home": "Home",
+    "tours": "Tours",
+    "hotels": "Hotels",
+    "about": "About",
+    "contacts": "Contacts",
+    "login": "Log in",
+    "register": "Sign up",
+    "profile": "Profile",
+    "myOrders": "My Orders",
+    "support": "Support",
+    "adminPanel": "Admin Panel",
+    "logout": "Log out",
+    "greeting": "Hello, {{username}}!"
+  },
+  "footer": {
+    "company": "Travel Agency",
+    "description": "We organize the best tours worldwide since 2010. Our goal is to make your vacation unforgettable!",
+    "navigation": "Navigation",
+    "contacts": "Contacts",
+    "address": "123456, Russia, Moscow",
+    "street": "10 Travellers St.",
+    "email": "Email: info@tour-agency.ru",
+    "phone": "Phone: +7 (123) 456-78-90",
+    "socialNetworks": "Social Networks",
+    "copyright": "© {{year}} Travel Agency. All rights reserved."
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "logout": "Logout",
+    "email": "Email",
+    "password": "Password",
+    "confirmPassword": "Confirm Password",
+    "forgotPassword": "Forgot Password?",
+    "alreadyHaveAccount": "Already have an account?",
+    "dontHaveAccount": "Don't have an account?",
+    "createAccount": "Create Account",
+    "loginSuccess": "Logged in successfully!",
+    "registerSuccess": "Registered successfully!",
+    "validation": {
+      "usernameRequired": "Username is required",
+      "emailRequired": "Email is required",
+      "invalidEmail": "Invalid email",
+      "passwordRequired": "Password is required",
+      "passwordMinLength": "Password must be at least 6 characters",
+      "passwordsNotMatch": "Passwords do not match",
+      "fullNameRequired": "Full name is required",
+      "phoneRequired": "Phone is required"
+    },
+    "errors": {
+      "incorrectCredentials": "Incorrect credentials",
+      "userExists": "User with this username or email already exists"
+    }
+  },
+  "navigation": {
+    "home": "Home",
+    "tours": "Tours",
+    "about": "About",
+    "contacts": "Contacts",
+    "profile": "Profile",
+    "settings": "Settings",
+    "support": "Support"
+  },
+  "tour": {
+    "search": "Search Tour",
+    "popular": "Popular Tours",
+    "recommended": "Recommended",
+    "price": "Price",
+    "duration": "Duration",
+    "location": "Location",
+    "destinations": "Destinations",
+    "departure": "Departure",
+    "arrival": "Arrival",
+    "book": "Book",
+    "days": "days",
+    "from": "from",
+    "to": "to",
+    "reviews": "Reviews",
+    "details": "Details",
+    "included": "Included in Tour",
+    "notIncluded": "Not Included in Tour",
+    "itinerary": "Itinerary"
+  },
+  "profile": {
+    "title": "User Profile",
+    "personalInfo": "Personal Information",
+    "name": "Name",
+    "surname": "Surname",
+    "phone": "Phone",
+    "address": "Address",
+    "myBookings": "My Bookings",
+    "changePassword": "Change Password",
+    "currentPassword": "Current Password",
+    "newPassword": "New Password",
+    "updateSuccess": "Profile updated successfully"
+  },
+  "tours": {
+    "title": "Tours",
+    "filter": {
+      "title": "Tour Filter",
+      "country": "Country",
+      "city": "City",
+      "dateFrom": "Start date",
+      "dateTo": "End date",
+      "people": "Number of people",
+      "priceFrom": "Price from",
+      "priceTo": "Price to",
+      "applyFilter": "Apply filters",
+      "resetFilter": "Reset"
+    },
+    "notFound": "Tours not found. Try changing filter parameters.",
+    "duration": "Duration: {{duration}} {{days}}",
+    "day_one": "day",
+    "day_other": "days",
+    "priceFrom": "from {{price}} ₽",
+    "details": "Details",
+    "tourDetail": {
+      "title": "Tour Details",
+      "description": "Description",
+      "destination": "Destination",
+      "duration": "Duration",
+      "price": "Price",
+      "dates": "Available dates",
+      "date": "Date",
+      "availability": "Available seats",
+      "book": "Book"
+    }
+  },
+  "hotels": {
+    "title": "Hotels",
+    "filter": {
+      "title": "Hotel Filter",
+      "country": "Country",
+      "city": "City",
+      "category": "Category (stars)",
+      "priceFrom": "Price from",
+      "priceTo": "Price to"
+    },
+    "notFound": "Hotels not found. Try changing filter parameters.",
+    "category": "{{category}} stars",
+    "details": "Details",
+    "hotelDetail": {
+      "title": "Hotel Details",
+      "description": "Description",
+      "address": "Address",
+      "category": "Category",
+      "rooms": "Rooms",
+      "roomType": "Room type",
+      "beds": "Beds",
+      "price": "Price per night",
+      "book": "Book"
+    }
+  },
+  "booking": {
+    "title": "Booking",
+    "participants": "Participants",
+    "date": "Date",
+    "payment": "Payment",
+    "confirmation": "Confirmation",
+    "totalPrice": "Total Price",
+    "bookingSuccess": "Booking completed successfully!",
+    "bookingDetails": "Booking Details",
+    "bookingId": "Booking ID",
+    "status": "Status",
+    "payNow": "Pay Now",
+    "paymentMethod": "Payment Method",
+    "creditCard": "Credit Card",
+    "paypal": "PayPal",
+    "bankTransfer": "Bank Transfer"
+  },
+  "orders": {
+    "title": "My Orders",
+    "noOrders": "You don't have any orders yet",
+    "orderNumber": "Order #{{number}}",
+    "orderDate": "Order date",
+    "tour": "Tour",
+    "dateRange": "Date range",
+    "status": "Status",
+    "totalPrice": "Total price",
+    "details": "Details",
+    "cancel": "Cancel",
+    "orderDetail": {
+      "title": "Order Details",
+      "orderInformation": "Order Information",
+      "tourInformation": "Tour Information",
+      "hotelInformation": "Hotel Information",
+      "paymentInformation": "Payment Information"
+    },
+    "statuses": {
+      "pending": "Pending",
+      "confirmed": "Confirmed",
+      "paid": "Paid",
+      "cancelled": "Cancelled",
+      "completed": "Completed"
+    }
+  },
+  "support": {
+    "title": "Technical Support",
+    "createTicket": "Create Ticket",
+    "myTickets": "My Tickets",
+    "noTickets": "You don't have any tickets yet",
+    "ticketNumber": "Ticket #{{number}}",
+    "subject": "Subject",
+    "status": "Status",
+    "created": "Created",
+    "lastUpdate": "Last update",
+    "viewTicket": "View",
+    "closeTicket": "Close ticket",
+    "newMessage": "New message",
+    "sendMessage": "Send message",
+    "statuses": {
+      "open": "Open",
+      "in_progress": "In progress",
+      "closed": "Closed"
+    },
+    "chat": {
+      "title": "Chat for ticket #{{id}}",
+      "online": "Online",
+      "offline": "Offline",
+      "reconnect": "Reconnect",
+      "emptyChat": "No messages yet. Write the first message!",
+      "messagePlaceholder": "Type a message..."
+    }
+  },
+  "admin": {
+    "dashboard": {
+      "title": "Admin Dashboard",
+      "statistics": "Statistics",
+      "totalUsers": "Total users",
+      "totalTours": "Total tours",
+      "totalOrders": "Total orders",
+      "pendingOrders": "Pending orders",
+      "totalTickets": "Total tickets",
+      "openTickets": "Open tickets"
+    },
+    "users": {
+      "title": "User Management",
+      "addUser": "Add user",
+      "editUser": "Edit user",
+      "deleteUser": "Delete user"
+    },
+    "tours": {
+      "title": "Tour Management",
+      "addTour": "Add tour",
+      "editTour": "Edit tour",
+      "deleteTour": "Delete tour",
+      "manageDates": "Manage dates"
+    },
+    "hotels": {
+      "title": "Hotel Management",
+      "addHotel": "Add hotel",
+      "editHotel": "Edit hotel",
+      "deleteHotel": "Delete hotel",
+      "manageRooms": "Manage rooms"
+    },
+    "orders": {
+      "title": "Order Management",
+      "updateStatus": "Update status"
+    },
+    "support": {
+      "title": "Ticket Management",
+      "allTickets": "All tickets",
+      "updateStatus": "Update status"
+    }
+  },
+  "error": {
+    "requiredField": "Required field",
+    "invalidEmail": "Invalid email",
+    "passwordMismatch": "Passwords don't match",
+    "passwordLength": "Password must be at least 6 characters",
+    "somethingWentWrong": "Something went wrong, please try again later",
+    "pageNotFound": "Page not found",
+    "unauthorized": "Authorization required",
+    "forbidden": "Access forbidden"
+  }
+} 
