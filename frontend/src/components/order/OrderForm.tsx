@@ -2,21 +2,22 @@ import React, { useState } from 'react';
 import './OrderForm.css';
 
 interface OrderFormProps {
-  orderData: {
+  bookingData: {
     tourId: string;
     tourDateId: number;
     roomId: number | null;
-    adults: number;
-    children: number;
-    specialRequests: string;
-    contactPhone: string;
+    peopleCount: number;
     totalPrice: number;
+    contactPhone?: string;
+    specialRequests?: string;
+    email?: string;
   };
   onChange: (name: string, value: any) => void;
   onSubmit: () => void;
+  loading?: boolean;
 }
 
-const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit }) => {
+const OrderForm: React.FC<OrderFormProps> = ({ bookingData, onChange, onSubmit, loading }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -24,11 +25,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit }) 
     let parsedValue: any = value;
     
     // Для числовых полей преобразуем значение в число
-    if (name === 'adults' || name === 'children') {
+    if (name === 'peopleCount') {
       parsedValue = parseInt(value, 10);
       // Проверяем на минимальные значения
-      if (name === 'adults' && parsedValue < 1) parsedValue = 1;
-      if (name === 'children' && parsedValue < 0) parsedValue = 0;
+      if (parsedValue < 1) parsedValue = 1;
     }
     
     onChange(name, parsedValue);
@@ -46,14 +46,20 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit }) 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (orderData.adults < 1) {
-      newErrors.adults = 'Необходимо указать минимум 1 взрослого';
+    if (bookingData.peopleCount < 1) {
+      newErrors.peopleCount = 'Необходимо указать минимум 1 человека';
     }
     
-    if (orderData.contactPhone.trim() === '') {
+    if (!bookingData.contactPhone || bookingData.contactPhone.trim() === '') {
       newErrors.contactPhone = 'Введите номер телефона для связи';
-    } else if (!/^\+?\d{10,15}$/.test(orderData.contactPhone)) {
+    } else if (!/^\+?\d{10,15}$/.test(bookingData.contactPhone)) {
       newErrors.contactPhone = 'Введите корректный номер телефона';
+    }
+    
+    if (!bookingData.email || bookingData.email.trim() === '') {
+      newErrors.email = 'Введите email для связи';
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.email)) {
+      newErrors.email = 'Введите корректный email';
     }
     
     setErrors(newErrors);
@@ -74,36 +80,37 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit }) 
         <h3>Информация о туристах</h3>
         
         <div className="form-group">
-          <label htmlFor="adults">Количество взрослых</label>
+          <label htmlFor="peopleCount">Количество человек</label>
           <input
             type="number"
-            id="adults"
-            name="adults"
+            id="peopleCount"
+            name="peopleCount"
             min="1"
             max="10"
-            value={orderData.adults}
+            value={bookingData.peopleCount}
             onChange={handleChange}
-            className={errors.adults ? 'error' : ''}
+            className={errors.peopleCount ? 'error' : ''}
           />
-          {errors.adults && <div className="error-message">{errors.adults}</div>}
-        </div>
-        
-        <div className="form-group">
-          <label htmlFor="children">Количество детей (до 12 лет)</label>
-          <input
-            type="number"
-            id="children"
-            name="children"
-            min="0"
-            max="10"
-            value={orderData.children}
-            onChange={handleChange}
-          />
+          {errors.peopleCount && <div className="error-message">{errors.peopleCount}</div>}
         </div>
       </div>
       
       <div className="form-section">
         <h3>Контактная информация</h3>
+        
+        <div className="form-group">
+          <label htmlFor="email">Email</label>
+          <input
+            type="email"
+            id="email"
+            name="email"
+            placeholder="example@mail.com"
+            value={bookingData.email || ''}
+            onChange={handleChange}
+            className={errors.email ? 'error' : ''}
+          />
+          {errors.email && <div className="error-message">{errors.email}</div>}
+        </div>
         
         <div className="form-group">
           <label htmlFor="contactPhone">Контактный телефон</label>
@@ -112,7 +119,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit }) 
             id="contactPhone"
             name="contactPhone"
             placeholder="+7 (999) 123-45-67"
-            value={orderData.contactPhone}
+            value={bookingData.contactPhone || ''}
             onChange={handleChange}
             className={errors.contactPhone ? 'error' : ''}
           />
@@ -130,15 +137,15 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit }) 
             name="specialRequests"
             rows={4}
             placeholder="Укажите особые пожелания к поездке, если есть"
-            value={orderData.specialRequests}
+            value={bookingData.specialRequests || ''}
             onChange={handleChange}
           ></textarea>
         </div>
       </div>
       
       <div className="form-actions">
-        <button type="submit" className="form-submit-button">
-          Перейти к подтверждению
+        <button type="submit" className="form-submit-button" disabled={loading}>
+          {loading ? 'Оформляем заказ...' : 'Перейти к подтверждению'}
         </button>
       </div>
     </form>

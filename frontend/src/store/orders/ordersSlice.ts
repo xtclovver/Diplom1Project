@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { orderService } from '../../services/api';
 
 // Типы данных
 interface Order {
@@ -57,96 +57,6 @@ const initialState: OrdersState = {
   error: null
 };
 
-// API mock (в реальном приложении здесь будут реальные запросы к API)
-const mockFetchUserOrders = (): Promise<Order[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve([
-        {
-          id: 1,
-          userId: 2,
-          tourId: 1,
-          tourDateId: 1,
-          roomId: 1,
-          peopleCount: 2,
-          totalPrice: 50000,
-          status: 'confirmed',
-          createdAt: '2023-05-10T12:30:00',
-          tour: {
-            id: 1,
-            name: 'Тур в Сочи',
-            imageUrl: '/img/tours/sochi.jpg'
-          },
-          tourDate: {
-            startDate: '2023-06-01',
-            endDate: '2023-06-08'
-          },
-          room: {
-            id: 1,
-            description: 'Стандартный двухместный номер',
-            beds: 2
-          }
-        },
-        {
-          id: 2,
-          userId: 2,
-          tourId: 2,
-          tourDateId: 3,
-          roomId: null,
-          peopleCount: 1,
-          totalPrice: 30000,
-          status: 'pending',
-          createdAt: '2023-05-15T09:45:00',
-          tour: {
-            id: 2,
-            name: 'Горный курорт "Красная поляна"',
-            imageUrl: '/img/tours/krasnaya-polyana.jpg'
-          },
-          tourDate: {
-            startDate: '2023-07-05',
-            endDate: '2023-07-10'
-          }
-        }
-      ]);
-    }, 800);
-  });
-};
-
-const mockCreateOrder = (bookingData: BookingData): Promise<Order> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve({
-        id: 3,
-        userId: 2,
-        tourId: parseInt(bookingData.tourId),
-        tourDateId: bookingData.tourDateId,
-        roomId: bookingData.roomId,
-        peopleCount: bookingData.peopleCount,
-        totalPrice: bookingData.totalPrice,
-        status: 'pending',
-        createdAt: new Date().toISOString(),
-        tour: {
-          id: parseInt(bookingData.tourId),
-          name: 'Тур в Сочи', // В реальном API это придет с сервера
-          imageUrl: '/img/tours/sochi.jpg'
-        },
-        tourDate: {
-          startDate: '2023-06-15', // В реальном API это придет с сервера
-          endDate: '2023-06-22'
-        }
-      });
-    }, 800);
-  });
-};
-
-const mockCancelOrder = (orderId: number): Promise<void> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      resolve();
-    }, 500);
-  });
-};
-
 // Асинхронные action creators
 export const fetchUserOrders = createAsyncThunk<
   Order[],
@@ -155,9 +65,8 @@ export const fetchUserOrders = createAsyncThunk<
   'orders/fetchUserOrders',
   async (_, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockFetchUserOrders();
-      return response;
+      const response = await orderService.getUserOrders();
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось загрузить заказы');
     }
@@ -179,9 +88,8 @@ export const createOrder = createAsyncThunk<
         return rejectWithValue('Не все данные для бронирования заполнены');
       }
       
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockCreateOrder(bookingData);
-      return response;
+      const response = await orderService.createOrder(bookingData);
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось создать заказ');
     }
@@ -195,8 +103,7 @@ export const cancelOrder = createAsyncThunk<
   'orders/cancelOrder',
   async (orderId, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      await mockCancelOrder(orderId);
+      await orderService.cancelOrder(orderId.toString());
       return orderId;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось отменить заказ');
@@ -254,18 +161,19 @@ const ordersSlice = createSlice({
       })
       .addCase(cancelOrder.fulfilled, (state, action: PayloadAction<number>) => {
         state.loading = false;
-        const orderId = action.payload;
-        const orderIndex = state.orders.findIndex(order => order.id === orderId);
-        if (orderIndex !== -1) {
-          state.orders[orderIndex].status = 'cancelled';
+        // Обновляем статус заказа на 'cancelled'
+        const order = state.orders.find(order => order.id === action.payload);
+        if (order) {
+          order.status = 'cancelled';
         }
       })
       .addCase(cancelOrder.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
   }
 });
 
 export const { setBookingData, clearBookingData } = ordersSlice.actions;
+
 export default ordersSlice.reducer; 

@@ -13,14 +13,16 @@ type OrderServiceImpl struct {
 	orderRepo repository.OrderRepository
 	tourRepo  repository.TourRepository
 	userRepo  repository.UserRepository
+	roomRepo  repository.RoomRepository
 }
 
 // NewOrderService создает новый сервис для работы с заказами
-func NewOrderService(orderRepo repository.OrderRepository, tourRepo repository.TourRepository, userRepo repository.UserRepository) OrderService {
+func NewOrderService(orderRepo repository.OrderRepository, tourRepo repository.TourRepository, userRepo repository.UserRepository, roomRepo repository.RoomRepository) OrderService {
 	return &OrderServiceImpl{
 		orderRepo: orderRepo,
 		tourRepo:  tourRepo,
 		userRepo:  userRepo,
+		roomRepo:  roomRepo,
 	}
 }
 
@@ -118,9 +120,18 @@ func (s *OrderServiceImpl) CalculatePrice(ctx context.Context, tourID, tourDateI
 
 	// Если выбран номер, добавляем его стоимость
 	var roomPrice float64 = 0
-	if roomID != nil {
-		// Логика получения стоимости номера
-		// ...
+	if roomID != nil && s.roomRepo != nil {
+		// Получаем информацию о комнате
+		room, err := s.roomRepo.GetByID(ctx, *roomID)
+		if err != nil {
+			return 0, err
+		}
+
+		// Вычисляем продолжительность пребывания на основе дат тура
+		duration := tour.Duration
+
+		// Добавляем стоимость номера за весь период пребывания
+		roomPrice = room.PricePerNight * float64(duration)
 	}
 
 	return basePrice + roomPrice, nil

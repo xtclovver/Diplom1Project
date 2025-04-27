@@ -1,22 +1,21 @@
 import { configureStore } from '@reduxjs/toolkit';
-import authReducer from './auth/authSlice';
-import tourReducer from './tour/tourSlice';
 import toursReducer from './tours/toursSlice';
 import ordersReducer from './orders/ordersSlice';
+import authReducer from './auth/authSlice';
 import supportReducer from './support/supportSlice';
 
 const store = configureStore({
   reducer: {
-    auth: authReducer,
-    tour: tourReducer,
     tours: toursReducer,
     orders: ordersReducer,
-    support: supportReducer,
+    auth: authReducer,
+    support: supportReducer
   },
-  middleware: (getDefaultMiddleware) => 
+  // Отключаем middleware SerializableStateInvariantMiddleware в development
+  middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
-      serializableCheck: false,
-    }),
+      serializableCheck: false
+    })
 });
 
 export type RootState = ReturnType<typeof store.getState>;

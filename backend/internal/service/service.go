@@ -25,7 +25,7 @@ func NewService(repos *repository.Repository, tokenManager auth.TokenManager) *S
 		Auth:          NewAuthService(repos.User, tokenManager),
 		Tour:          NewTourService(repos.Tour),
 		Hotel:         NewHotelService(repos.Hotel, repos.Room),
-		Order:         NewOrderService(repos.Order, repos.Tour, repos.User),
+		Order:         NewOrderService(repos.Order, repos.Tour, repos.User, repos.Room),
 		SupportTicket: NewSupportTicketService(repos.SupportTicket, repos.User),
 	}
 }

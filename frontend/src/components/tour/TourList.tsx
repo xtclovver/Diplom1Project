@@ -6,8 +6,8 @@ interface Tour {
   id: number;
   name: string;
   description: string;
-  image_url: string;
-  base_price: number;
+  imageUrl: string;
+  basePrice: number;
   duration: number;
   city: {
     id: number;
@@ -15,15 +15,26 @@ interface Tour {
     country: {
       id: number;
       name: string;
+      code: string;
     };
   };
 }
 
 interface TourListProps {
   tours: Tour[];
+  loading?: boolean;
 }
 
-const TourList: React.FC<TourListProps> = ({ tours }) => {
+const TourList: React.FC<TourListProps> = ({ tours, loading }) => {
+  if (loading) {
+    return (
+      <div className="loading-tours">
+        <div className="spinner"></div>
+        <p>Загрузка туров...</p>
+      </div>
+    );
+  }
+
   if (!tours || tours.length === 0) {
     return (
       <div className="empty-tours">
@@ -38,7 +49,7 @@ const TourList: React.FC<TourListProps> = ({ tours }) => {
       {tours.map((tour) => (
         <div key={tour.id} className="tour-card">
           <div className="tour-image">
-            <img src={tour.image_url || '/images/tour-placeholder.jpg'} alt={tour.name} />
+            <img src={tour.imageUrl || '/images/tour-placeholder.jpg'} alt={tour.name} />
           </div>
           <div className="tour-content">
             <h3 className="tour-title">{tour.name}</h3>
@@ -51,7 +62,7 @@ const TourList: React.FC<TourListProps> = ({ tours }) => {
             <p className="tour-description">{truncateText(tour.description, 150)}</p>
             <div className="tour-footer">
               <div className="tour-price">
-                от <span>{tour.base_price.toLocaleString()} ₽</span>
+                от <span>{tour.basePrice.toLocaleString()} ₽</span>
               </div>
               <Link to={`/tours/${tour.id}`} className="tour-button">
                 Подробнее

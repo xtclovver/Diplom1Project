@@ -84,6 +84,11 @@ export const authService = {
   // Обновление токена
   refreshToken: (refreshToken) => {
     return api.post('/auth/refresh', { refreshToken });
+  },
+  
+  // Получение данных текущего пользователя
+  getCurrentUser: () => {
+    return api.get('/users/me');
   }
 };
 

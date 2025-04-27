@@ -1,27 +1,67 @@
 import React from 'react';
 import './OrderSummary.css';
 
+interface Tour {
+  id: number;
+  name: string;
+  description: string;
+  basePrice: number;
+  imageUrl: string;
+  duration: number;
+  city: {
+    id: number;
+    name: string;
+    country: {
+      id: number;
+      name: string;
+      code: string;
+    }
+  };
+}
+
+interface TourDate {
+  id: number;
+  tourId: number;
+  startDate: string;
+  endDate: string;
+  availability: number;
+  priceModifier: number;
+}
+
+interface Room {
+  id: number;
+  hotelId: number;
+  description: string;
+  beds: number;
+  price: number;
+  imageUrl: string;
+}
+
 interface OrderSummaryProps {
-  tour: any;
-  orderData: {
+  tour: Tour;
+  tourDate: TourDate;
+  selectedRoom: Room | null;
+  bookingData: {
     tourId: string;
     tourDateId: number;
     roomId: number | null;
-    adults: number;
-    children: number;
-    specialRequests: string;
-    contactPhone: string;
+    peopleCount: number;
     totalPrice: number;
+    contactPhone?: string;
+    specialRequests?: string;
+    email?: string;
   };
-  startDate: string;
-  endDate: string;
+  onConfirm?: () => void;
+  onEdit?: () => void;
 }
 
 const OrderSummary: React.FC<OrderSummaryProps> = ({ 
   tour, 
-  orderData, 
-  startDate, 
-  endDate 
+  tourDate, 
+  selectedRoom,
+  bookingData,
+  onConfirm,
+  onEdit
 }) => {
   const formatDate = (dateString: string): string => {
     const date = new Date(dateString);
@@ -30,8 +70,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   
   // Рассчитываем количество дней тура
   const calculateDays = (): number => {
-    const start = new Date(startDate);
-    const end = new Date(endDate);
+    const start = new Date(tourDate.startDate);
+    const end = new Date(tourDate.endDate);
     const diffTime = Math.abs(end.getTime() - start.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 чтобы учесть день отъезда
   };
@@ -47,9 +87,25 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   };
   
-  // Вычисляем стоимость для взрослых и детей
-  const adultsCost = orderData.adults * tour.base_price;
-  const childrenCost = orderData.children * (tour.base_price * 0.7); // 70% от базовой цены для детей
+  // Функция для склонения слова "человек"
+  const getPeopleText = (count: number): string => {
+    if (count % 10 === 1 && count % 100 !== 11) {
+      return 'человек';
+    } else if ([2, 3, 4].includes(count % 10) && ![12, 13, 14].includes(count % 100)) {
+      return 'человека';
+    } else {
+      return 'человек';
+    }
+  };
+  
+  // Рассчитываем базовую стоимость тура с учетом модификатора цены
+  const baseTourCost = tour.basePrice * tourDate.priceModifier;
+  
+  // Рассчитываем стоимость проживания за все дни
+  const roomCost = selectedRoom ? selectedRoom.price * (calculateDays() - 1) : 0; // -1 день, т.к. отель обычно бронируется на ночи
+  
+  // Общая стоимость тура для всех участников
+  const totalTourCost = baseTourCost * bookingData.peopleCount;
   
   const days = calculateDays();
   
@@ -59,16 +115,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       
       <div className="summary-tour-details">
         <div className="tour-image">
-          <img src={tour.image_url || '/images/tour-placeholder.jpg'} alt={tour.name} />
+          <img src={tour.imageUrl || '/images/tour-placeholder.jpg'} alt={tour.name} />
         </div>
         
         <div className="tour-details">
           <h4>{tour.name}</h4>
           <div className="tour-location">
-            <i className="fa fa-map-marker"></i> {tour.city?.name}, {tour.city?.country?.name}
+            <i className="fa fa-map-marker"></i> {tour.city.name}, {tour.city.country.name}
           </div>
           <div className="tour-dates">
-            <i className="fa fa-calendar"></i> {formatDate(startDate)} - {formatDate(endDate)}
+            <i className="fa fa-calendar"></i> {formatDate(tourDate.startDate)} - {formatDate(tourDate.endDate)}
             <span>({days} {getDaysText(days)})</span>
           </div>
         </div>
@@ -77,50 +133,81 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       <div className="summary-section tourists-info">
         <h4>Туристы</h4>
         <div className="summary-item">
-          <span className="summary-label">Взрослые:</span>
-          <span className="summary-value">{orderData.adults} чел.</span>
+          <span className="summary-label">Количество человек:</span>
+          <span className="summary-value">{bookingData.peopleCount} {getPeopleText(bookingData.peopleCount)}</span>
         </div>
-        {orderData.children > 0 && (
+      </div>
+      
+      {selectedRoom && (
+        <div className="summary-section room-info">
+          <h4>Проживание</h4>
           <div className="summary-item">
-            <span className="summary-label">Дети до 12 лет:</span>
-            <span className="summary-value">{orderData.children} чел.</span>
+            <span className="summary-label">Тип номера:</span>
+            <span className="summary-value">{selectedRoom.description}</span>
+          </div>
+          <div className="summary-item">
+            <span className="summary-label">Стоимость за ночь:</span>
+            <span className="summary-value">{selectedRoom.price.toLocaleString()} ₽</span>
+          </div>
+        </div>
+      )}
+      
+      <div className="summary-section contact-info">
+        <h4>Контактная информация</h4>
+        {bookingData.email && (
+          <div className="summary-item">
+            <span className="summary-label">Email:</span>
+            <span className="summary-value">{bookingData.email}</span>
+          </div>
+        )}
+        {bookingData.contactPhone && (
+          <div className="summary-item">
+            <span className="summary-label">Телефон:</span>
+            <span className="summary-value">{bookingData.contactPhone}</span>
           </div>
         )}
       </div>
       
-      <div className="summary-section contact-info">
-        <h4>Контактная информация</h4>
-        <div className="summary-item">
-          <span className="summary-label">Телефон:</span>
-          <span className="summary-value">{orderData.contactPhone}</span>
-        </div>
-      </div>
-      
-      {orderData.specialRequests && (
+      {bookingData.specialRequests && (
         <div className="summary-section special-requests">
           <h4>Особые пожелания</h4>
-          <p>{orderData.specialRequests}</p>
+          <p>{bookingData.specialRequests}</p>
         </div>
       )}
       
       <div className="summary-section price-breakdown">
-        <h4>Стоимость</h4>
+        <h4>Детализация стоимости</h4>
         <div className="summary-item">
-          <span className="summary-label">Стоимость для взрослых:</span>
-          <span className="summary-value">{adultsCost.toLocaleString()} ₽</span>
+          <span className="summary-label">Базовая стоимость тура:</span>
+          <span className="summary-value">{baseTourCost.toLocaleString()} ₽ × {bookingData.peopleCount}</span>
         </div>
-        {orderData.children > 0 && (
+        {selectedRoom && (
           <div className="summary-item">
-            <span className="summary-label">Стоимость для детей:</span>
-            <span className="summary-value">{childrenCost.toLocaleString()} ₽</span>
+            <span className="summary-label">Проживание за {days-1} {getDaysText(days-1)}:</span>
+            <span className="summary-value">{roomCost.toLocaleString()} ₽</span>
           </div>
         )}
       </div>
       
       <div className="total-price">
         <span className="total-label">Итого:</span>
-        <span className="total-value">{orderData.totalPrice.toLocaleString()} ₽</span>
+        <span className="total-value">{bookingData.totalPrice.toLocaleString()} ₽</span>
       </div>
+      
+      {(onConfirm || onEdit) && (
+        <div className="summary-actions">
+          {onEdit && (
+            <button className="summary-edit-button" onClick={onEdit}>
+              Изменить данные
+            </button>
+          )}
+          {onConfirm && (
+            <button className="summary-confirm-button" onClick={onConfirm}>
+              Подтвердить и оплатить
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 };

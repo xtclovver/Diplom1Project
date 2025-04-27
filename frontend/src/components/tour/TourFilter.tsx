@@ -1,16 +1,30 @@
 import React, { useState, useEffect } from 'react';
-import { useSelector } from 'react-redux';
+import axios from 'axios';
 import './TourFilter.css';
 
-// Используем тот же интерфейс, что в tourSlice
+// Типы данных для фильтрации туров
 interface TourFilters {
-  country?: string;
-  city?: string;
+  countries?: number[];
+  cities?: number[];
+  priceMin?: number;
+  priceMax?: number;
   dateFrom?: string;
   dateTo?: string;
-  people?: number;
-  priceMin?: string;
-  priceMax?: string;
+  duration?: number[];
+  peopleCount?: number;
+  searchQuery?: string;
+}
+
+interface Country {
+  id: number;
+  name: string;
+  code: string;
+}
+
+interface City {
+  id: number;
+  name: string;
+  countryId: number;
 }
 
 interface FilterProps {
@@ -19,59 +33,96 @@ interface FilterProps {
 }
 
 const TourFilter: React.FC<FilterProps> = ({ onFilterChange, initialFilters }) => {
-  // Инициализируем состояние с initialFilters, устанавливая дефолтные значения для опциональных полей
+  // Инициализируем состояние с initialFilters
   const [filters, setFilters] = useState<TourFilters>({
-    country: initialFilters.country || '',
-    city: initialFilters.city || '',
+    countries: initialFilters.countries || [],
+    cities: initialFilters.cities || [],
     dateFrom: initialFilters.dateFrom || '',
     dateTo: initialFilters.dateTo || '',
-    people: initialFilters.people || 1,
-    priceMin: initialFilters.priceMin || '',
-    priceMax: initialFilters.priceMax || ''
+    peopleCount: initialFilters.peopleCount || 1,
+    priceMin: initialFilters.priceMin || undefined,
+    priceMax: initialFilters.priceMax || undefined,
+    searchQuery: initialFilters.searchQuery || '',
+    duration: initialFilters.duration || []
   });
-  const [countries, setCountries] = useState<{ id: number, name: string }[]>([]);
-  const [cities, setCities] = useState<{ id: number, name: string }[]>([]);
   
-  // Получаем список стран и городов из API
+  const [countries, setCountries] = useState<Country[]>([]);
+  const [cities, setCities] = useState<City[]>([]);
+  const [loading, setLoading] = useState<boolean>(false);
+  
+  // Получаем список стран из API
   useEffect(() => {
-    // Здесь должен быть запрос к API для получения списка стран
-    // Для примера используем моковые данные
-    setCountries([
-      { id: 1, name: 'Россия' },
-      { id: 2, name: 'Турция' },
-      { id: 3, name: 'Египет' },
-      { id: 4, name: 'Таиланд' }
-    ]);
+    const fetchCountries = async () => {
+      try {
+        setLoading(true);
+        const response = await axios.get('/api/countries');
+        setCountries(response.data);
+      } catch (err) {
+        console.error('Error fetching countries:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    
+    fetchCountries();
   }, []);
   
-  // При изменении страны получаем список городов
+  // Получаем список городов при изменении выбранной страны
   useEffect(() => {
-    if (filters.country) {
-      // Здесь должен быть запрос к API для получения списка городов по стране
-      // Для примера используем моковые данные
-      if (filters.country === '1') {
-        setCities([
-          { id: 1, name: 'Москва' },
-          { id: 2, name: 'Санкт-Петербург' },
-          { id: 3, name: 'Сочи' }
-        ]);
-      } else if (filters.country === '2') {
-        setCities([
-          { id: 4, name: 'Анталия' },
-          { id: 5, name: 'Стамбул' },
-          { id: 6, name: 'Алания' }
-        ]);
-      } else {
-        setCities([]);
+    const fetchCities = async () => {
+      try {
+        if (filters.countries && filters.countries.length > 0) {
+          setLoading(true);
+          const response = await axios.get('/api/cities', {
+            params: { countryIds: filters.countries.join(',') }
+          });
+          setCities(response.data);
+        } else {
+          setCities([]);
+        }
+      } catch (err) {
+        console.error('Error fetching cities:', err);
+      } finally {
+        setLoading(false);
       }
-    } else {
-      setCities([]);
-    }
-  }, [filters.country]);
+    };
+    
+    fetchCities();
+  }, [filters.countries]);
   
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
+  // Обработчики изменения полей формы
+  const handleCountryChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+    setFilters(prev => ({
+      ...prev,
+      countries: selectedOptions,
+      cities: [] // Сбрасываем выбранные города при смене страны
+    }));
+  };
+  
+  const handleCityChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    const selectedOptions = Array.from(e.target.selectedOptions, option => parseInt(option.value));
+    setFilters(prev => ({
+      ...prev,
+      cities: selectedOptions
+    }));
+  };
+  
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const { name, value } = e.target;
-    setFilters(prev => ({ ...prev, [name]: value }));
+    
+    // Преобразуем значения в нужный тип
+    if (name === 'priceMin' || name === 'priceMax' || name === 'peopleCount') {
+      setFilters(prev => ({
+        ...prev,
+        [name]: value ? parseInt(value) : undefined
+      }));
+    } else {
+      setFilters(prev => ({
+        ...prev,
+        [name]: value
+      }));
+    }
   };
   
   const handleSubmit = (e: React.FormEvent) => {
@@ -80,82 +131,110 @@ const TourFilter: React.FC<FilterProps> = ({ onFilterChange, initialFilters }) =
   };
   
   const handleReset = () => {
-    setFilters(initialFilters);
-    onFilterChange(initialFilters);
+    const resetFilters = {
+      countries: [],
+      cities: [],
+      dateFrom: '',
+      dateTo: '',
+      peopleCount: 1,
+      priceMin: undefined,
+      priceMax: undefined,
+      searchQuery: '',
+      duration: []
+    };
+    setFilters(resetFilters);
+    onFilterChange(resetFilters);
   };
   
   return (
     <div className="tour-filter">
-      <h3>Фильтры</h3>
+      <h3>Поиск и фильтры</h3>
       
       <form onSubmit={handleSubmit}>
+        <div className="filter-group search-group">
+          <label htmlFor="searchQuery">Поиск по названию</label>
+          <input 
+            type="text" 
+            id="searchQuery" 
+            name="searchQuery" 
+            placeholder="Введите название тура" 
+            value={filters.searchQuery || ''} 
+            onChange={handleInputChange}
+          />
+        </div>
+        
         <div className="filter-group">
-          <label htmlFor="country">Страна</label>
+          <label htmlFor="countries">Страна</label>
           <select 
-            id="country" 
-            name="country" 
-            value={filters.country} 
-            onChange={handleChange}
+            id="countries" 
+            name="countries" 
+            multiple 
+            value={filters.countries?.map(String) || []} 
+            onChange={handleCountryChange}
+            disabled={loading}
           >
-            <option value="">Все страны</option>
             {countries.map(country => (
               <option key={country.id} value={country.id}>
                 {country.name}
               </option>
             ))}
           </select>
+          <small className="help-text">Для выбора нескольких стран удерживайте Ctrl</small>
         </div>
         
         <div className="filter-group">
-          <label htmlFor="city">Город</label>
+          <label htmlFor="cities">Город</label>
           <select 
-            id="city" 
-            name="city" 
-            value={filters.city} 
-            onChange={handleChange}
-            disabled={!filters.country}
+            id="cities" 
+            name="cities" 
+            multiple 
+            value={filters.cities?.map(String) || []} 
+            onChange={handleCityChange}
+            disabled={loading || !filters.countries || filters.countries.length === 0}
           >
-            <option value="">Все города</option>
             {cities.map(city => (
               <option key={city.id} value={city.id}>
                 {city.name}
               </option>
             ))}
           </select>
+          <small className="help-text">Для выбора нескольких городов удерживайте Ctrl</small>
         </div>
         
         <div className="filter-group">
-          <label htmlFor="dateFrom">Дата начала</label>
+          <label htmlFor="dateFrom">Дата начала поездки</label>
           <input 
             type="date" 
             id="dateFrom" 
             name="dateFrom" 
-            value={filters.dateFrom} 
-            onChange={handleChange}
+            value={filters.dateFrom || ''} 
+            onChange={handleInputChange}
+            min={new Date().toISOString().split('T')[0]} // Минимальная дата - сегодня
           />
         </div>
         
         <div className="filter-group">
-          <label htmlFor="dateTo">Дата окончания</label>
+          <label htmlFor="dateTo">Дата окончания поездки</label>
           <input 
             type="date" 
             id="dateTo" 
             name="dateTo" 
-            value={filters.dateTo} 
-            onChange={handleChange}
+            value={filters.dateTo || ''} 
+            onChange={handleInputChange}
+            min={filters.dateFrom || new Date().toISOString().split('T')[0]} // Минимальная дата - дата начала или сегодня
           />
         </div>
         
         <div className="filter-group">
-          <label htmlFor="people">Количество человек</label>
+          <label htmlFor="peopleCount">Количество человек</label>
           <input 
             type="number" 
-            id="people" 
-            name="people" 
+            id="peopleCount" 
+            name="peopleCount" 
             min="1" 
             max="10" 
-            value={filters.people} 
-            onChange={handleChange}
+            value={filters.peopleCount || 1} 
+            onChange={handleInputChange}
           />
         </div>
         
@@ -167,8 +246,9 @@ const TourFilter: React.FC<FilterProps> = ({ onFilterChange, initialFilters }) =
               id="priceMin" 
               name="priceMin" 
               placeholder="0" 
-              value={filters.priceMin} 
-              onChange={handleChange}
+              value={filters.priceMin || ''} 
+              onChange={handleInputChange}
+              min="0"
             />
           </div>
           
@@ -179,8 +259,9 @@ const TourFilter: React.FC<FilterProps> = ({ onFilterChange, initialFilters }) =
               id="priceMax" 
               name="priceMax" 
               placeholder="∞" 
-              value={filters.priceMax} 
-              onChange={handleChange}
+              value={filters.priceMax || ''} 
+              onChange={handleInputChange}
+              min={filters.priceMin || 0}
             />
           </div>
         </div>

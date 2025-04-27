@@ -3,23 +3,40 @@ import './TourDateSelector.css';
 
 interface TourDate {
   id: number;
-  start_date: string;
-  end_date: string;
-  available_seats: number;
-  price: number;
+  tourId: number;
+  startDate: string;
+  endDate: string;
+  availability: number; // Доступное количество мест
+  priceModifier: number; // Модификатор цены для сезонов
 }
 
 interface TourDateSelectorProps {
   dates: TourDate[];
   onSelect: (date: TourDate) => void;
   selected: TourDate | null;
+  basePrice: number; // Базовая цена тура
+  loading?: boolean;
 }
 
 const TourDateSelector: React.FC<TourDateSelectorProps> = ({ 
   dates, 
   onSelect, 
-  selected 
+  selected,
+  basePrice,
+  loading 
 }) => {
+  if (loading) {
+    return (
+      <div className="tour-date-selector">
+        <div className="date-selector-header">Выберите дату поездки</div>
+        <div className="loading-dates">
+          <div className="spinner"></div>
+          <p>Загрузка доступных дат...</p>
+        </div>
+      </div>
+    );
+  }
+
   if (!dates || dates.length === 0) {
     return (
       <div className="tour-date-selector">
@@ -37,6 +54,11 @@ const TourDateSelector: React.FC<TourDateSelectorProps> = ({
     return date.toLocaleDateString('ru-RU');
   };
 
+  // Рассчитываем финальную цену с учетом модификатора
+  const calculatePrice = (basePrice: number, modifier: number): number => {
+    return Math.round(basePrice * modifier);
+  };
+
   return (
     <div className="tour-date-selector">
       <div className="date-selector-header">Выберите дату поездки</div>
@@ -44,19 +66,19 @@ const TourDateSelector: React.FC<TourDateSelectorProps> = ({
         {dates.map((date) => (
           <div 
             key={date.id}
-            className={`date-option ${selected?.id === date.id ? 'selected' : ''} ${date.available_seats <= 0 ? 'disabled' : ''}`}
-            onClick={() => date.available_seats > 0 && onSelect(date)}
+            className={`date-option ${selected?.id === date.id ? 'selected' : ''} ${date.availability <= 0 ? 'disabled' : ''}`}
+            onClick={() => date.availability > 0 && onSelect(date)}
           >
             <div className="date-range">
-              {formatDate(date.start_date)} - {formatDate(date.end_date)}
+              {formatDate(date.startDate)} - {formatDate(date.endDate)}
             </div>
             <div className="date-details">
               <span className="date-price">
-                {date.price.toLocaleString()} ₽
+                {calculatePrice(basePrice, date.priceModifier).toLocaleString()} ₽
               </span>
-              <span className={`date-seats ${date.available_seats <= 3 ? 'low' : ''}`}>
-                {date.available_seats > 0
-                  ? `Осталось мест: ${date.available_seats}`
+              <span className={`date-seats ${date.availability <= 3 ? 'low' : ''}`}>
+                {date.availability > 0
+                  ? `Осталось мест: ${date.availability}`
                   : 'Нет мест'}
               </span>
             </div>

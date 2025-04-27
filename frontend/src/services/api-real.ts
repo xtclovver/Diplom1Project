@@ -100,7 +100,7 @@ export const hotelService = {
   getHotels: (filters = {}, page = 1, size = 10) => {
     return api.get('/hotels', { params: { ...filters, page, size } });
   },
-  
+
   // Получение информации об отеле
   getHotelById: (id: string) => {
     return api.get(`/hotels/${id}`);

@@ -1,5 +1,5 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
-import axios from 'axios';
+import { tourService } from '../../services/api';
 
 // Типы данных
 interface Tour {
@@ -76,147 +76,6 @@ const initialState: ToursState = {
   error: null
 };
 
-// API mock (в реальном приложении здесь будут реальные запросы к API)
-const mockFetchTours = (filters: TourFilters, pagination: PaginationParams): Promise<{ tours: Tour[], total: number }> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      // Имитация данных с сервера
-      const mockTours: Tour[] = [
-        {
-          id: 1,
-          name: 'Тур в Сочи',
-          description: 'Отличный тур для отдыха на побережье Чёрного моря.',
-          basePrice: 25000,
-          imageUrl: '/img/tours/sochi.jpg',
-          city: {
-            id: 1,
-            name: 'Сочи',
-            country: {
-              id: 1,
-              name: 'Россия',
-              code: 'RU'
-            }
-          },
-          duration: 7,
-          isActive: true
-        },
-        {
-          id: 2,
-          name: 'Горный курорт "Красная поляна"',
-          description: 'Активный отдых в горах, катание на лыжах и сноуборде.',
-          basePrice: 30000,
-          imageUrl: '/img/tours/krasnaya-polyana.jpg',
-          city: {
-            id: 2,
-            name: 'Красная Поляна',
-            country: {
-              id: 1,
-              name: 'Россия',
-              code: 'RU'
-            }
-          },
-          duration: 5,
-          isActive: true
-        },
-        {
-          id: 3,
-          name: 'Экскурсия по Москве',
-          description: 'Посещение главных достопримечательностей столицы.',
-          basePrice: 15000,
-          imageUrl: '/img/tours/moscow.jpg',
-          city: {
-            id: 3,
-            name: 'Москва',
-            country: {
-              id: 1,
-              name: 'Россия',
-              code: 'RU'
-            }
-          },
-          duration: 3,
-          isActive: true
-        }
-      ];
-      
-      // В реальном приложении здесь была бы фильтрация по параметрам
-      
-      resolve({
-        tours: mockTours,
-        total: mockTours.length
-      });
-    }, 800);
-  });
-};
-
-const mockFetchTourById = (tourId: string): Promise<Tour> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // Имитация данных с сервера
-      const tour = {
-        id: 1,
-        name: 'Тур в Сочи',
-        description: 'Отличный тур для отдыха на побережье Чёрного моря. Вас ждут прекрасные пляжи, теплое море и множество развлечений.',
-        basePrice: 25000,
-        imageUrl: '/img/tours/sochi.jpg',
-        city: {
-          id: 1,
-          name: 'Сочи',
-          country: {
-            id: 1,
-            name: 'Россия',
-            code: 'RU'
-          }
-        },
-        duration: 7,
-        isActive: true
-      };
-      
-      if (tourId === '1') {
-        resolve(tour);
-      } else {
-        reject(new Error('Тур не найден'));
-      }
-    }, 500);
-  });
-};
-
-const mockFetchTourDates = (tourId: string): Promise<TourDate[]> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      if (tourId === '1') {
-        resolve([
-          {
-            id: 1,
-            tourId: 1,
-            startDate: '2023-06-01',
-            endDate: '2023-06-08',
-            availability: 15,
-            priceModifier: 1.0
-          },
-          {
-            id: 2,
-            tourId: 1,
-            startDate: '2023-06-15',
-            endDate: '2023-06-22',
-            availability: 10,
-            priceModifier: 1.1
-          },
-          {
-            id: 3,
-            tourId: 1,
-            startDate: '2023-07-01',
-            endDate: '2023-07-08',
-            availability: 8,
-            priceModifier: 1.2
-          }
-        ]);
-      } else {
-        resolve([]);
-      }
-    }, 500);
-  });
-};
-
 // Асинхронные action creators
 export const fetchTours = createAsyncThunk<
   { tours: Tour[]; total: number },
@@ -225,9 +84,11 @@ export const fetchTours = createAsyncThunk<
   'tours/fetchTours',
   async ({ filters, page, size }, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockFetchTours(filters, { page, size });
-      return response;
+      const response = await tourService.getTours(filters, page, size);
+      return {
+        tours: response.data.tours,
+        total: response.data.total
+      };
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось загрузить туры');
     }
@@ -241,9 +102,8 @@ export const fetchTourById = createAsyncThunk<
   'tours/fetchTourById',
   async (tourId, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockFetchTourById(tourId);
-      return response;
+      const response = await tourService.getTourById(tourId);
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось загрузить информацию о туре');
     }
@@ -257,9 +117,8 @@ export const fetchTourDates = createAsyncThunk<
   'tours/fetchTourDates',
   async (tourId, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockFetchTourDates(tourId);
-      return response;
+      const response = await tourService.getTourDates(tourId);
+      return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось загрузить даты тура');
     }
@@ -271,16 +130,30 @@ const toursSlice = createSlice({
   name: 'tours',
   initialState,
   reducers: {
+    // Устанавливаем фильтры
     setFilters: (state, action: PayloadAction<TourFilters>) => {
-      state.filters = action.payload;
-      state.pagination.page = 1; // Сброс на первую страницу при изменении фильтров
+      state.filters = { ...state.filters, ...action.payload };
+      // Сбрасываем страницу при изменении фильтров
+      state.pagination.page = 1;
     },
+    // Очищаем фильтры
+    clearFilters: (state) => {
+      state.filters = {};
+      state.pagination.page = 1;
+    },
+    // Устанавливаем страницу пагинации
     setPage: (state, action: PayloadAction<number>) => {
       state.pagination.page = action.payload;
     },
-    setSize: (state, action: PayloadAction<number>) => {
+    // Устанавливаем размер страницы
+    setPageSize: (state, action: PayloadAction<number>) => {
       state.pagination.size = action.payload;
-      state.pagination.page = 1; // Сброс на первую страницу при изменении размера
+      state.pagination.page = 1; // Сбрасываем страницу при изменении размера
+    },
+    // Очищаем данные тура при переходе со страницы
+    clearTourData: (state) => {
+      state.tour = null;
+      state.tourDates = [];
     }
   },
   extraReducers: (builder) => {
@@ -326,9 +199,10 @@ const toursSlice = createSlice({
       .addCase(fetchTourDates.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
-      });
+      })
   }
 });
 
-export const { setFilters, setPage, setSize } = toursSlice.actions;
+export const { setFilters, clearFilters, setPage, setPageSize, clearTourData } = toursSlice.actions;
+
 export default toursSlice.reducer; 

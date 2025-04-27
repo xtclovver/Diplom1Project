@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import axios from 'axios';
+import { authService } from '../../services/api';
 
 // Типы данных
 interface User {
@@ -83,37 +84,8 @@ const mockLogin = (credentials: { username: string; password: string }): Promise
   });
 };
 
-const mockRegister = (userData: {
-  username: string;
-  email: string;
-  password: string;
-  fullName: string;
-  phone: string;
-}): Promise<{ user: User; token: string }> => {
-  return new Promise((resolve, reject) => {
-    setTimeout(() => {
-      // Имитация регистрации
-      if (userData.username === 'admin') {
-        reject(new Error('Пользователь с таким именем уже существует'));
-      } else {
-        resolve({
-          user: {
-            id: 3,
-            username: userData.username,
-            email: userData.email,
-            fullName: userData.fullName,
-            phone: userData.phone,
-            role: {
-              id: 2,
-              name: 'user'
-            }
-          },
-          token: 'new-user-mock-token'
-        });
-      }
-    }, 800);
-  });
-};
+// Используем реальный API вместо заглушки
+// Функция register использует API из сервиса authService
 
 const mockGetUserProfile = (): Promise<User> => {
   return new Promise((resolve) => {
@@ -153,21 +125,48 @@ const mockUpdateUserProfile = (profileData: UserProfile): Promise<User> => {
 
 // Асинхронные action creators
 export const login = createAsyncThunk<
-  { user: User; token: string },
-  { username: string; password: string }
+  { accessToken: string; refreshToken: string },
+  { usernameOrEmail: string; password: string }
 >(
   'auth/login',
-  async (credentials, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue, dispatch }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockLogin(credentials);
+      // Выполняем реальный запрос к API
+      const response = await authService.login({
+        usernameOrEmail: credentials.usernameOrEmail,
+        password: credentials.password
+      });
       
-      // Сохраняем токен в localStorage
-      localStorage.setItem('token', response.token);
+      // Проверяем структуру ответа и извлекаем токены
+      const data = response.data;
+      const accessToken = data.accessToken || data.token;
+      const refreshToken = data.refreshToken || data.refresh_token;
       
-      return response;
+      if (!accessToken) {
+        return rejectWithValue('Не получен токен доступа от сервера');
+      }
+      
+      // Сохраняем токены в localStorage
+      localStorage.setItem('accessToken', accessToken);
+      if (refreshToken) {
+        localStorage.setItem('refreshToken', refreshToken);
+      }
+      localStorage.setItem('token', accessToken); // Для совместимости
+      
+      // Запрашиваем данные пользователя
+      dispatch(getUserProfile());
+      
+      return { 
+        accessToken, 
+        refreshToken: refreshToken || '' 
+      };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Не удалось авторизоваться');
+      console.error('Login error:', error);
+      return rejectWithValue(
+        error.response?.data?.error || 
+        error.response?.data?.message || 
+        'Не удалось авторизоваться'
+      );
     }
   }
 );
@@ -185,15 +184,37 @@ export const register = createAsyncThunk<
   'auth/register',
   async (userData, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockRegister(userData);
+      // Преобразуем данные в формат, ожидаемый API
+      const apiUserData = {
+        email: userData.email,
+        password: userData.password,
+        name: userData.fullName // используем fullName как name
+      };
+      
+      // Вызываем API
+      const response = await authService.register(apiUserData);
+      
+      // Преобразуем ответ API в ожидаемый формат
+      const token = response.data.accessToken || response.data.token;
       
       // Сохраняем токен в localStorage
-      localStorage.setItem('token', response.token);
+      localStorage.setItem('token', token);
+      localStorage.setItem('accessToken', token);
+      if (response.data.refreshToken) {
+        localStorage.setItem('refreshToken', response.data.refreshToken);
+      }
       
-      return response;
+      // Возвращаем данные в формате, ожидаемом reducer'ом
+      return {
+        user: response.data.user,
+        token: token
+      };
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Не удалось зарегистрироваться');
+      return rejectWithValue(
+        error.response?.data?.error || 
+        error.response?.data?.message || 
+        'Не удалось зарегистрироваться'
+      );
     }
   }
 );
@@ -232,11 +253,11 @@ export const getUserProfile = createAsyncThunk<
   'auth/getUserProfile',
   async (_, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockGetUserProfile();
-      return response;
+      // Запрос данных пользователя через API
+      const response = await authService.getCurrentUser();
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Не удалось получить профиль пользователя');
+      return rejectWithValue(error.response?.data?.error || 'Не удалось получить данные пользователя');
     }
   }
 );
@@ -273,16 +294,16 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(login.fulfilled, (state, action: PayloadAction<{ user: User; token: string }>) => {
+      .addCase(login.fulfilled, (state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) => {
         state.loading = false;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
+        state.token = action.payload.accessToken;
         state.isAuthenticated = true;
-        state.isAdmin = action.payload.user.role.name === 'admin';
+        // Теперь данные пользователя будут установлены через getUserProfile
       })
       .addCase(login.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload as string;
+        state.isAuthenticated = false;
       })
       
       // Обработка register
