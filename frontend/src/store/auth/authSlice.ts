@@ -130,38 +130,60 @@ export const login = createAsyncThunk<
 >(
   'auth/login',
   async (credentials, { rejectWithValue, dispatch }) => {
+    console.log('[Auth] Вызван метод login с:', credentials.usernameOrEmail);
     try {
       // Выполняем реальный запрос к API
+      console.log('[Auth] Отправка запроса на аутентификацию');
       const response = await authService.login({
         usernameOrEmail: credentials.usernameOrEmail,
         password: credentials.password
       });
       
+      console.log('[Auth] Успешный ответ от сервера:', response.status);
+      
       // Проверяем структуру ответа и извлекаем токены
       const data = response.data;
-      const accessToken = data.accessToken || data.token;
-      const refreshToken = data.refreshToken || data.refresh_token;
+      console.log('[Auth] Данные ответа:', JSON.stringify(data, null, 2));
       
-      if (!accessToken) {
-        return rejectWithValue('Не получен токен доступа от сервера');
+      const accessToken = data.accessToken;
+      const refreshToken = data.refreshToken;
+      
+      if (!accessToken || !refreshToken) {
+        console.error('[Auth] Отсутствуют токены в ответе:', { accessToken: !!accessToken, refreshToken: !!refreshToken });
+        return rejectWithValue('Не получены токены доступа от сервера');
       }
       
       // Сохраняем токены в localStorage
+      console.log('[Auth] Сохранение токенов в localStorage');
       localStorage.setItem('accessToken', accessToken);
-      if (refreshToken) {
-        localStorage.setItem('refreshToken', refreshToken);
-      }
+      localStorage.setItem('refreshToken', refreshToken);
       localStorage.setItem('token', accessToken); // Для совместимости
       
-      // Запрашиваем данные пользователя
-      dispatch(getUserProfile());
+      // Запрашиваем данные пользователя и ждем выполнения
+      console.log('[Auth] Запрос данных пользователя');
+      try {
+        const userResult = await dispatch(getUserProfile()).unwrap();
+        console.log('[Auth] Успешно получены данные пользователя:', JSON.stringify(userResult, null, 2));
+      } catch (userError) {
+        console.error('[Auth] Ошибка при получении данных пользователя:', userError);
+        // Продолжаем выполнение, поскольку аутентификация успешна, но логгируем ошибку
+      }
       
       return { 
         accessToken, 
-        refreshToken: refreshToken || '' 
+        refreshToken
       };
     } catch (error: any) {
-      console.error('Login error:', error);
+      console.error('[Auth] Ошибка входа:', error);
+      
+      if (error.response) {
+        console.error('[Auth] Детали ответа:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      }
+      
       return rejectWithValue(
         error.response?.data?.error || 
         error.response?.data?.message || 
@@ -222,8 +244,10 @@ export const register = createAsyncThunk<
 export const logout = createAsyncThunk(
   'auth/logout',
   async () => {
-    // Удаляем токен из localStorage
+    // Удаляем все токены из localStorage
     localStorage.removeItem('token');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
     return null;
   }
 );
@@ -253,10 +277,30 @@ export const getUserProfile = createAsyncThunk<
   'auth/getUserProfile',
   async (_, { rejectWithValue }) => {
     try {
+      console.log('[Auth] Начат запрос данных пользователя');
       // Запрос данных пользователя через API
       const response = await authService.getCurrentUser();
+      console.log('[Auth] Получен ответ от сервера:', response.status);
+      console.log('[Auth] Полученные данные пользователя:', JSON.stringify(response.data, null, 2));
+      
+      // Проверка корректности данных
+      if (!response.data || !response.data.role) {
+        console.error('[Auth] Некорректные данные пользователя:', response.data);
+        return rejectWithValue('Получены некорректные данные пользователя');
+      }
+      
       return response.data;
     } catch (error: any) {
+      console.error('[Auth] Ошибка получения данных пользователя:', error);
+      
+      if (error.response) {
+        console.error('[Auth] Детали ответа:', {
+          status: error.response.status,
+          data: error.response.data,
+          headers: error.response.headers
+        });
+      }
+      
       return rejectWithValue(error.response?.data?.error || 'Не удалось получить данные пользователя');
     }
   }
@@ -291,16 +335,25 @@ const authSlice = createSlice({
     builder
       // Обработка login
       .addCase(login.pending, (state) => {
+        console.log('[Auth Reducer] login.pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action: PayloadAction<{ accessToken: string; refreshToken: string }>) => {
+        console.log('[Auth Reducer] login.fulfilled, accessToken получен:', !!action.payload.accessToken);
         state.loading = false;
         state.token = action.payload.accessToken;
-        state.isAuthenticated = true;
+        console.log('[Auth Reducer] Состояние после login.fulfilled:', { 
+          hasToken: !!state.token,
+          isAuthenticated: state.isAuthenticated
+        });
+        // Не устанавливаем isAuthenticated = true здесь, 
+        // так как мы должны сначала получить данные пользователя
+        // state.isAuthenticated = true;
         // Теперь данные пользователя будут установлены через getUserProfile
       })
       .addCase(login.rejected, (state, action) => {
+        console.error('[Auth Reducer] login.rejected:', action.payload);
         state.loading = false;
         state.error = action.payload as string;
         state.isAuthenticated = false;
@@ -346,15 +399,39 @@ const authSlice = createSlice({
       
       // Обработка getUserProfile
       .addCase(getUserProfile.pending, (state) => {
+        console.log('[Auth Reducer] getUserProfile.pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(getUserProfile.fulfilled, (state, action: PayloadAction<User>) => {
+        console.log('[Auth Reducer] getUserProfile.fulfilled, данные:', JSON.stringify(action.payload, null, 2));
         state.loading = false;
+        
+        // Проверка наличия данных
+        if (!action.payload) {
+          console.error('[Auth Reducer] getUserProfile.fulfilled получил пустые данные');
+          state.error = 'Получены пустые данные пользователя';
+          return;
+        }
+        
+        // Проверка роли
+        if (!action.payload.role) {
+          console.error('[Auth Reducer] getUserProfile.fulfilled: отсутствует роль в данных пользователя');
+          action.payload.role = { id: 0, name: 'user' }; // Устанавливаем роль по умолчанию
+        }
+        
         state.user = action.payload;
-        state.isAdmin = action.payload.role.name === 'admin';
+        // Устанавливаем isAuthenticated = true только после получения данных пользователя
+        state.isAuthenticated = true;
+        state.isAdmin = action.payload && action.payload.role && action.payload.role.name === 'admin';
+        console.log('[Auth Reducer] Состояние после getUserProfile.fulfilled:', {
+          isAuthenticated: state.isAuthenticated,
+          isAdmin: state.isAdmin,
+          hasUser: !!state.user
+        });
       })
       .addCase(getUserProfile.rejected, (state, action) => {
+        console.error('[Auth Reducer] getUserProfile.rejected:', action.payload);
         state.loading = false;
         state.error = action.payload as string;
       })

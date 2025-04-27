@@ -46,6 +46,7 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			auth.POST("/register", h.register)
 			auth.POST("/login", h.login)
 			auth.POST("/refresh", h.refreshToken)
+			auth.GET("/diagnostic", h.authDiagnostic) // Диагностический эндпоинт
 		}
 
 		// Туры (доступны без аутентификации для просмотра)

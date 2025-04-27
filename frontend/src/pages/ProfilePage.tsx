@@ -9,7 +9,23 @@ import './ProfilePage.css';
 const ProfilePage: React.FC = () => {
   const dispatch = useAppDispatch();
   const navigate = useNavigate();
-  const { user, loading, error, isAuthenticated } = useSelector((state: any) => state.auth);
+  const authState = useSelector((state: any) => state.auth);
+  const { user, loading, error, isAuthenticated } = authState;
+  
+  // Отладочное логирование состояния аутентификации
+  useEffect(() => {
+    console.log('[ProfilePage] Состояние аутентификации:', {
+      isAuthenticated: authState.isAuthenticated,
+      hasUser: !!authState.user,
+      hasToken: !!authState.token,
+      loading: authState.loading,
+      error: authState.error
+    });
+    
+    if (authState.user) {
+      console.log('[ProfilePage] Данные пользователя:', JSON.stringify(authState.user, null, 2));
+    }
+  }, [authState]);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -23,24 +39,42 @@ const ProfilePage: React.FC = () => {
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
   useEffect(() => {
+    console.log('[ProfilePage] Проверка аутентификации:', isAuthenticated);
     if (!isAuthenticated) {
+      console.log('[ProfilePage] Перенаправление на страницу входа');
       navigate('/login', { state: { from: '/profile' } });
       return;
     }
     
     // Загружаем данные пользователя
+    console.log('[ProfilePage] Запрос данных пользователя');
     dispatch(getUserProfile());
   }, [dispatch, navigate, isAuthenticated]);
   
   useEffect(() => {
+    console.log('[ProfilePage] Обновление данных пользователя в форме:', user);
     if (user) {
-      setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : ''
-      });
+      try {
+        // Проверка структуры данных пользователя
+        console.log('[ProfilePage] Структура данных пользователя:', {
+          hasFirstName: 'firstName' in user,
+          hasLastName: 'lastName' in user,
+          hasEmail: 'email' in user,
+          hasPhone: 'phone' in user,
+          hasBirthDate: 'birthDate' in user
+        });
+        
+        // Создаем объект с безопасным доступом к полям
+        setFormData({
+          firstName: user.firstName || '',
+          lastName: user.lastName || '',
+          email: user.email || '',
+          phone: user.phone || '',
+          birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : ''
+        });
+      } catch (err) {
+        console.error('[ProfilePage] Ошибка при обработке данных пользователя:', err);
+      }
     }
   }, [user]);
   

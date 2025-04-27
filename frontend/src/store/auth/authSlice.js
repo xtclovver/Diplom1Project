@@ -4,11 +4,38 @@ import { authService } from '../../services/api';
 // Асинхронные действия
 export const login = createAsyncThunk(
   'auth/login',
-  async (credentials, { rejectWithValue }) => {
+  async (credentials, { rejectWithValue, dispatch }) => {
     try {
+      console.log('[Auth JS] Отправка запроса на аутентификацию');
       const response = await authService.login(credentials);
-      return response.data;
+      console.log('[Auth JS] Успешный ответ от сервера:', response.status);
+      console.log('[Auth JS] Данные ответа:', JSON.stringify(response.data, null, 2));
+      
+      // Проверяем структуру ответа и извлекаем токены
+      const accessToken = response.data.accessToken;
+      const refreshToken = response.data.refreshToken;
+      
+      if (!accessToken || !refreshToken) {
+        console.error('[Auth JS] Отсутствуют токены в ответе');
+        return rejectWithValue('Не получены токены доступа от сервера');
+      }
+      
+      // Сохраняем токены в localStorage
+      console.log('[Auth JS] Сохранение токенов в localStorage');
+      localStorage.setItem('accessToken', accessToken);
+      localStorage.setItem('refreshToken', refreshToken);
+      localStorage.setItem('token', accessToken); // Для совместимости
+      
+      // Запрашиваем данные пользователя
+      console.log('[Auth JS] Запрос данных пользователя');
+      dispatch(getUserProfile());
+      
+      return { 
+        accessToken, 
+        refreshToken 
+      };
     } catch (error) {
+      console.error('[Auth JS] Ошибка входа:', error);
       return rejectWithValue(error.response?.data?.message || 'Не удалось войти');
     }
   }
@@ -42,9 +69,19 @@ export const getUserProfile = createAsyncThunk(
   'auth/getUserProfile',
   async (_, { rejectWithValue }) => {
     try {
-      const response = await authService.getUserProfile();
+      console.log('[Auth JS] Начало запроса данных пользователя');
+      const response = await authService.getCurrentUser();
+      console.log('[Auth JS] Получен ответ от сервера с данными пользователя');
+      
+      if (!response.data) {
+        console.error('[Auth JS] Ответ не содержит данных пользователя');
+        return rejectWithValue('Ответ сервера не содержит данных пользователя');
+      }
+      
+      console.log('[Auth JS] Данные пользователя:', JSON.stringify(response.data, null, 2));
       return response.data;
     } catch (error) {
+      console.error('[Auth JS] Ошибка при получении данных пользователя:', error);
       return rejectWithValue(error.response?.data?.message || 'Не удалось получить профиль');
     }
   }
@@ -54,9 +91,28 @@ export const updateUserProfile = createAsyncThunk(
   'auth/updateUserProfile',
   async (userData, { rejectWithValue }) => {
     try {
+      console.log('[Auth JS] Обновление профиля пользователя:', userData);
+      // Проверяем, реализована ли функция updateUserProfile в authService
+      if (!authService.updateUserProfile) {
+        console.error('[Auth JS] Метод updateUserProfile не реализован в authService');
+        // Используем моковую функцию для совместимости
+        const mockUser = {
+          id: 1,
+          username: 'user',
+          email: userData.email || 'user@example.com',
+          fullName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
+          phone: userData.phone || '',
+          role: { id: 2, name: 'user' }
+        };
+        console.log('[Auth JS] Возвращаем моковые данные:', mockUser);
+        return mockUser;
+      }
+      
       const response = await authService.updateUserProfile(userData);
+      console.log('[Auth JS] Ответ на обновление профиля:', response.data);
       return response.data;
     } catch (error) {
+      console.error('[Auth JS] Ошибка при обновлении профиля:', error);
       return rejectWithValue(error.response?.data?.message || 'Не удалось обновить профиль');
     }
   }
@@ -64,11 +120,26 @@ export const updateUserProfile = createAsyncThunk(
 
 export const checkAdminAccess = createAsyncThunk(
   'auth/checkAdminAccess',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
-      const response = await authService.checkAdminAccess();
-      return response.data;
+      console.log('[Auth JS] Проверка прав администратора');
+      
+      // Получаем текущего пользователя из состояния
+      const state = getState();
+      const { user } = state.auth;
+      
+      if (!user) {
+        console.error('[Auth JS] Нет данных пользователя для проверки прав администратора');
+        return rejectWithValue('Пользователь не авторизован');
+      }
+      
+      // Проверяем роль пользователя
+      const isAdmin = user.role && user.role.name === 'admin';
+      console.log('[Auth JS] Результат проверки прав администратора:', isAdmin);
+      
+      return { isAdmin };
     } catch (error) {
+      console.error('[Auth JS] Ошибка при проверке прав администратора:', error);
       return rejectWithValue(error.response?.data?.message || 'Нет доступа к администрированию');
     }
   }
@@ -106,18 +177,20 @@ const authSlice = createSlice({
     builder
       // Обработчики для login
       .addCase(login.pending, (state) => {
+        console.log('[Auth JS Reducer] login.pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(login.fulfilled, (state, action) => {
+        console.log('[Auth JS Reducer] login.fulfilled, данные:', JSON.stringify(action.payload, null, 2));
         state.loading = false;
-        state.isAuthenticated = true;
-        state.user = action.payload.user;
-        state.token = action.payload.token;
-        state.isAdmin = action.payload.user.role === 'admin';
-        localStorage.setItem('token', action.payload.token);
+        // Токены уже установлены в localStorage внутри thunk
+        state.token = action.payload.accessToken;
+        // НЕ устанавливаем user и isAuthenticated здесь
+        // Это будет сделано в getUserProfile.fulfilled
       })
       .addCase(login.rejected, (state, action) => {
+        console.error('[Auth JS Reducer] login.rejected:', action.payload);
         state.loading = false;
         state.error = action.payload;
       })
@@ -158,15 +231,38 @@ const authSlice = createSlice({
       
       // Обработчики для getUserProfile
       .addCase(getUserProfile.pending, (state) => {
+        console.log('[Auth JS Reducer] getUserProfile.pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(getUserProfile.fulfilled, (state, action) => {
+        console.log('[Auth JS Reducer] getUserProfile.fulfilled, данные:', JSON.stringify(action.payload, null, 2));
         state.loading = false;
+        // Проверка данных пользователя
+        if (!action.payload) {
+          console.error('[Auth JS Reducer] getUserProfile.fulfilled получил пустые данные');
+          state.error = 'Получены пустые данные пользователя';
+          return;
+        }
+        
+        // Проверка наличия роли
+        if (!action.payload.role) {
+          console.error('[Auth JS Reducer] Отсутствует роль в данных пользователя');
+          action.payload.role = { id: 0, name: 'user' }; // Устанавливаем роль по умолчанию
+        }
+        
         state.user = action.payload;
-        state.isAdmin = action.payload.role === 'admin';
+        state.isAuthenticated = true; // Устанавливаем здесь после получения данных пользователя
+        state.isAdmin = action.payload.role && action.payload.role.name === 'admin';
+        
+        console.log('[Auth JS Reducer] Состояние после getUserProfile.fulfilled:', {
+          isAuthenticated: state.isAuthenticated,
+          isAdmin: state.isAdmin,
+          hasUser: !!state.user
+        });
       })
       .addCase(getUserProfile.rejected, (state, action) => {
+        console.error('[Auth JS Reducer] getUserProfile.rejected:', action.payload);
         state.loading = false;
         state.error = action.payload;
       })

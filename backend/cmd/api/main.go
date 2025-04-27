@@ -31,6 +31,41 @@ func main() {
 	}
 	defer db.Close()
 
+	// Проверка подключения к БД
+	if err := db.Ping(); err != nil {
+		log.Fatalf("Ошибка проверки подключения к базе данных: %s", err.Error())
+	}
+	log.Println("Успешное подключение к базе данных")
+
+	// Проверка наличия таблицы пользователей
+	var tableCount int
+	err = db.Get(&tableCount, "SELECT COUNT(*) FROM information_schema.tables WHERE table_schema = DATABASE() AND table_name = 'users'")
+	if err != nil {
+		log.Fatalf("Ошибка проверки наличия таблицы пользователей: %s", err.Error())
+	}
+
+	if tableCount == 0 {
+		log.Fatalf("Таблица пользователей не найдена в базе данных. Необходимо выполнить миграции.")
+	}
+
+	// Проверка наличия ролей пользователей
+	var roleCount int
+	err = db.Get(&roleCount, "SELECT COUNT(*) FROM roles")
+	if err != nil {
+		log.Printf("Ошибка проверки ролей пользователей: %s", err.Error())
+	} else {
+		log.Printf("В системе найдено %d ролей пользователей", roleCount)
+	}
+
+	// Подсчет количества пользователей в системе
+	var userCount int
+	err = db.Get(&userCount, "SELECT COUNT(*) FROM users")
+	if err != nil {
+		log.Printf("Ошибка подсчета пользователей: %s", err.Error())
+	} else {
+		log.Printf("В системе зарегистрировано %d пользователей", userCount)
+	}
+
 	// Инициализация менеджера JWT токенов
 	tokenManager := auth.NewJWTManager(cfg.JWT)
 
