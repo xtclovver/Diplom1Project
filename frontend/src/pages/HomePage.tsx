@@ -2,13 +2,19 @@ import React from 'react';
 import { Link } from 'react-router-dom';
 import './HomePage.css';
 
+// Импорт изображений - этот способ не требуется при использовании папки public
+// import baliImage from '../assets/images/bali.jpg';
+// import europeImage from '../assets/images/europe.jpg';
+// import egyptImage from '../assets/images/egypt.jpg';
+// import japanImage from '../assets/images/japan.jpg';
+
 const HomePage: React.FC = () => {
   // Данные для примера популярных туров
   const popularTours = [
-    { id: 1, name: 'Пляжи Бали', image: 'https://via.placeholder.com/300x200', price: 75000 },
-    { id: 2, name: 'Тур по Европе', image: 'https://via.placeholder.com/300x200', price: 120000 },
-    { id: 3, name: 'Горы Кавказа', image: 'https://via.placeholder.com/300x200', price: 45000 },
-    { id: 4, name: 'Сафари в Африке', image: 'https://via.placeholder.com/300x200', price: 180000 },
+    { id: 1, name: 'Пляж Бали', image: '/images/bali.jpg', price: 75000, rating: 4.8, days: 10 },
+    { id: 2, name: 'Тур по Европе', image: '/images/europe.jpg', price: 120000, rating: 4.9, days: 14 },
+    { id: 3, name: 'Пляж Египет', image: '/images/egypt.jpg', price: 45000, rating: 4.5, days: 7 },
+    { id: 4, name: 'Тур по Японии', image: '/images/japan.jpg', price: 180000, rating: 5.0, days: 12 },
   ];
 
   return (
@@ -54,11 +60,19 @@ const HomePage: React.FC = () => {
           <div className="tours-grid">
             {popularTours.map(tour => (
               <div className="tour-card" key={tour.id}>
-                <div className="tour-image">
-                  <img src={tour.image} alt={tour.name} />
+                <div className="tour-header">
+                  <div className="tour-badge">Популярно</div>
+                  <img src={tour.image} alt={tour.name} className="tour-image" />
                 </div>
-                <div className="tour-info">
+                <div className="tour-content">
+                  <div className="tour-rating">
+                    <span className="stars">★★★★★</span>
+                    <span className="rating-value">{tour.rating}</span>
+                  </div>
                   <h3>{tour.name}</h3>
+                  <div className="tour-details">
+                    <span className="tour-duration">{tour.days} дней</span>
+                  </div>
                   <p className="tour-price">{tour.price.toLocaleString()} ₽</p>
                   <Link to={`/tours/${tour.id}`} className="tour-details-btn">
                     Подробнее
