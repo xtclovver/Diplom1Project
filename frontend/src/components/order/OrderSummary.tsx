@@ -39,18 +39,22 @@ interface Room {
 
 interface OrderSummaryProps {
   tour: Tour;
-  tourDate: TourDate;
-  selectedRoom: Room | null;
-  bookingData: {
+  tourDate?: TourDate;
+  selectedRoom?: Room | null;
+  orderData: {
     tourId: string;
     tourDateId: number;
     roomId: number | null;
-    peopleCount: number;
+    adults?: number;
+    children?: number;
+    peopleCount?: number;
     totalPrice: number;
     contactPhone?: string;
     specialRequests?: string;
     email?: string;
   };
+  startDate?: string;
+  endDate?: string;
   onConfirm?: () => void;
   onEdit?: () => void;
 }
@@ -59,7 +63,9 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   tour, 
   tourDate, 
   selectedRoom,
-  bookingData,
+  orderData,
+  startDate,
+  endDate,
   onConfirm,
   onEdit
 }) => {
@@ -70,8 +76,8 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   
   // Рассчитываем количество дней тура
   const calculateDays = (): number => {
-    const start = new Date(tourDate.startDate);
-    const end = new Date(tourDate.endDate);
+    const start = new Date(tourDate?.startDate || '');
+    const end = new Date(tourDate?.endDate || '');
     const diffTime = Math.abs(end.getTime() - start.getTime());
     return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 чтобы учесть день отъезда
   };
@@ -99,13 +105,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   };
   
   // Рассчитываем базовую стоимость тура с учетом модификатора цены
-  const baseTourCost = tour.basePrice * tourDate.priceModifier;
+  const baseTourCost = tour.basePrice * (tourDate?.priceModifier || 1);
   
   // Рассчитываем стоимость проживания за все дни
   const roomCost = selectedRoom ? selectedRoom.price * (calculateDays() - 1) : 0; // -1 день, т.к. отель обычно бронируется на ночи
   
   // Общая стоимость тура для всех участников
-  const totalTourCost = baseTourCost * bookingData.peopleCount;
+  const totalTourCost = baseTourCost * (orderData.peopleCount || 0);
   
   const days = calculateDays();
   
@@ -124,7 +130,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
             <i className="fa fa-map-marker"></i> {tour.city.name}, {tour.city.country.name}
           </div>
           <div className="tour-dates">
-            <i className="fa fa-calendar"></i> {formatDate(tourDate.startDate)} - {formatDate(tourDate.endDate)}
+            <i className="fa fa-calendar"></i> {formatDate(tourDate?.startDate || '')} - {formatDate(tourDate?.endDate || '')}
             <span>({days} {getDaysText(days)})</span>
           </div>
         </div>
@@ -134,7 +140,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <h4>Туристы</h4>
         <div className="summary-item">
           <span className="summary-label">Количество человек:</span>
-          <span className="summary-value">{bookingData.peopleCount} {getPeopleText(bookingData.peopleCount)}</span>
+          <span className="summary-value">{orderData.peopleCount || 0} {getPeopleText(orderData.peopleCount || 0)}</span>
         </div>
       </div>
       
@@ -154,24 +160,24 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       
       <div className="summary-section contact-info">
         <h4>Контактная информация</h4>
-        {bookingData.email && (
+        {orderData.email && (
           <div className="summary-item">
             <span className="summary-label">Email:</span>
-            <span className="summary-value">{bookingData.email}</span>
+            <span className="summary-value">{orderData.email}</span>
           </div>
         )}
-        {bookingData.contactPhone && (
+        {orderData.contactPhone && (
           <div className="summary-item">
             <span className="summary-label">Телефон:</span>
-            <span className="summary-value">{bookingData.contactPhone}</span>
+            <span className="summary-value">{orderData.contactPhone}</span>
           </div>
         )}
       </div>
       
-      {bookingData.specialRequests && (
+      {orderData.specialRequests && (
         <div className="summary-section special-requests">
           <h4>Особые пожелания</h4>
-          <p>{bookingData.specialRequests}</p>
+          <p>{orderData.specialRequests}</p>
         </div>
       )}
       
@@ -179,7 +185,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <h4>Детализация стоимости</h4>
         <div className="summary-item">
           <span className="summary-label">Базовая стоимость тура:</span>
-          <span className="summary-value">{baseTourCost.toLocaleString()} ₽ × {bookingData.peopleCount}</span>
+          <span className="summary-value">{baseTourCost.toLocaleString()} ₽ × {orderData.peopleCount || 0}</span>
         </div>
         {selectedRoom && (
           <div className="summary-item">
@@ -191,7 +197,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       
       <div className="total-price">
         <span className="total-label">Итого:</span>
-        <span className="total-value">{bookingData.totalPrice.toLocaleString()} ₽</span>
+        <span className="total-value">{orderData.totalPrice.toLocaleString()} ₽</span>
       </div>
       
       {(onConfirm || onEdit) && (

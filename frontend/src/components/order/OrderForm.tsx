@@ -2,11 +2,13 @@ import React, { useState } from 'react';
 import './OrderForm.css';
 
 interface OrderFormProps {
-  bookingData: {
+  orderData: {
     tourId: string;
     tourDateId: number;
     roomId: number | null;
-    peopleCount: number;
+    adults?: number;
+    children?: number;
+    peopleCount?: number;
     totalPrice: number;
     contactPhone?: string;
     specialRequests?: string;
@@ -17,7 +19,7 @@ interface OrderFormProps {
   loading?: boolean;
 }
 
-const OrderForm: React.FC<OrderFormProps> = ({ bookingData, onChange, onSubmit, loading }) => {
+const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit, loading }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
@@ -46,19 +48,19 @@ const OrderForm: React.FC<OrderFormProps> = ({ bookingData, onChange, onSubmit, 
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
-    if (bookingData.peopleCount < 1) {
+    if (!orderData.peopleCount || orderData.peopleCount < 1) {
       newErrors.peopleCount = 'Необходимо указать минимум 1 человека';
     }
     
-    if (!bookingData.contactPhone || bookingData.contactPhone.trim() === '') {
+    if (!orderData.contactPhone || orderData.contactPhone.trim() === '') {
       newErrors.contactPhone = 'Введите номер телефона для связи';
-    } else if (!/^\+?\d{10,15}$/.test(bookingData.contactPhone)) {
+    } else if (!/^\+?\d{10,15}$/.test(orderData.contactPhone)) {
       newErrors.contactPhone = 'Введите корректный номер телефона';
     }
     
-    if (!bookingData.email || bookingData.email.trim() === '') {
+    if (!orderData.email || orderData.email.trim() === '') {
       newErrors.email = 'Введите email для связи';
-    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(bookingData.email)) {
+    } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orderData.email)) {
       newErrors.email = 'Введите корректный email';
     }
     
@@ -87,7 +89,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ bookingData, onChange, onSubmit, 
             name="peopleCount"
             min="1"
             max="10"
-            value={bookingData.peopleCount}
+            value={orderData.peopleCount}
             onChange={handleChange}
             className={errors.peopleCount ? 'error' : ''}
           />
@@ -105,7 +107,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ bookingData, onChange, onSubmit, 
             id="email"
             name="email"
             placeholder="example@mail.com"
-            value={bookingData.email || ''}
+            value={orderData.email || ''}
             onChange={handleChange}
             className={errors.email ? 'error' : ''}
           />
@@ -119,7 +121,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ bookingData, onChange, onSubmit, 
             id="contactPhone"
             name="contactPhone"
             placeholder="+7 (999) 123-45-67"
-            value={bookingData.contactPhone || ''}
+            value={orderData.contactPhone || ''}
             onChange={handleChange}
             className={errors.contactPhone ? 'error' : ''}
           />
@@ -137,7 +139,7 @@ const OrderForm: React.FC<OrderFormProps> = ({ bookingData, onChange, onSubmit, 
             name="specialRequests"
             rows={4}
             placeholder="Укажите особые пожелания к поездке, если есть"
-            value={bookingData.specialRequests || ''}
+            value={orderData.specialRequests || ''}
             onChange={handleChange}
           ></textarea>
         </div>

@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
-import { fetchTours, setFilters, setPage, setSize } from '../store/tours/toursSlice';
+import { fetchTours, setFilters, setPage, setPageSize } from '../store/tours/toursSlice';
 import TourFilter from '../components/tour/TourFilter';
 import TourList from '../components/tour/TourList';
 import Pagination from '../components/ui/Pagination';
@@ -13,8 +13,8 @@ interface Tour {
   id: number;
   name: string;
   description: string;
-  image_url: string;
-  base_price: number;
+  imageUrl: string;
+  basePrice: number;
   duration: number;
   city: {
     id: number;
@@ -52,24 +52,7 @@ interface ReduxTourFilters {
 
 // Интерфейс ToursState из toursSlice.ts
 interface ToursState {
-  tours: {
-    id: number;
-    name: string;
-    description: string;
-    basePrice: number;
-    imageUrl: string;
-    city: {
-      id: number;
-      name: string;
-      country: {
-        id: number;
-        name: string;
-        code: string;
-      };
-    };
-    duration: number;
-    isActive: boolean;
-  }[];
+  tours: Tour[];
   tour: any;
   tourDates: any[];
   filters: ReduxTourFilters;
@@ -124,28 +107,17 @@ const TourCatalogPage: React.FC = () => {
   };
 
   const handleSizeChange = (size: number) => {
-    dispatch(setSize(size));
+    dispatch(setPageSize(size));
   };
 
   const handleSortChange = (sort: string) => {
     setSortBy(sort);
   };
 
-  // Конвертируем tours от Redux store в формат для TourList
-  const convertedTours: Tour[] = (tours || []).map(tour => ({
-    id: tour.id,
-    name: tour.name,
-    description: tour.description,
-    image_url: tour.imageUrl,
-    base_price: tour.basePrice,
-    duration: tour.duration,
-    city: tour.city
-  }));
-
   // Сортировка туров
-  const sortedTours = [...convertedTours].sort((a, b) => {
-    if (sortBy === 'price-asc') return a.base_price - b.base_price;
-    if (sortBy === 'price-desc') return b.base_price - a.base_price;
+  const sortedTours = [...tours].sort((a, b) => {
+    if (sortBy === 'price-asc') return a.basePrice - b.basePrice;
+    if (sortBy === 'price-desc') return b.basePrice - a.basePrice;
     if (sortBy === 'popular') return 0; // Реализовать когда появится данные о популярности
     return 0;
   });
@@ -171,7 +143,7 @@ const TourCatalogPage: React.FC = () => {
       
       <div className="catalog-container">
         <div className="filter-panel">
-          <TourFilter onFilterChange={handleFilterChange} initialFilters={filterForComponent} />
+          <TourFilter onFilterChange={handleFilterChange as any} initialFilters={filterForComponent as any} />
         </div>
         
         <div className="tour-results">
@@ -197,7 +169,7 @@ const TourCatalogPage: React.FC = () => {
             <Spinner />
           ) : (
             <>
-              <TourList tours={sortedTours} />
+              <TourList tours={sortedTours as any} />
               
               <div className="pagination-container">
                 <Pagination 

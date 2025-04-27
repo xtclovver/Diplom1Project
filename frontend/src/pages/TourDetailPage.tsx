@@ -10,12 +10,22 @@ import HotelRooms from '../components/tour/HotelRooms';
 import Spinner from '../components/ui/Spinner';
 import './TourDetailPage.css';
 
+interface Room {
+  id: number;
+  hotelId: number;
+  description: string;
+  beds: number;
+  price: number;
+  imageUrl: string;
+}
+
 const TourDetailPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
   const { tour, tourDates, loading, error } = useSelector((state: any) => state.tours);
   const [selectedDate, setSelectedDate] = useState<any>(null);
+  const [selectedRoom, setSelectedRoom] = useState<Room | null>(null);
   const isAuthenticated = useSelector((state: any) => state.auth.isAuthenticated);
 
   useEffect(() => {
@@ -27,6 +37,12 @@ const TourDetailPage: React.FC = () => {
 
   const handleDateSelect = (date: any) => {
     setSelectedDate(date);
+    // Сбрасываем выбранную комнату при изменении даты
+    setSelectedRoom(null);
+  };
+
+  const handleRoomSelect = (room: Room) => {
+    setSelectedRoom(room);
   };
 
   const handleBooking = () => {
@@ -40,8 +56,9 @@ const TourDetailPage: React.FC = () => {
         state: { 
           tourId: id, 
           tourDateId: selectedDate.id,
-          startDate: selectedDate.start_date,
-          endDate: selectedDate.end_date
+          roomId: selectedRoom?.id || null,
+          startDate: selectedDate.startDate,
+          endDate: selectedDate.endDate
         } 
       });
     }
@@ -99,6 +116,7 @@ const TourDetailPage: React.FC = () => {
               dates={tourDates} 
               onSelect={handleDateSelect} 
               selected={selectedDate}
+              basePrice={tour?.basePrice || 0}
             />
             
             <button 
@@ -115,7 +133,14 @@ const TourDetailPage: React.FC = () => {
       {selectedDate && (
         <div className="tour-hotel-rooms">
           <h2>Доступные номера в отеле</h2>
-          <HotelRooms tourId={id} tourDateId={selectedDate.id} />
+          <HotelRooms 
+            hotelId={tour?.hotel?.id} 
+            tourDateId={selectedDate.id}
+            startDate={selectedDate.startDate}
+            endDate={selectedDate.endDate}
+            onRoomSelect={handleRoomSelect}
+            selectedRoomId={selectedRoom?.id || null}
+          />
         </div>
       )}
     </div>

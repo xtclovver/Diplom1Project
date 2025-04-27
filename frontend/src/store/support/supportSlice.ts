@@ -243,4 +243,7 @@ const supportSlice = createSlice({
 
 export const { clearTicketData } = supportSlice.actions;
 
+// Экспортируем addTicketMessage как sendMessage для обратной совместимости
+export const sendMessage = addTicketMessage;
+
 export default supportSlice.reducer; 
