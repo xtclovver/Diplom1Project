@@ -59,11 +59,12 @@ type Tour struct {
 
 // TourDate представляет доступную дату тура
 type TourDate struct {
-	ID           int64     `db:"id" json:"id"`
-	TourID       int64     `db:"tour_id" json:"tour_id"`
-	StartDate    time.Time `db:"start_date" json:"start_date"`
-	EndDate      time.Time `db:"end_date" json:"end_date"`
-	Availability int       `db:"availability" json:"availability"`
+	ID            int64     `db:"id" json:"id"`
+	TourID        int64     `db:"tour_id" json:"tour_id"`
+	StartDate     time.Time `db:"start_date" json:"start_date"`
+	EndDate       time.Time `db:"end_date" json:"end_date"`
+	Availability  int       `db:"availability" json:"availability"`
+	PriceModifier float64   `db:"price_modifier" json:"price_modifier"`
 }
 
 // Role представляет роль пользователя
@@ -101,7 +102,7 @@ type Order struct {
 	UserID      int64     `db:"user_id" json:"user_id"`
 	TourID      int64     `db:"tour_id" json:"tour_id"`
 	TourDateID  int64     `db:"tour_date_id" json:"tour_date_id"`
-	RoomID      int64     `db:"room_id" json:"room_id"`
+	RoomID      *int64    `db:"room_id" json:"room_id"`
 	PeopleCount int       `db:"people_count" json:"people_count"`
 	TotalPrice  float64   `db:"total_price" json:"total_price"`
 	Status      string    `db:"status" json:"status"`

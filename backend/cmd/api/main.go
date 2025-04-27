@@ -38,7 +38,7 @@ func main() {
 	repos := repository.NewRepository(db)
 
 	// Инициализация сервисов
-	services := service.NewService(repos)
+	services := service.NewService(repos, tokenManager)
 
 	// Инициализация обработчиков
 	handlers := handler.NewHandler(services, tokenManager)

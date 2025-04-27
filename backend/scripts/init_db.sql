@@ -126,12 +126,91 @@ CREATE TABLE IF NOT EXISTS ticket_messages (
     FOREIGN KEY (user_id) REFERENCES users(id)
 );
 
--- Вставка начальных ролей
-INSERT INTO roles (name) VALUES 
-('admin'), 
-('user'), 
-('support');
+-- Добавление данных-заполнителей
 
--- Создание пользователя админа (пароль: admin)
-INSERT INTO users (username, password, email, full_name, role_id) VALUES 
-('admin', '$2a$10$EqKVSgwxmAJep8VQjPlN8.X0SEp4OVhtdNqNO1yGszAo5AwMJKE8u', 'admin@example.com', 'Administrator', 1); 
+-- Роли пользователей
+INSERT INTO roles (name) VALUES 
+    ('admin'),
+    ('user'),
+    ('support');
+
+-- Пользователи (пароль: hashed_password - в реальном приложении должен быть хэширован)
+INSERT INTO users (username, password, email, full_name, phone, role_id) VALUES 
+    ('admin', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'admin@example.com', 'Администратор', '+7 (999) 123-45-67', 1),
+    ('user1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'user1@example.com', 'Иван Иванов', '+7 (999) 765-43-21', 2),
+    ('support1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'support1@example.com', 'Сотрудник Поддержки', '+7 (999) 111-22-33', 3);
+
+-- Страны
+INSERT INTO countries (name, code) VALUES 
+    ('Россия', 'RU'),
+    ('Турция', 'TR'),
+    ('Египет', 'EG'),
+    ('Таиланд', 'TH'),
+    ('ОАЭ', 'AE');
+
+-- Города
+INSERT INTO cities (country_id, name) VALUES 
+    (1, 'Москва'),
+    (1, 'Санкт-Петербург'),
+    (1, 'Сочи'),
+    (2, 'Анталья'),
+    (2, 'Стамбул'),
+    (3, 'Хургада'),
+    (3, 'Шарм-эль-Шейх'),
+    (4, 'Пхукет'),
+    (4, 'Бангкок'),
+    (5, 'Дубай');
+
+-- Отели
+INSERT INTO hotels (city_id, name, description, address, category, image_url) VALUES 
+    (3, 'Сочи Марриотт Красная Поляна', 'Роскошный отель с видом на горы', 'Эсто-Садок, ул. Горная 5', 5, '/images/hotels/sochi_marriott.jpg'),
+    (3, 'Radisson Blu Resort & Congress', 'Курортный отель рядом с пляжем', 'Адлер, ул. Морская 10', 4, '/images/hotels/radisson_sochi.jpg'),
+    (4, 'Турция Делюкс', 'Все включено на побережье', 'Анталья, Пляжная улица 123', 5, '/images/hotels/turkey_deluxe.jpg'),
+    (6, 'Red Sea Resort', 'Идеальный вариант для семейного отдыха', 'Хургада, ул. Набережная 45', 4, '/images/hotels/red_sea_resort.jpg'),
+    (8, 'Phuket Paradise', 'Бунгало на берегу моря', 'Пхукет, Пляж Патонг 30', 5, '/images/hotels/phuket_paradise.jpg'),
+    (10, 'Dubai Luxury Hotel', 'Роскошный отель в центре', 'Дубай, Шейх Зайед Роуд 100', 5, '/images/hotels/dubai_luxury.jpg');
+
+-- Номера
+INSERT INTO rooms (hotel_id, description, beds, price, image_url) VALUES 
+    (1, 'Стандартный номер с видом на горы', 2, 8000.00, '/images/rooms/sochi_standard.jpg'),
+    (1, 'Люкс с балконом', 3, 15000.00, '/images/rooms/sochi_lux.jpg'),
+    (2, 'Двухместный номер с видом на море', 2, 7500.00, '/images/rooms/radisson_double.jpg'),
+    (3, 'Семейный номер', 4, 6000.00, '/images/rooms/turkey_family.jpg'),
+    (4, 'Стандартный номер с видом на море', 2, 5500.00, '/images/rooms/egypt_standard.jpg'),
+    (5, 'Бунгало на пляже', 2, 9000.00, '/images/rooms/phuket_bungalow.jpg'),
+    (6, 'Премиум с видом на город', 2, 12000.00, '/images/rooms/dubai_premium.jpg');
+
+-- Туры
+INSERT INTO tours (city_id, name, description, base_price, image_url, duration, is_active) VALUES 
+    (3, 'Горнолыжный отдых в Сочи', 'Зимний отдых на склонах Красной Поляны', 25000.00, '/images/tours/sochi_ski.jpg', 7, true),
+    (3, 'Летний отдых в Сочи', 'Пляжный отдых на Черном море', 20000.00, '/images/tours/sochi_beach.jpg', 10, true),
+    (4, 'Все включено в Турции', 'Отдых на курортах с системой все включено', 35000.00, '/images/tours/turkey_all_inclusive.jpg', 7, true),
+    (6, 'Древний Египет', 'Экскурсионный тур с посещением пирамид', 40000.00, '/images/tours/egypt_ancient.jpg', 8, true),
+    (8, 'Райский Таиланд', 'Отдых на лучших пляжах Пхукета', 45000.00, '/images/tours/thailand_paradise.jpg', 12, true),
+    (10, 'Роскошный Дубай', 'Шоппинг и достопримечательности Эмиратов', 50000.00, '/images/tours/dubai_luxury_tour.jpg', 5, true);
+
+-- Доступные даты туров
+INSERT INTO tour_dates (tour_id, start_date, end_date, availability, price_modifier) VALUES 
+    (1, '2023-12-15', '2023-12-22', 20, 1.0),
+    (1, '2023-12-25', '2024-01-01', 15, 1.5),
+    (2, '2023-06-01', '2023-06-11', 30, 1.0),
+    (2, '2023-07-01', '2023-07-11', 25, 1.2),
+    (3, '2023-05-10', '2023-05-17', 40, 1.0),
+    (3, '2023-08-15', '2023-08-22', 35, 1.1),
+    (4, '2023-09-05', '2023-09-13', 25, 1.0),
+    (5, '2023-11-01', '2023-11-13', 20, 1.0),
+    (6, '2023-10-05', '2023-10-10', 15, 1.0);
+
+-- Заказы
+INSERT INTO orders (user_id, tour_id, tour_date_id, room_id, people_count, total_price, status) VALUES 
+    (2, 1, 1, 1, 2, 58000.00, 'confirmed'),
+    (2, 3, 5, 4, 3, 53000.00, 'paid');
+
+-- Тикеты поддержки
+INSERT INTO support_tickets (user_id, subject, status) VALUES 
+    (2, 'Вопрос по бронированию', 'open');
+
+-- Сообщения в тикетах
+INSERT INTO ticket_messages (ticket_id, user_id, message) VALUES 
+    (1, 2, 'Здравствуйте! Я хотел бы уточнить детали моего бронирования.'),
+    (1, 3, 'Добрый день! Какие именно детали вас интересуют?'); 

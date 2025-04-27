@@ -1,6 +1,6 @@
 ---
 description: 
 globs: 
-alwaysApply: false
+alwaysApply: true
 ---
 Всегда смотри на файл [PLAN](mdc:PLAN)

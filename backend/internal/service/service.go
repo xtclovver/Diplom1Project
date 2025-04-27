@@ -5,6 +5,7 @@ import (
 
 	"github.com/usedcvnt/Diplom1Project/backend/internal/domain"
 	"github.com/usedcvnt/Diplom1Project/backend/internal/repository"
+	"github.com/usedcvnt/Diplom1Project/backend/pkg/auth"
 )
 
 // Service содержит все сервисы приложения
@@ -18,10 +19,10 @@ type Service struct {
 }
 
 // NewService создает новый экземпляр Service
-func NewService(repos *repository.Repository) *Service {
+func NewService(repos *repository.Repository, tokenManager auth.TokenManager) *Service {
 	return &Service{
 		User:          NewUserService(repos.User),
-		Auth:          NewAuthService(repos.User),
+		Auth:          NewAuthService(repos.User, tokenManager),
 		Tour:          NewTourService(repos.Tour),
 		Hotel:         NewHotelService(repos.Hotel, repos.Room),
 		Order:         NewOrderService(repos.Order, repos.Tour, repos.User),

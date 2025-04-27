@@ -1,19 +1,20 @@
 package handler
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
-	"github.com/gorilla/websocket"
+	gw "github.com/gorilla/websocket"
 	"github.com/usedcvnt/Diplom1Project/backend/internal/domain"
-	"github.com/usedcvnt/Diplom1Project/backend/pkg/websocket"
+	pkgwebsocket "github.com/usedcvnt/Diplom1Project/backend/pkg/websocket"
 )
 
 var (
 	// Конфигурация для апгрейда HTTP-соединения до WebSocket
-	upgrader = websocket.Upgrader{
+	upgrader = gw.Upgrader{
 		ReadBufferSize:  1024,
 		WriteBufferSize: 1024,
 		CheckOrigin: func(r *http.Request) bool {
@@ -22,12 +23,12 @@ var (
 	}
 
 	// Центральный хаб для управления всеми WebSocket-соединениями
-	wsHub *websocket.Hub
+	wsHub *pkgwebsocket.Hub
 )
 
 // InitWebSocketHub инициализирует WebSocket-хаб
 func InitWebSocketHub() {
-	wsHub = websocket.NewHub()
+	wsHub = pkgwebsocket.NewHub()
 	go wsHub.Run()
 }
 
@@ -67,10 +68,10 @@ func (h *Handler) wsTicketChat(c *gin.Context) {
 	}
 
 	// Создаем клиента
-	client := &websocket.Client{
+	client := &pkgwebsocket.Client{
 		Hub:      wsHub,
 		Conn:     conn,
-		Send:     make(chan websocket.Message, 256),
+		Send:     make(chan pkgwebsocket.Message, 256),
 		TicketID: ticketID,
 		UserID:   user.ID,
 	}
@@ -94,7 +95,7 @@ func (h *Handler) wsTicketChat(c *gin.Context) {
 				senderName = "Неизвестный пользователь"
 			}
 
-			client.Send <- websocket.Message{
+			client.Send <- pkgwebsocket.Message{
 				Type: "history",
 				Content: map[string]interface{}{
 					"id":        msg.ID,
@@ -109,7 +110,7 @@ func (h *Handler) wsTicketChat(c *gin.Context) {
 }
 
 // handleTicketMessage обрабатывает новое сообщение из WebSocket и сохраняет его в базе данных
-func (h *Handler) handleTicketMessage(message websocket.Message, ticketID, userID int64) {
+func (h *Handler) handleTicketMessage(message pkgwebsocket.Message, ticketID, userID int64) {
 	// Проверяем, что это сообщение чата
 	if message.Type != "chat" {
 		return
@@ -127,5 +128,10 @@ func (h *Handler) handleTicketMessage(message websocket.Message, ticketID, userI
 	}
 
 	// Сохраняем сообщение в базе данных
-	h.services.SupportTicket.AddMessage(h.ctx, ticketID, userID, messageText)
+	_, err := h.services.SupportTicket.AddMessage(context.Background(), ticketID, userID, messageText)
+	if err != nil {
+		// Обработка ошибки сохранения сообщения
+		fmt.Printf("Ошибка сохранения сообщения в БД: %v\n", err)
+		// Возможно, стоит отправить сообщение об ошибке обратно клиенту или залогировать
+	}
 }

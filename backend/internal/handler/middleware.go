@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/gin-gonic/gin"
+	"github.com/usedcvnt/Diplom1Project/backend/internal/domain"
 )
 
 const (
@@ -54,9 +55,16 @@ func (h *Handler) authMiddleware() gin.HandlerFunc {
 func (h *Handler) adminMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Получаем пользователя из контекста
-		user, exists := c.Get("user")
+		userAny, exists := c.Get("user")
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Требуется авторизация"})
+			return
+		}
+
+		// Приводим тип пользователя
+		user, ok := userAny.(*domain.User)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Ошибка получения данных пользователя"})
 			return
 		}
 
@@ -74,9 +82,16 @@ func (h *Handler) adminMiddleware() gin.HandlerFunc {
 func (h *Handler) supportMiddleware() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		// Получаем пользователя из контекста
-		user, exists := c.Get("user")
+		userAny, exists := c.Get("user")
 		if !exists {
 			c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{"error": "Требуется авторизация"})
+			return
+		}
+
+		// Приводим тип пользователя
+		user, ok := userAny.(*domain.User)
+		if !ok {
+			c.AbortWithStatusJSON(http.StatusInternalServerError, gin.H{"error": "Ошибка получения данных пользователя"})
 			return
 		}
 
