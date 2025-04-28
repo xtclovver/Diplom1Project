@@ -25,8 +25,8 @@ func NewUserRepository(db *sqlx.DB) UserRepository {
 // Create создает нового пользователя
 func (r *userRepository) Create(ctx context.Context, user *domain.User) (int64, error) {
 	query := `
-		INSERT INTO users (username, password, email, full_name, phone, role_id)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO users (username, password, email, first_name, last_name, full_name, phone, role_id)
+		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 
 	log.Printf("[UserRepository] Попытка создания пользователя: %s, email: %s", user.Username, user.Email)
@@ -37,6 +37,8 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) (int64, 
 		user.Username,
 		user.Password,
 		user.Email,
+		user.FirstName,
+		user.LastName,
 		user.FullName,
 		user.Phone,
 		user.RoleID,
@@ -70,7 +72,7 @@ func (r *userRepository) Create(ctx context.Context, user *domain.User) (int64, 
 // GetByID получает пользователя по ID
 func (r *userRepository) GetByID(ctx context.Context, id int64) (*domain.User, error) {
 	query := `
-		SELECT id, username, password, email, full_name, phone, role_id, created_at
+		SELECT id, username, password, email, first_name, last_name, full_name, phone, role_id, created_at
 		FROM users
 		WHERE id = ?
 	`
@@ -90,7 +92,7 @@ func (r *userRepository) GetByID(ctx context.Context, id int64) (*domain.User, e
 // GetByUsername получает пользователя по имени пользователя
 func (r *userRepository) GetByUsername(ctx context.Context, username string) (*domain.User, error) {
 	query := `
-		SELECT id, username, password, email, full_name, phone, role_id, created_at
+		SELECT id, username, password, email, first_name, last_name, full_name, phone, role_id, created_at
 		FROM users
 		WHERE username = ?
 	`
@@ -115,7 +117,7 @@ func (r *userRepository) GetByUsername(ctx context.Context, username string) (*d
 // GetByEmail получает пользователя по email
 func (r *userRepository) GetByEmail(ctx context.Context, email string) (*domain.User, error) {
 	query := `
-		SELECT id, username, password, email, full_name, phone, role_id, created_at
+		SELECT id, username, password, email, first_name, last_name, full_name, phone, role_id, created_at
 		FROM users
 		WHERE email = ?
 	`
@@ -147,13 +149,15 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 		// Если пароль предоставлен, обновляем его тоже
 		query = `
 			UPDATE users
-			SET username = ?, email = ?, password = ?, full_name = ?, phone = ?, role_id = ?
+			SET username = ?, email = ?, password = ?, first_name = ?, last_name = ?, full_name = ?, phone = ?, role_id = ?
 			WHERE id = ?
 		`
 		args = []interface{}{
 			user.Username,
 			user.Email,
 			user.Password,
+			user.FirstName,
+			user.LastName,
 			user.FullName,
 			user.Phone,
 			user.RoleID,
@@ -165,12 +169,14 @@ func (r *userRepository) Update(ctx context.Context, user *domain.User) error {
 		// Если пароль пустой, не обновляем его
 		query = `
 			UPDATE users
-			SET username = ?, email = ?, full_name = ?, phone = ?, role_id = ?
+			SET username = ?, email = ?, first_name = ?, last_name = ?, full_name = ?, phone = ?, role_id = ?
 			WHERE id = ?
 		`
 		args = []interface{}{
 			user.Username,
 			user.Email,
+			user.FirstName,
+			user.LastName,
 			user.FullName,
 			user.Phone,
 			user.RoleID,
@@ -206,16 +212,16 @@ func (r *userRepository) Delete(ctx context.Context, id int64) error {
 // List возвращает список пользователей с пагинацией
 func (r *userRepository) List(ctx context.Context, offset, limit int) ([]*domain.User, error) {
 	query := `
-		SELECT id, username, email, full_name, phone, role_id, created_at
+		SELECT id, username, email, first_name, last_name, full_name, phone, role_id, created_at
 		FROM users
-		ORDER BY id
+		ORDER BY created_at DESC
 		LIMIT ? OFFSET ?
 	`
 
-	users := make([]*domain.User, 0)
+	var users []*domain.User
 	err := r.db.SelectContext(ctx, &users, query, limit, offset)
 	if err != nil {
-		return nil, fmt.Errorf("failed to list users: %w", err)
+		return nil, fmt.Errorf("failed to get users list: %w", err)
 	}
 
 	return users, nil

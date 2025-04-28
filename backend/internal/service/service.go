@@ -41,7 +41,7 @@ type UserService interface {
 
 // AuthService интерфейс для аутентификации и авторизации
 type AuthService interface {
-	Register(ctx context.Context, username, email, password, fullName, phone string) (int64, error)
+	Register(ctx context.Context, username, email, password, firstName, lastName, fullName, phone string) (int64, error)
 	Login(ctx context.Context, usernameOrEmail, password string) (string, string, error) // Возвращает access и refresh токены
 	ValidateToken(ctx context.Context, token string) (*domain.User, error)
 	RefreshToken(ctx context.Context, refreshToken string) (string, string, error) // Возвращает новые access и refresh токены

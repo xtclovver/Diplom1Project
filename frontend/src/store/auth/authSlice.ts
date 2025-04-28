@@ -8,6 +8,8 @@ interface User {
   username: string;
   email: string;
   fullName: string;
+  firstName?: string;
+  lastName?: string;
   phone: string;
   role: {
     id: number;
@@ -313,11 +315,18 @@ export const updateUserProfile = createAsyncThunk<
   'auth/updateUserProfile',
   async (profileData, { rejectWithValue }) => {
     try {
-      // В реальном приложении здесь будет запрос к API
-      const response = await mockUpdateUserProfile(profileData);
-      return response;
+      // Используем реальный API вместо заглушки
+      console.log('[Auth] Отправка запроса на обновление профиля:', profileData);
+      const response = await authService.updateUserProfile(profileData);
+      console.log('[Auth] Ответ на обновление профиля:', response.data);
+      return response.data;
     } catch (error: any) {
-      return rejectWithValue(error.message || 'Не удалось обновить профиль пользователя');
+      console.error('[Auth] Ошибка обновления профиля:', error);
+      return rejectWithValue(
+        error.response?.data?.error || 
+        error.response?.data?.message || 
+        'Не удалось обновить профиль пользователя'
+      );
     }
   }
 );
@@ -420,6 +429,11 @@ const authSlice = createSlice({
           action.payload.role = { id: 0, name: 'user' }; // Устанавливаем роль по умолчанию
         }
         
+        // Формируем fullName из firstName и lastName, если оно не было получено с сервера
+        if (!action.payload.fullName && action.payload.firstName) {
+          action.payload.fullName = `${action.payload.firstName || ''} ${action.payload.lastName || ''}`.trim();
+        }
+        
         state.user = action.payload;
         // Устанавливаем isAuthenticated = true только после получения данных пользователя
         state.isAuthenticated = true;
@@ -443,7 +457,16 @@ const authSlice = createSlice({
       })
       .addCase(updateUserProfile.fulfilled, (state, action: PayloadAction<User>) => {
         state.loading = false;
-        state.user = action.payload;
+        
+        // Сохраняем обновленные данные пользователя
+        if (action.payload) {
+          // Формируем fullName из firstName и lastName, если оно не было получено с сервера
+          if (!action.payload.fullName && action.payload.firstName) {
+            action.payload.fullName = `${action.payload.firstName || ''} ${action.payload.lastName || ''}`.trim();
+          }
+          
+          state.user = action.payload;
+        }
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
         state.loading = false;

@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -445,9 +446,11 @@ func (h *Handler) getCurrentUser(c *gin.Context) {
 }
 
 type updateUserInput struct {
-	Email    string `json:"email" binding:"omitempty,email"`
-	FullName string `json:"full_name"`
-	Phone    string `json:"phone"`
+	Email     string `json:"email" binding:"omitempty,email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	FullName  string `json:"full_name"`
+	Phone     string `json:"phone"`
 }
 
 // @Summary Update current user profile
@@ -456,7 +459,7 @@ type updateUserInput struct {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body updateUserInput true "Updated user data (email, full_name, phone)"
+// @Param user body updateUserInput true "Updated user data (email, first_name, last_name, full_name, phone)"
 // @Success 200 {string} string "OK"
 // @Failure 400 {object} ErrorResponse "Invalid input body"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
@@ -480,13 +483,29 @@ func (h *Handler) updateCurrentUser(c *gin.Context) {
 		user.Email = input.Email
 		updated = true
 	}
-	// Allow updating full_name and phone even if empty string is provided?
-	// Current logic: update if input is different from current value.
-	if input.FullName != user.FullName { // Consider adding binding:"omitempty" if empty shouldn't overwrite
-		user.FullName = input.FullName
+
+	// Обрабатываем first_name, last_name и full_name
+	if input.FirstName != user.FirstName {
+		user.FirstName = input.FirstName
 		updated = true
 	}
-	if input.Phone != user.Phone { // Consider adding binding:"omitempty"
+
+	if input.LastName != user.LastName {
+		user.LastName = input.LastName
+		updated = true
+	}
+
+	// Если указано полное имя, используем его
+	if input.FullName != "" && input.FullName != user.FullName {
+		user.FullName = input.FullName
+		updated = true
+	} else if input.FirstName != "" || input.LastName != "" {
+		// Иначе формируем полное имя из first_name и last_name
+		user.FullName = strings.TrimSpace(input.FirstName + " " + input.LastName)
+		updated = true
+	}
+
+	if input.Phone != user.Phone {
 		user.Phone = input.Phone
 		updated = true
 	}
@@ -1061,11 +1080,13 @@ func (h *Handler) getUserByID(c *gin.Context) {
 }
 
 type adminUpdateUserInput struct {
-	Username string `json:"username" binding:"required"`
-	Email    string `json:"email" binding:"required,email"`
-	FullName string `json:"full_name"`
-	Phone    string `json:"phone"`
-	RoleID   int64  `json:"role_id" binding:"required"`
+	Username  string `json:"username" binding:"required"`
+	Email     string `json:"email" binding:"required,email"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	FullName  string `json:"full_name"`
+	Phone     string `json:"phone"`
+	RoleID    int64  `json:"role_id" binding:"required"`
 }
 
 // @Summary Update user by ID (Admin only)
@@ -1075,7 +1096,7 @@ type adminUpdateUserInput struct {
 // @Accept json
 // @Produce json
 // @Param id path int true "User ID"
-// @Param user body adminUpdateUserInput true "Updated user data"
+// @Param user body adminUpdateUserInput true "Updated user data (username, email, first_name, last_name, full_name, phone, role_id)"
 // @Success 200 {string} string "OK"
 // @Failure 400 {object} ErrorResponse "Invalid input body or ID"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
@@ -1109,7 +1130,19 @@ func (h *Handler) updateUser(c *gin.Context) {
 	// Update fields from input
 	userToUpdate.Username = input.Username
 	userToUpdate.Email = input.Email
-	userToUpdate.FullName = input.FullName
+
+	// Обновляем поля имени
+	userToUpdate.FirstName = input.FirstName
+	userToUpdate.LastName = input.LastName
+
+	// Если указано полное имя, используем его
+	if input.FullName != "" {
+		userToUpdate.FullName = input.FullName
+	} else {
+		// Иначе формируем полное имя из first_name и last_name
+		userToUpdate.FullName = strings.TrimSpace(input.FirstName + " " + input.LastName)
+	}
+
 	userToUpdate.Phone = input.Phone
 	userToUpdate.RoleID = input.RoleID
 

@@ -78,6 +78,8 @@ CREATE TABLE IF NOT EXISTS users (
     username VARCHAR(100) NOT NULL,
     password VARCHAR(255) NOT NULL, -- Хешированный пароль bcrypt
     email VARCHAR(255) NOT NULL,
+    first_name VARCHAR(100),
+    last_name VARCHAR(155),
     full_name VARCHAR(255),
     phone VARCHAR(20),
     role_id INT NOT NULL,
@@ -135,10 +137,10 @@ INSERT INTO roles (name) VALUES
     ('support');
 
 -- Пользователи (пароль: hashed_password - в реальном приложении должен быть хэширован)
-INSERT INTO users (username, password, email, full_name, phone, role_id) VALUES 
-    ('admin', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'admin@example.com', 'Администратор', '+7 (999) 123-45-67', 1),
-    ('user1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'user1@example.com', 'Иван Иванов', '+7 (999) 765-43-21', 2),
-    ('support1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'support1@example.com', 'Сотрудник Поддержки', '+7 (999) 111-22-33', 3);
+INSERT INTO users (username, password, email, first_name, last_name, full_name, phone, role_id) VALUES 
+    ('admin', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'admin@example.com', 'Администратор', '', 'Администратор', '+7 (999) 123-45-67', 1),
+    ('user1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'user1@example.com', 'Иван', 'Иванов', 'Иван Иванов', '+7 (999) 765-43-21', 2),
+    ('support1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'support1@example.com', 'Сотрудник', 'Поддержки', 'Сотрудник Поддержки', '+7 (999) 111-22-33', 3);
 
 -- Страны
 INSERT INTO countries (name, code) VALUES 

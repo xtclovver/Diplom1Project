@@ -79,6 +79,8 @@ type User struct {
 	Username  string    `db:"username" json:"username"`
 	Password  string    `db:"password" json:"-"`
 	Email     string    `db:"email" json:"email"`
+	FirstName string    `db:"first_name" json:"first_name"`
+	LastName  string    `db:"last_name" json:"last_name"`
 	FullName  string    `db:"full_name" json:"full_name"`
 	Phone     string    `db:"phone" json:"phone"`
 	RoleID    int64     `db:"role_id" json:"role_id"`

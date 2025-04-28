@@ -18,11 +18,13 @@ type loginInput struct {
 
 // registerInput данные для регистрации
 type registerInput struct {
-	Username string `json:"username" binding:"required,min=3,max=30"`
-	Email    string `json:"email" binding:"required,email"`
-	Password string `json:"password" binding:"required,min=6"`
-	FullName string `json:"fullName" binding:"required"`
-	Phone    string `json:"phone" binding:"required"`
+	Username  string `json:"username" binding:"required,min=3,max=30"`
+	Email     string `json:"email" binding:"required,email"`
+	Password  string `json:"password" binding:"required,min=6"`
+	FirstName string `json:"first_name"`
+	LastName  string `json:"last_name"`
+	FullName  string `json:"fullName"`
+	Phone     string `json:"phone" binding:"required"`
 }
 
 // refreshInput данные для обновления токена
@@ -54,6 +56,8 @@ func (h *Handler) register(c *gin.Context) {
 		input.Username,
 		input.Email,
 		input.Password,
+		input.FirstName,
+		input.LastName,
 		input.FullName,
 		input.Phone,
 	)

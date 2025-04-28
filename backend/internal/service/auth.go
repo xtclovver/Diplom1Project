@@ -26,7 +26,7 @@ func NewAuthService(repos repository.UserRepository, tokenManager auth.TokenMana
 }
 
 // Register регистрирует нового пользователя
-func (s *AuthServiceImpl) Register(ctx context.Context, username, email, password, fullName, phone string) (int64, error) {
+func (s *AuthServiceImpl) Register(ctx context.Context, username, email, password, firstName, lastName, fullName, phone string) (int64, error) {
 	log.Printf("[AuthService] Попытка регистрации пользователя: %s, email: %s", username, email)
 
 	// Проверяем, не существует ли уже пользователь с таким именем
@@ -52,13 +52,20 @@ func (s *AuthServiceImpl) Register(ctx context.Context, username, email, passwor
 
 	log.Printf("[AuthService] Создание пользователя с хешем пароля длиной: %d", len(hashedPassword))
 
+	// Если нет полного имени, но есть имя и фамилия, формируем полное имя
+	if fullName == "" && (firstName != "" || lastName != "") {
+		fullName = strings.TrimSpace(firstName + " " + lastName)
+	}
+
 	user := &domain.User{
-		Username: username,
-		Email:    email,
-		Password: hashedPassword,
-		FullName: fullName,
-		Phone:    phone,
-		RoleID:   2, // Предполагается, что ID роли обычного пользователя = 2
+		Username:  username,
+		Email:     email,
+		Password:  hashedPassword,
+		FirstName: firstName,
+		LastName:  lastName,
+		FullName:  fullName,
+		Phone:     phone,
+		RoleID:    2, // Предполагается, что ID роли обычного пользователя = 2
 	}
 
 	id, err := s.repos.Create(ctx, user)

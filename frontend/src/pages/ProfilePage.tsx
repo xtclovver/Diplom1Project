@@ -28,8 +28,7 @@ const ProfilePage: React.FC = () => {
   }, [authState]);
   
   const [formData, setFormData] = useState({
-    firstName: '',
-    lastName: '',
+    fullName: '',
     email: '',
     phone: '',
     birthDate: ''
@@ -55,19 +54,16 @@ const ProfilePage: React.FC = () => {
     console.log('[ProfilePage] Обновление данных пользователя в форме:', user);
     if (user) {
       try {
-        // Проверка структуры данных пользователя
-        console.log('[ProfilePage] Структура данных пользователя:', {
-          hasFirstName: 'firstName' in user,
-          hasLastName: 'lastName' in user,
-          hasEmail: 'email' in user,
-          hasPhone: 'phone' in user,
-          hasBirthDate: 'birthDate' in user
-        });
+        // Формируем полное имя
+        let fullName = user.fullName || '';
+        if (!fullName && user.firstName) {
+          // Если нет fullName, но есть firstName, создаем из firstName и lastName
+          fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        }
         
         // Создаем объект с безопасным доступом к полям
         setFormData({
-          firstName: user.firstName || '',
-          lastName: user.lastName || '',
+          fullName: fullName,
           email: user.email || '',
           phone: user.phone || '',
           birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : ''
@@ -98,12 +94,8 @@ const ProfilePage: React.FC = () => {
   const validateForm = (): boolean => {
     const errors: Record<string, string> = {};
     
-    if (!formData.firstName.trim()) {
-      errors.firstName = 'Введите имя';
-    }
-    
-    if (!formData.lastName.trim()) {
-      errors.lastName = 'Введите фамилию';
+    if (!formData.fullName.trim()) {
+      errors.fullName = 'Введите полное имя';
     }
     
     if (!formData.email.trim()) {
@@ -124,8 +116,19 @@ const ProfilePage: React.FC = () => {
     e.preventDefault();
     
     if (validateForm()) {
+      // Извлекаем имя и фамилию из полного имени (для API)
+      const nameParts = formData.fullName.trim().split(' ');
+      const firstName = nameParts[0] || '';
+      const lastName = nameParts.slice(1).join(' ') || '';
+      
       // Отправляем обновленные данные
-      dispatch(updateUserProfile(formData));
+      dispatch(updateUserProfile({
+        firstName,
+        lastName,
+        email: formData.email,
+        phone: formData.phone,
+        birthDate: formData.birthDate
+      }));
       setIsEditing(false);
     }
   };
@@ -138,8 +141,7 @@ const ProfilePage: React.FC = () => {
     // Сбрасываем форму к данным пользователя
     if (user) {
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
+        fullName: user.fullName || '',
         email: user.email || '',
         phone: user.phone || '',
         birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : ''
@@ -186,34 +188,18 @@ const ProfilePage: React.FC = () => {
           </div>
           
           <form className="profile-form" onSubmit={handleSubmit}>
-            <div className="form-row">
-              <div className="form-group">
-                <label htmlFor="firstName">Имя</label>
-                <input
-                  type="text"
-                  id="firstName"
-                  name="firstName"
-                  value={formData.firstName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className={formErrors.firstName ? 'error' : ''}
-                />
-                {formErrors.firstName && <div className="error-message">{formErrors.firstName}</div>}
-              </div>
-              
-              <div className="form-group">
-                <label htmlFor="lastName">Фамилия</label>
-                <input
-                  type="text"
-                  id="lastName"
-                  name="lastName"
-                  value={formData.lastName}
-                  onChange={handleChange}
-                  disabled={!isEditing}
-                  className={formErrors.lastName ? 'error' : ''}
-                />
-                {formErrors.lastName && <div className="error-message">{formErrors.lastName}</div>}
-              </div>
+            <div className="form-group">
+              <label htmlFor="fullName">Полное имя</label>
+              <input
+                type="text"
+                id="fullName"
+                name="fullName"
+                value={formData.fullName}
+                onChange={handleChange}
+                disabled={!isEditing}
+                className={formErrors.fullName ? 'error' : ''}
+              />
+              {formErrors.fullName && <div className="error-message">{formErrors.fullName}</div>}
             </div>
             
             <div className="form-group">

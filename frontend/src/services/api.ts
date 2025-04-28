@@ -192,6 +192,18 @@ export const authService = {
       console.error('[Auth API] Ошибка получения данных пользователя:', error);
       throw error;
     }
+  },
+  
+  // Обновление профиля пользователя
+  updateUserProfile: (profileData: { 
+    firstName: string;
+    lastName: string;
+    email: string;
+    phone: string;
+    birthDate: string; 
+  }) => {
+    console.log('[Auth API] Отправка запроса на обновление профиля:', profileData);
+    return api.put('/auth/profile', profileData);
   }
 };
 
