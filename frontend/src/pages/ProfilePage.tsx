@@ -56,17 +56,35 @@ const ProfilePage: React.FC = () => {
       try {
         // Формируем полное имя
         let fullName = user.fullName || '';
-        if (!fullName && user.firstName) {
-          // Если нет fullName, но есть firstName, создаем из firstName и lastName
-          fullName = `${user.firstName || ''} ${user.lastName || ''}`.trim();
+        
+        if (!fullName) {
+          if (user.first_name || user.firstName) {
+            // Получаем имя и фамилию из соответствующих полей (в зависимости от формата данных)
+            const firstName = user.first_name || user.firstName || '';
+            const lastName = user.last_name || user.lastName || '';
+            fullName = `${firstName} ${lastName}`.trim();
+            console.log('[ProfilePage] Сформировано полное имя из first_name и last_name:', fullName);
+          }
         }
+        
+        // Получаем email, phone и birthDate из соответствующих полей (в зависимости от формата данных)
+        const email = user.email || '';
+        const phone = user.phone || '';
+        const birthDate = user.birth_date || user.birthDate || '';
+        
+        console.log('[ProfilePage] Данные для формы:', {
+          fullName,
+          email,
+          phone,
+          birthDate
+        });
         
         // Создаем объект с безопасным доступом к полям
         setFormData({
           fullName: fullName,
-          email: user.email || '',
-          phone: user.phone || '',
-          birthDate: user.birthDate ? new Date(user.birthDate).toISOString().split('T')[0] : ''
+          email: email,
+          phone: phone,
+          birthDate: birthDate ? (birthDate.includes('T') ? birthDate.split('T')[0] : birthDate) : ''
         });
       } catch (err) {
         console.error('[ProfilePage] Ошибка при обработке данных пользователя:', err);
@@ -114,22 +132,41 @@ const ProfilePage: React.FC = () => {
   
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    console.log('[ProfilePage] Отправка формы');
     
     if (validateForm()) {
+      console.log('[ProfilePage] Форма прошла валидацию');
       // Извлекаем имя и фамилию из полного имени (для API)
       const nameParts = formData.fullName.trim().split(' ');
       const firstName = nameParts[0] || '';
       const lastName = nameParts.slice(1).join(' ') || '';
       
-      // Отправляем обновленные данные
-      dispatch(updateUserProfile({
+      const profileData = {
         firstName,
         lastName,
         email: formData.email,
         phone: formData.phone,
         birthDate: formData.birthDate
-      }));
-      setIsEditing(false);
+      };
+      
+      console.log('[ProfilePage] Данные для обновления профиля:', profileData);
+      
+      // Отправляем обновленные данные через редьюсер
+      dispatch(updateUserProfile(profileData))
+        .unwrap()
+        .then((result) => {
+          console.log('[ProfilePage] Профиль успешно обновлен:', result);
+          // Показываем уведомление об успешном обновлении
+          alert('Профиль успешно обновлен!');
+          setIsEditing(false);
+        })
+        .catch((error) => {
+          console.error('[ProfilePage] Ошибка обновления профиля:', error);
+          // Показываем уведомление об ошибке
+          alert(`Ошибка обновления профиля: ${error}`);
+        });
+    } else {
+      console.error('[ProfilePage] Форма не прошла валидацию');
     }
   };
   
@@ -166,7 +203,12 @@ const ProfilePage: React.FC = () => {
   
   return (
     <div className="profile-page">
-      <h1>Личный кабинет</h1>
+      <div className="profile-hero">
+        <div className="container">
+          <h1>Личный кабинет</h1>
+          <p className="profile-subtitle">Ваш профиль и история бронирований</p>
+        </div>
+      </div>
       
       <div className="profile-container">
         <div className="profile-sidebar">
@@ -188,6 +230,19 @@ const ProfilePage: React.FC = () => {
           </div>
           
           <form className="profile-form" onSubmit={handleSubmit}>
+            <div className="form-group">
+              <label htmlFor="username">Логин</label>
+              <input
+                type="text"
+                id="username"
+                name="username"
+                value={user?.username || ''}
+                disabled={true}
+                className="readonly-field"
+              />
+              <small className="field-hint">Логин не может быть изменен</small>
+            </div>
+            
             <div className="form-group">
               <label htmlFor="fullName">Полное имя</label>
               <input

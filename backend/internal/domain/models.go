@@ -83,6 +83,7 @@ type User struct {
 	LastName  string    `db:"last_name" json:"last_name"`
 	FullName  string    `db:"full_name" json:"full_name"`
 	Phone     string    `db:"phone" json:"phone"`
+	BirthDate string    `db:"birth_date" json:"birth_date"`
 	RoleID    int64     `db:"role_id" json:"role_id"`
 	CreatedAt time.Time `db:"created_at" json:"created_at"`
 }

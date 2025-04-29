@@ -15,12 +15,16 @@ import './SupportPage.css';
 const SupportPage: React.FC = () => {
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [showNewTicketForm, setShowNewTicketForm] = useState(false);
+  const [dataInitialized, setDataInitialized] = useState(false);
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
   
-  const { tickets, loading, error } = useSelector((state: any) => state.support);
-  const { isAuthenticated } = useSelector((state: any) => state.auth);
+  // Используем безопасное получение данных из store
+  const supportState = useSelector((state: any) => state?.support);
+  const loading = supportState?.loading || false;
+  const error = supportState?.error || null;
+  const { isAuthenticated } = useSelector((state: any) => state?.auth || { isAuthenticated: false });
   
   useEffect(() => {
     if (!isAuthenticated) {
@@ -28,7 +32,15 @@ const SupportPage: React.FC = () => {
       return;
     }
     
-    dispatch(fetchUserTickets() as any);
+    // Загружаем тикеты пользователя
+    dispatch(fetchUserTickets() as any)
+      .then(() => {
+        setDataInitialized(true);
+      })
+      .catch((err: any) => {
+        console.error('Ошибка при загрузке тикетов:', err);
+        setDataInitialized(true); // Помечаем как инициализированные даже в случае ошибки
+      });
   }, [dispatch, isAuthenticated, navigate]);
   
   const handleTicketSelect = (ticketId: number) => {
@@ -59,7 +71,8 @@ const SupportPage: React.FC = () => {
     setSelectedTicketId(null);
   };
 
-  if (loading && !tickets.length) {
+  // Показываем индикатор загрузки пока данные не загружены
+  if (loading || !dataInitialized) {
     return <div className="support-loading">Загрузка...</div>;
   }
 
@@ -82,7 +95,6 @@ const SupportPage: React.FC = () => {
           </div>
           
           <SupportTicketList 
-            tickets={tickets} 
             selectedTicketId={selectedTicketId}
             onTicketSelect={handleTicketSelect}
           />

@@ -1,6 +1,7 @@
-import { TypedUseSelectorHook, useDispatch, useSelector } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
 import type { RootState, AppDispatch } from './index';
 
-// Используйте эти типизированные хуки вместо обычных useDispatch и useSelector
-export const useAppDispatch = () => useDispatch<AppDispatch>();
-export const useAppSelector: TypedUseSelectorHook<RootState> = useSelector; 
+// Типизированные хуки для React Redux 9.x
+type DispatchFunc = () => AppDispatch;
+export const useAppDispatch: DispatchFunc = useDispatch;
+export const useAppSelector = <T>(selector: (state: RootState) => T) => useSelector(selector); 

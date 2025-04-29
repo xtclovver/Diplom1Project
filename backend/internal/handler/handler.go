@@ -451,6 +451,7 @@ type updateUserInput struct {
 	LastName  string `json:"last_name"`
 	FullName  string `json:"full_name"`
 	Phone     string `json:"phone"`
+	BirthDate string `json:"birth_date"`
 }
 
 // @Summary Update current user profile
@@ -459,7 +460,7 @@ type updateUserInput struct {
 // @Tags users
 // @Accept json
 // @Produce json
-// @Param user body updateUserInput true "Updated user data (email, first_name, last_name, full_name, phone)"
+// @Param user body updateUserInput true "Updated user data (email, first_name, last_name, full_name, phone, birth_date)"
 // @Success 200 {string} string "OK"
 // @Failure 400 {object} ErrorResponse "Invalid input body"
 // @Failure 401 {object} ErrorResponse "Unauthorized"
@@ -507,6 +508,11 @@ func (h *Handler) updateCurrentUser(c *gin.Context) {
 
 	if input.Phone != user.Phone {
 		user.Phone = input.Phone
+		updated = true
+	}
+
+	if input.BirthDate != user.BirthDate {
+		user.BirthDate = input.BirthDate
 		updated = true
 	}
 

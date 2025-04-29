@@ -136,11 +136,11 @@ INSERT INTO roles (name) VALUES
     ('user'),
     ('support');
 
--- Пользователи (пароль: hashed_password - в реальном приложении должен быть хэширован)
+-- Пользователи (пароль: password)
 INSERT INTO users (username, password, email, first_name, last_name, full_name, phone, role_id) VALUES 
-    ('admin', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'admin@example.com', 'Администратор', '', 'Администратор', '+7 (999) 123-45-67', 1),
-    ('user1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'user1@example.com', 'Иван', 'Иванов', 'Иван Иванов', '+7 (999) 765-43-21', 2),
-    ('support1', '$2a$10$5dUVELjS7RMNQdFGTJyI5e4tB63YlhGZCO7LezcLITJfTQU8HOs2W', 'support1@example.com', 'Сотрудник', 'Поддержки', 'Сотрудник Поддержки', '+7 (999) 111-22-33', 3);
+    ('admin', '$2a$10$VnSofjaTgaF8SwigfzYseuxTDmD0MCXOE3qn70NrNnlAt2Zgk3J8a', 'admin@example.com', 'Администратор', '', 'Администратор', '+7 (999) 123-45-67', 1),
+    ('user1', '$2a$10$VnSofjaTgaF8SwigfzYseuxTDmD0MCXOE3qn70NrNnlAt2Zgk3J8a', 'user1@example.com', 'Иван', 'Иванов', 'Иван Иванов', '+7 (999) 765-43-21', 2),
+    ('support1', '$2a$10$VnSofjaTgaF8SwigfzYseuxTDmD0MCXOE3qn70NrNnlAt2Zgk3J8a', 'support1@example.com', 'Сотрудник', 'Поддержки', 'Сотрудник Поддержки', '+7 (999) 111-22-33', 3);
 
 -- Страны
 INSERT INTO countries (name, code) VALUES 

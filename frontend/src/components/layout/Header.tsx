@@ -55,12 +55,21 @@ const Header: React.FC = () => {
   const getFullName = (): string => {
     if (!user) return '';
     
-    // Если есть fullName, используем его
+    // Приоритет 1: fullName
     if (user.fullName) {
       return user.fullName;
     }
     
-    // Если ничего нет, используем имя пользователя
+    // Приоритет 2: first_name + last_name
+    if (user.first_name || user.firstName) {
+      const firstName = user.first_name || user.firstName || '';
+      const lastName = user.last_name || user.lastName || '';
+      if (firstName || lastName) {
+        return `${firstName} ${lastName}`.trim();
+      }
+    }
+    
+    // Приоритет 3: username
     return user.username || '';
   };
 

@@ -333,10 +333,16 @@ export const updateUserProfile = createAsyncThunk<
       // Используем реальный API вместо заглушки
       console.log('[Auth] Отправка запроса на обновление профиля:', profileData);
       const response = await authService.updateUserProfile(profileData);
-      console.log('[Auth] Ответ на обновление профиля:', response.data);
-      return response.data;
+      console.log('[Auth] Ответ на обновление профиля:', response.status, response.data);
+      
+      // После успешного обновления получаем актуальные данные пользователя
+      const userResponse = await authService.getCurrentUser();
+      console.log('[Auth] Получены обновленные данные пользователя:', userResponse.data);
+      
+      return userResponse.data;
     } catch (error: any) {
       console.error('[Auth] Ошибка обновления профиля:', error);
+      console.error('[Auth] Детали ответа:', error.response?.status, error.response?.data);
       return rejectWithValue(
         error.response?.data?.error || 
         error.response?.data?.message || 
@@ -470,10 +476,12 @@ const authSlice = createSlice({
       
       // Обработка updateUserProfile
       .addCase(updateUserProfile.pending, (state) => {
+        console.log('[Auth Reducer] updateUserProfile.pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(updateUserProfile.fulfilled, (state, action: PayloadAction<User>) => {
+        console.log('[Auth Reducer] updateUserProfile.fulfilled, данные:', action.payload);
         state.loading = false;
         
         // Сохраняем обновленные данные пользователя
@@ -484,9 +492,11 @@ const authSlice = createSlice({
           }
           
           state.user = action.payload;
+          console.log('[Auth Reducer] Данные пользователя обновлены:', state.user);
         }
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
+        console.error('[Auth Reducer] updateUserProfile.rejected:', action.payload);
         state.loading = false;
         state.error = action.payload as string;
       });

@@ -215,7 +215,16 @@ export const authService = {
     birthDate: string; 
   }) => {
     console.log('[Auth API] Отправка запроса на обновление профиля:', profileData);
-    return api.put('/auth/profile', profileData);
+    // Преобразуем имена полей для соответствия API бэкенда
+    const backendData = {
+      first_name: profileData.firstName,
+      last_name: profileData.lastName, 
+      email: profileData.email,
+      phone: profileData.phone,
+      birth_date: profileData.birthDate
+    };
+    console.log('[Auth API] Преобразованные данные для бэкенда:', backendData);
+    return api.put('/users/me', backendData);
   }
 };
 

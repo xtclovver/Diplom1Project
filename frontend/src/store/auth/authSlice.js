@@ -1,5 +1,6 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import { authService } from '../../services/api';
+import userService from '../../services/userService';
 
 // Асинхронные действия
 export const login = createAsyncThunk(
@@ -70,7 +71,8 @@ export const getUserProfile = createAsyncThunk(
   async (_, { rejectWithValue }) => {
     try {
       console.log('[Auth JS] Начало запроса данных пользователя');
-      const response = await authService.getCurrentUser();
+      // Используем userService вместо authService
+      const response = await userService.getCurrentUser();
       console.log('[Auth JS] Получен ответ от сервера с данными пользователя');
       
       if (!response.data) {
@@ -92,25 +94,16 @@ export const updateUserProfile = createAsyncThunk(
   async (userData, { rejectWithValue }) => {
     try {
       console.log('[Auth JS] Обновление профиля пользователя:', userData);
-      // Проверяем, реализована ли функция updateUserProfile в authService
-      if (!authService.updateUserProfile) {
-        console.error('[Auth JS] Метод updateUserProfile не реализован в authService');
-        // Используем моковую функцию для совместимости
-        const mockUser = {
-          id: 1,
-          username: 'user',
-          email: userData.email || 'user@example.com',
-          fullName: `${userData.firstName || ''} ${userData.lastName || ''}`.trim(),
-          phone: userData.phone || '',
-          role: { id: 2, name: 'user' }
-        };
-        console.log('[Auth JS] Возвращаем моковые данные:', mockUser);
-        return mockUser;
-      }
       
-      const response = await authService.updateUserProfile(userData);
-      console.log('[Auth JS] Ответ на обновление профиля:', response.data);
-      return response.data;
+      // Используем userService вместо authService
+      const response = await userService.updateUserProfile(userData);
+      console.log('[Auth JS] Ответ на обновление профиля:', response.status, response.data);
+      
+      // После успешного обновления получаем актуальные данные
+      const userResponse = await userService.getCurrentUser();
+      console.log('[Auth JS] Получены обновленные данные пользователя:', userResponse.data);
+      
+      return userResponse.data;
     } catch (error) {
       console.error('[Auth JS] Ошибка при обновлении профиля:', error);
       return rejectWithValue(error.response?.data?.message || 'Не удалось обновить профиль');
@@ -269,14 +262,45 @@ const authSlice = createSlice({
       
       // Обработчики для updateUserProfile
       .addCase(updateUserProfile.pending, (state) => {
+        console.log('[Auth JS Reducer] updateUserProfile.pending');
         state.loading = true;
         state.error = null;
       })
       .addCase(updateUserProfile.fulfilled, (state, action) => {
+        console.log('[Auth JS Reducer] updateUserProfile.fulfilled, данные:', JSON.stringify(action.payload, null, 2));
         state.loading = false;
+        
+        // Проверка данных пользователя
+        if (!action.payload) {
+          console.error('[Auth JS Reducer] updateUserProfile.fulfilled получил пустые данные');
+          state.error = 'Получены пустые данные пользователя';
+          return;
+        }
+        
+        // Проверка наличия роли
+        if (!action.payload.role) {
+          console.error('[Auth JS Reducer] Отсутствует роль в обновленных данных пользователя');
+          action.payload.role = { id: 0, name: 'user' }; // Устанавливаем роль по умолчанию
+        }
+        
+        // Формируем fullName из first_name и last_name, если fullName не присутствует
+        if (!action.payload.fullName && (action.payload.first_name || action.payload.firstName)) {
+          const firstName = action.payload.first_name || action.payload.firstName || '';
+          const lastName = action.payload.last_name || action.payload.lastName || '';
+          action.payload.fullName = `${firstName} ${lastName}`.trim();
+          console.log('[Auth JS Reducer] Сформировано fullName:', action.payload.fullName);
+        }
+        
         state.user = action.payload;
+        console.log('[Auth JS Reducer] Состояние после updateUserProfile.fulfilled:', {
+          hasUser: !!state.user,
+          fullName: state.user.fullName,
+          firstName: state.user.first_name || state.user.firstName,
+          lastName: state.user.last_name || state.user.lastName
+        });
       })
       .addCase(updateUserProfile.rejected, (state, action) => {
+        console.error('[Auth JS Reducer] updateUserProfile.rejected:', action.payload);
         state.loading = false;
         state.error = action.payload;
       })

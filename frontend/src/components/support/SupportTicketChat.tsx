@@ -29,23 +29,44 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
   const messagesEndRef = useRef<HTMLDivElement>(null);
   
   const dispatch = useDispatch();
-  const { ticketMessages, tickets, loading } = useSelector((state: any) => state.support);
-  const { user } = useSelector((state: any) => state.auth);
   
-  const currentTicket = tickets.find((ticket: any) => ticket.id === ticketId);
+  // Безопасно получаем данные из Redux
+  const supportState = useSelector((state: any) => state?.support || {});
+  const { 
+    tickets = [], 
+    loading = false, 
+    error = null 
+  } = supportState;
+  
+  // Безопасно получаем информацию о тикет-сообщениях
+  const ticketMessages = supportState.ticketMessages || {};
   const messages = ticketMessages[ticketId] || [];
+  
+  // Безопасно получаем данные пользователя
+  const authState = useSelector((state: any) => state?.auth || {});
+  const user = authState.user || { id: null, username: 'Пользователь' };
+  
+  // Находим текущий тикет
+  const currentTicket = Array.isArray(tickets) 
+    ? tickets.find((ticket: any) => ticket?.id === ticketId) 
+    : null;
   
   useEffect(() => {
     if (ticketId) {
-      dispatch(fetchTicketMessages(ticketId) as any);
-      // Устанавливаем интервал для обновления сообщений
-      const interval = setInterval(() => {
-        if (ticketId) {
-          dispatch(fetchTicketMessages(ticketId) as any);
-        }
-      }, 10000); // Каждые 10 секунд
-      
-      return () => clearInterval(interval);
+      try {
+        dispatch(fetchTicketMessages(ticketId) as any);
+        
+        // Устанавливаем интервал для обновления сообщений
+        const interval = setInterval(() => {
+          if (ticketId) {
+            dispatch(fetchTicketMessages(ticketId) as any);
+          }
+        }, 10000); // Каждые 10 секунд
+        
+        return () => clearInterval(interval);
+      } catch (error) {
+        console.error('Ошибка при загрузке сообщений:', error);
+      }
     }
   }, [dispatch, ticketId]);
   
@@ -67,14 +88,19 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
   };
   
   const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return new Intl.DateTimeFormat('ru-RU', {
-      day: '2-digit',
-      month: '2-digit',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit'
-    }).format(date);
+    try {
+      const date = new Date(dateString);
+      return new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(date);
+    } catch (error) {
+      console.error('Ошибка при форматировании даты:', error);
+      return 'Некорректная дата';
+    }
   };
   
   const getStatusText = (status: string) => {
@@ -86,24 +112,32 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
       case 'closed':
         return 'Закрыт';
       default:
-        return status;
+        return status || 'Неизвестный статус';
     }
   };
   
-  if (!currentTicket) {
+  if (error) {
+    return <div className="chat-error">Ошибка загрузки: {error}</div>;
+  }
+  
+  if (loading && !currentTicket) {
     return <div className="chat-loading">Загрузка тикета...</div>;
+  }
+  
+  if (!currentTicket) {
+    return <div className="chat-loading">Тикет не найден. Пожалуйста, выберите другой тикет.</div>;
   }
 
   return (
     <div className="ticket-chat">
       <div className="ticket-chat-header">
-        <h3>{currentTicket.subject}</h3>
+        <h3>{currentTicket.subject || 'Без темы'}</h3>
         <div className="ticket-chat-info">
-          <span className={`ticket-status ticket-status-${currentTicket.status}`}>
+          <span className={`ticket-status ticket-status-${currentTicket.status || 'unknown'}`}>
             {getStatusText(currentTicket.status)}
           </span>
           <span className="ticket-date">
-            Создан: {formatDate(currentTicket.createdAt)}
+            Создан: {currentTicket.createdAt ? formatDate(currentTicket.createdAt) : 'Дата неизвестна'}
           </span>
         </div>
         
@@ -128,15 +162,15 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
           </div>
         )}
         
-        {messages.map((msg: Message) => (
+        {Array.isArray(messages) && messages.map((msg: Message) => (
           <div 
             key={msg.id} 
             className={`chat-message ${msg.userId === user.id ? 'user-message' : 'support-message'}`}
           >
             <div className="message-header">
               <span className="message-author">
-                {msg.user.username} 
-                {msg.user.role === 'support' && ' (Поддержка)'}
+                {msg.user?.username || 'Неизвестный пользователь'} 
+                {msg.user?.role === 'support' && ' (Поддержка)'}
               </span>
               <span className="message-time">{formatDate(msg.createdAt)}</span>
             </div>
