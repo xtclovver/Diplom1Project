@@ -187,8 +187,8 @@ export const supportService = {
   },
   
   // Добавление сообщения в тикет
-  addTicketMessage: (id, messageData) => {
-    return api.post(`/tickets/${id}/messages`, messageData);
+  addTicketMessage: (id, message) => {
+    return api.post(`/tickets/${id}/messages`, { message });
   },
   
   // Получение сообщений тикета

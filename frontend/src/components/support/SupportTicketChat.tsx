@@ -5,13 +5,10 @@ import './SupportTicketChat.css';
 
 interface Message {
   id: number;
+  ticketId: number;
   userId: number;
   message: string;
   createdAt: string;
-  user: {
-    username: string;
-    role: string;
-  };
 }
 
 interface SupportTicketChatProps {
@@ -26,7 +23,9 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
   onCloseTicket
 }) => {
   const [message, setMessage] = useState('');
+  const [localMessages, setLocalMessages] = useState<Message[]>([]);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const prevMessagesRef = useRef<{length: number, hash: string}>({length: 0, hash: ''});
   
   const dispatch = useDispatch();
   
@@ -40,38 +39,116 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
   
   // Безопасно получаем информацию о тикет-сообщениях
   const ticketMessages = supportState.ticketMessages || {};
-  const messages = ticketMessages[ticketId] || [];
+  const serverMessages = ticketMessages[ticketId] || [];
+  
+  // Объединяем серверные сообщения с локальными временными сообщениями
+  const messages = localMessages.length > 0 ? localMessages : serverMessages;
   
   // Безопасно получаем данные пользователя
   const authState = useSelector((state: any) => state?.auth || {});
-  const user = authState.user || { id: null, username: 'Пользователь' };
+  const currentUser = authState.user || { id: null, username: 'Пользователь' };
   
   // Находим текущий тикет
   const currentTicket = Array.isArray(tickets) 
     ? tickets.find((ticket: any) => ticket?.id === ticketId) 
     : null;
   
+  // Вспомогательная функция для получения имени пользователя по ID
+  const getUsernameById = (userId: number): string => {
+    // Если это текущий пользователь
+    if (userId === currentUser.id) {
+      return currentUser.username || 'Вы';
+    }
+    // Если это администратор или поддержка (примерно определяем по ID)
+    if (userId === 1) {
+      return 'Администратор';
+    }
+    return 'Служба поддержки';
+  };
+  
+  // Загрузка сообщений при монтировании или изменении ticketId
   useEffect(() => {
-    if (ticketId) {
+    // Флаг, указывающий, был ли компонент размонтирован
+    let isMounted = true;
+    
+    // Очищаем локальные сообщения при смене тикета
+    if (isMounted) {
+      setLocalMessages([]);
+    }
+    
+    // Загружаем сообщения для текущего тикета, но только если их еще нет
+    if (ticketId && (!ticketMessages[ticketId] || ticketMessages[ticketId].length === 0)) {
       try {
         dispatch(fetchTicketMessages(ticketId) as any);
-        
-        // Устанавливаем интервал для обновления сообщений
-        const interval = setInterval(() => {
-          if (ticketId) {
-            dispatch(fetchTicketMessages(ticketId) as any);
-          }
-        }, 10000); // Каждые 10 секунд
-        
-        return () => clearInterval(interval);
       } catch (error) {
         console.error('Ошибка при загрузке сообщений:', error);
       }
     }
-  }, [dispatch, ticketId]);
+    
+    // Очистка эффекта
+    return () => {
+      isMounted = false;
+    };
+  }, [dispatch, ticketId, ticketMessages]);
   
+  // Обновляем локальные сообщения при получении новых с сервера и только если есть изменения
   useEffect(() => {
-    scrollToBottom();
+    // Проверяем, что serverMessages не пусты и изменились
+    if (serverMessages.length > 0) {
+      // Проверяем, изменились ли сообщения по ID
+      const localIds = localMessages.map((m: Message) => m.id).sort().join(',');
+      const serverIds = serverMessages.map((m: Message) => m.id).sort().join(',');
+      
+      if (localIds !== serverIds) {
+        setLocalMessages(serverMessages);
+      }
+    }
+  }, [serverMessages, localMessages]);
+  
+  // Периодическое обновление сообщений
+  useEffect(() => {
+    // Если тикет не выбран, не устанавливаем интервал
+    if (!ticketId) return;
+    
+    // Проверяем, не показываем ли мы уже индикатор загрузки
+    if (loading) return;
+    
+    // Переменная для хранения ID интервала
+    let intervalId: NodeJS.Timeout;
+    
+    // Функция для обновления сообщений
+    const updateMessages = () => {
+      // Проверяем, не загружаются ли уже сообщения
+      if (!loading) {
+        dispatch(fetchTicketMessages(ticketId) as any);
+      }
+    };
+    
+    // Устанавливаем интервал
+    intervalId = setInterval(updateMessages, 30000); // Каждые 30 секунд
+    
+    // Очистка интервала при размонтировании или изменении ticketId
+    return () => {
+      if (intervalId) {
+        clearInterval(intervalId);
+      }
+    };
+  }, [dispatch, ticketId, loading]);
+  
+  // Скроллинг только при изменении количества сообщений
+  useEffect(() => {
+    // Скроллим вниз только если добавились новые сообщения
+    const currentLength = messages.length;
+    const currentHash = messages.map((m: Message) => m.id).join('-');
+    
+    // Если количество сообщений изменилось или добавилось новое сообщение, скроллим вниз
+    if (currentLength > prevMessagesRef.current.length || 
+        currentHash !== prevMessagesRef.current.hash) {
+      scrollToBottom();
+    }
+    
+    // Сохраняем текущее значение для следующего вызова
+    prevMessagesRef.current = {length: currentLength, hash: currentHash};
   }, [messages]);
   
   const scrollToBottom = () => {
@@ -83,13 +160,60 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
     
     if (!message.trim()) return;
     
-    onSendMessage(ticketId, message);
+    // Создаем временное сообщение для оптимистичного обновления
+    const tempMessage: Message = {
+      id: Date.now(), // Временный ID
+      ticketId: ticketId,
+      userId: currentUser.id || 0,
+      message: message.trim(),
+      createdAt: new Date().toISOString()
+    };
+    
+    // Оптимистично добавляем сообщение в локальный массив
+    setLocalMessages([...serverMessages, tempMessage]);
+    
+    // Очищаем поле ввода перед отправкой
     setMessage('');
+    
+    // Отправляем сообщение на сервер
+    onSendMessage(ticketId, message);
+    
+    // Скроллим вниз после добавления сообщения
+    setTimeout(scrollToBottom, 100);
   };
   
   const formatDate = (dateString: string) => {
     try {
+      // Проверяем, что dateString не пуст
+      if (!dateString) {
+        return 'Недавно';
+      }
+      
+      // Приведение даты к формату ISO если нет Z или смещения часового пояса
+      if (dateString.includes('T') && !dateString.includes('Z') && !dateString.includes('+')) {
+        // Если нет миллисекунд, добавляем
+        if (dateString.split('T')[1].split(':').length === 2) {
+          dateString += ':00';
+        }
+        
+        // Добавляем Z для UTC
+        dateString += 'Z';
+      }
+      
       const date = new Date(dateString);
+      
+      // Если дата невалидная - возвращаем текущее время
+      if (date.toString() === 'Invalid Date' || isNaN(date.getTime())) {
+        console.warn('Невалидная дата:', dateString);
+        return new Intl.DateTimeFormat('ru-RU', {
+          day: '2-digit',
+          month: '2-digit',
+          year: 'numeric',
+          hour: '2-digit',
+          minute: '2-digit'
+        }).format(new Date());
+      }
+      
       return new Intl.DateTimeFormat('ru-RU', {
         day: '2-digit',
         month: '2-digit',
@@ -98,8 +222,14 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
         minute: '2-digit'
       }).format(date);
     } catch (error) {
-      console.error('Ошибка при форматировании даты:', error);
-      return 'Некорректная дата';
+      console.error('Ошибка при форматировании даты:', error, dateString);
+      return new Intl.DateTimeFormat('ru-RU', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+      }).format(new Date());
     }
   };
   
@@ -116,16 +246,20 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
     }
   };
   
+  // Проверяем, что загрузка идет только в том случае, если тикет выбран и сообщения для него не загружены
+  const isLoadingCurrentTicket = loading && ticketId && (!ticketMessages[ticketId] || ticketMessages[ticketId].length === 0);
+  
   if (error) {
     return <div className="chat-error">Ошибка загрузки: {error}</div>;
   }
   
-  if (loading && !currentTicket) {
-    return <div className="chat-loading">Загрузка тикета...</div>;
-  }
-  
   if (!currentTicket) {
     return <div className="chat-loading">Тикет не найден. Пожалуйста, выберите другой тикет.</div>;
+  }
+  
+  // Отображаем индикатор загрузки только если загружается именно этот тикет
+  if (isLoadingCurrentTicket && !currentTicket) {
+    return <div className="chat-loading">Загрузка тикета...</div>;
   }
 
   return (
@@ -137,7 +271,13 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
             {getStatusText(currentTicket.status)}
           </span>
           <span className="ticket-date">
-            Создан: {currentTicket.createdAt ? formatDate(currentTicket.createdAt) : 'Дата неизвестна'}
+            Создан: {currentTicket.createdAt ? formatDate(currentTicket.createdAt) : new Intl.DateTimeFormat('ru-RU', {
+              day: '2-digit',
+              month: '2-digit',
+              year: 'numeric',
+              hour: '2-digit',
+              minute: '2-digit'
+            }).format(new Date())}
           </span>
         </div>
         
@@ -152,31 +292,37 @@ const SupportTicketChat: React.FC<SupportTicketChatProps> = ({
       </div>
       
       <div className="ticket-chat-messages">
-        {loading && !messages.length && (
+        {isLoadingCurrentTicket && !messages.length && (
           <div className="chat-loading">Загрузка сообщений...</div>
         )}
         
-        {messages.length === 0 && !loading && (
-          <div className="no-messages">
-            Нет сообщений в этом тикете. Начните диалог с нашей службой поддержки.
-          </div>
-        )}
-        
-        {Array.isArray(messages) && messages.map((msg: Message) => (
-          <div 
-            key={msg.id} 
-            className={`chat-message ${msg.userId === user.id ? 'user-message' : 'support-message'}`}
-          >
-            <div className="message-header">
-              <span className="message-author">
-                {msg.user?.username || 'Неизвестный пользователь'} 
-                {msg.user?.role === 'support' && ' (Поддержка)'}
-              </span>
-              <span className="message-time">{formatDate(msg.createdAt)}</span>
+        {Array.isArray(messages) && messages.length > 0 ? (
+          messages.map((msg: Message) => {
+            // Проверяем, что у сообщения есть необходимые поля
+            if (!msg || !msg.id) return null;
+            
+            return (
+              <div 
+                key={msg.id} 
+                className={`chat-message ${msg.userId === currentUser.id ? 'user-message' : 'support-message'}`}
+              >
+                <div className="message-header">
+                  <span className="message-author">
+                    {getUsernameById(msg.userId)}
+                  </span>
+                  <span className="message-time">{formatDate(msg.createdAt)}</span>
+                </div>
+                <div className="message-content">{msg.message}</div>
+              </div>
+            );
+          })
+        ) : (
+          !loading && (
+            <div className="no-messages">
+              Нет сообщений в этом тикете. Начните диалог с нашей службой поддержки.
             </div>
-            <div className="message-content">{msg.message}</div>
-          </div>
-        ))}
+          )
+        )}
         
         <div ref={messagesEndRef} />
       </div>

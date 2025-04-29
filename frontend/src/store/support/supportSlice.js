@@ -18,7 +18,7 @@ export const createTicket = createAsyncThunk(
   'support/createTicket',
   async ({ subject, message }, { rejectWithValue }) => {
     try {
-      const response = await supportService.createTicket(subject, message);
+      const response = await supportService.createTicket({ subject, message });
       return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось создать тикет');
@@ -42,7 +42,7 @@ export const sendMessage = createAsyncThunk(
   'support/sendMessage',
   async ({ ticketId, message }, { rejectWithValue }) => {
     try {
-      const response = await supportService.sendMessage(ticketId, message);
+      const response = await supportService.addTicketMessage(ticketId, message);
       return { ticketId, message: response.data };
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось отправить сообщение');
@@ -89,7 +89,7 @@ const supportSlice = createSlice({
       })
       .addCase(fetchUserTickets.fulfilled, (state, action) => {
         state.loading = false;
-        state.tickets = action.payload;
+        state.tickets = action.payload || [];
       })
       .addCase(fetchUserTickets.rejected, (state, action) => {
         state.loading = false;
@@ -103,6 +103,9 @@ const supportSlice = createSlice({
       })
       .addCase(createTicket.fulfilled, (state, action) => {
         state.loading = false;
+        if (!state.tickets) {
+          state.tickets = [];
+        }
         state.tickets.unshift(action.payload);
         state.currentTicket = action.payload.id;
       })
@@ -118,6 +121,10 @@ const supportSlice = createSlice({
       })
       .addCase(closeTicket.fulfilled, (state, action) => {
         state.loading = false;
+        if (!state.tickets) {
+          state.tickets = [];
+          return;
+        }
         const index = state.tickets.findIndex(ticket => ticket.id === action.payload.ticketId);
         if (index !== -1) {
           state.tickets[index].status = 'closed';
@@ -141,7 +148,19 @@ const supportSlice = createSlice({
           state.ticketMessages[action.payload.ticketId] = [];
         }
         
-        state.ticketMessages[action.payload.ticketId].push(action.payload.message);
+        if (action.payload.message && typeof action.payload.message === 'object') {
+          state.ticketMessages[action.payload.ticketId].push(action.payload.message);
+        } else {
+          const currentUser = state.auth?.user || {};
+          const newMessage = {
+            id: Date.now(),
+            ticketId: action.payload.ticketId,
+            userId: currentUser.id || 0,
+            message: action.meta.arg.message,
+            createdAt: new Date().toISOString()
+          };
+          state.ticketMessages[action.payload.ticketId].push(newMessage);
+        }
       })
       .addCase(sendMessage.rejected, (state, action) => {
         state.loading = false;

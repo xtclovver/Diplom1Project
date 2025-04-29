@@ -81,11 +81,9 @@ const TourCatalogPage: React.FC = () => {
   const [sortBy, setSortBy] = useState('popular');
 
   useEffect(() => {
-    if (toursState) {
-      // Вызываем fetchTours только если store уже инициализирован
-      dispatch(fetchTours({ filters, page: pagination.page, size: pagination.size }));
-    }
-  }, [dispatch, filters, pagination.page, pagination.size, toursState]);
+    // Удаляем проверку на toursState и саму переменную из зависимостей
+    dispatch(fetchTours({ filters, page: pagination.page, size: pagination.size }));
+  }, [dispatch, filters, pagination.page, pagination.size]);
 
   const handleFilterChange = (newFilters: FilterComponentFilters) => {
     // Преобразуем фильтры из компонента в формат для Redux store

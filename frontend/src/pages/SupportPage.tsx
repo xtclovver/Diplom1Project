@@ -25,11 +25,17 @@ const SupportPage: React.FC = () => {
   const supportState = useSelector((state: any) => state?.support);
   const loading = supportState?.loading || false;
   const error = supportState?.error || null;
-  const { isAuthenticated } = useSelector((state: any) => state?.auth || { isAuthenticated: false });
+  const { isAuthenticated, user } = useSelector((state: any) => state?.auth || { isAuthenticated: false, user: null });
   
   useEffect(() => {
     if (!isAuthenticated) {
       navigate('/login');
+      return;
+    }
+    
+    // Если пользователь - администратор, перенаправляем на админ-страницу
+    if (user && (user.roleId === 1 || user.role === 'admin')) {
+      navigate('/admin/support');
       return;
     }
     
@@ -42,7 +48,7 @@ const SupportPage: React.FC = () => {
         console.error('Ошибка при загрузке тикетов:', err);
         setDataInitialized(true); // Помечаем как инициализированные даже в случае ошибки
       });
-  }, [dispatch, isAuthenticated, navigate]);
+  }, [dispatch, isAuthenticated, navigate, user]);
   
   const handleTicketSelect = (ticketId: number) => {
     setSelectedTicketId(ticketId);
