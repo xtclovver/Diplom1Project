@@ -95,8 +95,8 @@ const SupportPage: React.FC = () => {
     <div className="support-page">
       <div className="support-hero">
         <div className="container">
-          <h1>Техническая поддержка</h1>
-          <p className="support-subtitle">Ваши запросы в службу поддержки</p>
+          <h1>Личный кабинет</h1>
+          <p className="support-subtitle">Ваш профиль и история бронирований</p>
         </div>
       </div>
       
@@ -104,28 +104,33 @@ const SupportPage: React.FC = () => {
         <div className="support-sidebar">
           <div className="support-menu">
             <button 
-              className={`menu-item ${activeTab === 'tickets' ? 'active' : ''}`}
-              onClick={() => handleTabChange('tickets')}
-            >
-              Мои тикеты
-            </button>
-            <button 
-              className={`menu-item ${activeTab === 'new' ? 'active' : ''}`}
-              onClick={() => handleTabChange('new')}
-            >
-              Создать тикет
-            </button>
-            <button 
               className="menu-item"
               onClick={() => navigate('/profile')}
             >
-              Личный кабинет
+              Профиль
             </button>
             <button 
               className="menu-item"
               onClick={() => navigate('/orders')}
             >
               История заказов
+            </button>
+            <button 
+              className="menu-item active"
+            >
+              Техподдержка
+            </button>
+            <button 
+              className={`submenu-item ${activeTab === 'tickets' ? 'active' : ''}`}
+              onClick={() => handleTabChange('tickets')}
+            >
+              Мои тикеты
+            </button>
+            <button 
+              className={`submenu-item ${activeTab === 'new' ? 'active' : ''}`}
+              onClick={() => handleTabChange('new')}
+            >
+              Создать тикет
             </button>
           </div>
         </div>

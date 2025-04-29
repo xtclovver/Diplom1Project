@@ -26,12 +26,11 @@ interface Order {
   children: number;
 }
 
-// Выводим информацию о состоянии для отладки
-const debugState = (state: any) => {
-  console.log('Redux state:', state);
-  console.log('Keys in state:', Object.keys(state));
+// Отладочная функция для логирования состояния
+function debugState(state: any) {
+  console.log('[OrdersPage] Current state:', state);
   return state;
-};
+}
 
 const OrdersPage: React.FC = () => {
   const dispatch = useAppDispatch();
@@ -107,10 +106,15 @@ const OrdersPage: React.FC = () => {
   
   return (
     <div className="orders-page">
-      <h1>История заказов</h1>
+      <div className="profile-hero">
+        <div className="container">
+          <h1>Личный кабинет</h1>
+          <p className="profile-subtitle">Ваш профиль и история бронирований</p>
+        </div>
+      </div>
       
-      <div className="orders-container">
-        <div className="orders-sidebar">
+      <div className="profile-container">
+        <div className="profile-sidebar">
           <div className="profile-menu">
             <button className="menu-item" onClick={() => navigate('/profile')}>Профиль</button>
             <button className="menu-item active">История заказов</button>
@@ -120,7 +124,11 @@ const OrdersPage: React.FC = () => {
           <OrderFilter activeFilter={filter} onFilterChange={handleFilterChange} />
         </div>
         
-        <div className="orders-content">
+        <div className="profile-content">
+          <div className="profile-header">
+            <h2>История заказов</h2>
+          </div>
+          
           {filteredOrders.length === 0 ? (
             <div className="no-orders">
               <h3>У вас пока нет заказов</h3>
