@@ -4,27 +4,18 @@ import { useSelector } from 'react-redux';
 
 // Импорт компонентов страниц
 import HomePage from '../pages/HomePage';
-import TourListPage from '../pages/TourListPage';
+import TourCatalogPage from '../pages/TourCatalogPage';
+import ToursPage from '../pages/ToursPage';
 import TourDetailPage from '../pages/TourDetailPage';
-import HotelListPage from '../pages/HotelListPage';
-import HotelDetailPage from '../pages/HotelDetailPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import ProfilePage from '../pages/ProfilePage';
-import OrderListPage from '../pages/OrderListPage';
-import OrderDetailPage from '../pages/OrderDetailPage';
+import OrdersPage from '../pages/OrdersPage';
 import BookingPage from '../pages/BookingPage';
 import SupportPage from '../pages/SupportPage';
-import SupportTicketPage from '../pages/SupportTicketPage';
-import AdminDashboardPage from '../pages/AdminDashboardPage';
-import AdminUserPage from '../pages/AdminUserPage';
-import AdminTourPage from '../pages/AdminTourPage';
-import AdminHotelPage from '../pages/AdminHotelPage';
-import AdminOrderPage from '../pages/AdminOrderPage';
-import AdminSupportPage from '../pages/AdminSupportPage';
+import AdminPage from '../pages/AdminPage';
 import AboutPage from '../pages/AboutPage';
 import ContactsPage from '../pages/ContactsPage';
-import NotFoundPage from '../pages/NotFoundPage';
 
 // Компонент для защищенных маршрутов
 const ProtectedRoute = ({ children, redirectPath = '/login', requiredRole = null }) => {
@@ -50,10 +41,9 @@ const AppRoutes = () => {
     <Routes>
       {/* Публичные маршруты */}
       <Route path="/" element={<HomePage />} />
-      <Route path="/tours" element={<TourListPage />} />
+      <Route path="/tours" element={<ToursPage />} />
+      <Route path="/tours/catalog" element={<TourCatalogPage />} />
       <Route path="/tours/:id" element={<TourDetailPage />} />
-      <Route path="/hotels" element={<HotelListPage />} />
-      <Route path="/hotels/:id" element={<HotelDetailPage />} />
       <Route path="/login" element={<LoginPage />} />
       <Route path="/register" element={<RegisterPage />} />
       <Route path="/about" element={<AboutPage />} />
@@ -68,13 +58,7 @@ const AppRoutes = () => {
       
       <Route path="/orders" element={
         <ProtectedRoute>
-          <OrderListPage />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/orders/:id" element={
-        <ProtectedRoute>
-          <OrderDetailPage />
+          <OrdersPage />
         </ProtectedRoute>
       } />
       
@@ -90,58 +74,15 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
-      <Route path="/support/tickets/:id" element={
-        <ProtectedRoute>
-          <SupportTicketPage />
-        </ProtectedRoute>
-      } />
-      
       {/* Маршруты для администраторов */}
       <Route path="/admin" element={
         <ProtectedRoute requiredRole={ADMIN_ROLE_ID}>
-          <AdminDashboardPage />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/admin/users" element={
-        <ProtectedRoute requiredRole={ADMIN_ROLE_ID}>
-          <AdminUserPage />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/admin/tours" element={
-        <ProtectedRoute requiredRole={ADMIN_ROLE_ID}>
-          <AdminTourPage />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/admin/hotels" element={
-        <ProtectedRoute requiredRole={ADMIN_ROLE_ID}>
-          <AdminHotelPage />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/admin/orders" element={
-        <ProtectedRoute requiredRole={ADMIN_ROLE_ID}>
-          <AdminOrderPage />
-        </ProtectedRoute>
-      } />
-      
-      <Route path="/admin/support" element={
-        <ProtectedRoute requiredRole={ADMIN_ROLE_ID}>
-          <AdminSupportPage />
-        </ProtectedRoute>
-      } />
-      
-      {/* Маршруты для сотрудников тех-поддержки */}
-      <Route path="/support/tickets" element={
-        <ProtectedRoute requiredRole={SUPPORT_ROLE_ID}>
-          <AdminSupportPage />
+          <AdminPage />
         </ProtectedRoute>
       } />
       
       {/* Маршрут 404 */}
-      <Route path="*" element={<NotFoundPage />} />
+      <Route path="*" element={<HomePage />} />
     </Routes>
   );
 };

@@ -184,6 +184,21 @@ export const login = createAsyncThunk<
           data: error.response.data,
           headers: error.response.headers
         });
+        
+        // Обработка разных статус-кодов с более информативными сообщениями
+        if (error.response.status === 401) {
+          const errorMessage = error.response.data?.error || 'Неверное имя пользователя или пароль';
+          if (errorMessage.includes('invalid credentials')) {
+            return rejectWithValue('Неверное имя пользователя или пароль');
+          }
+          return rejectWithValue(errorMessage);
+        } else if (error.response.status === 400) {
+          return rejectWithValue('Некорректные данные: ' + (error.response.data?.error || 'проверьте введенные данные'));
+        } else if (error.response.status === 429) {
+          return rejectWithValue('Слишком много попыток входа. Пожалуйста, подождите некоторое время');
+        } else if (error.response.status >= 500) {
+          return rejectWithValue('Ошибка сервера. Пожалуйста, попробуйте позже');
+        }
       }
       
       return rejectWithValue(
@@ -366,6 +381,9 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload as string;
         state.isAuthenticated = false;
+        
+        // Убеждаемся, что state обновлен до того, как произойдет перерисовка компонента
+        state.user = null;
       })
       
       // Обработка register

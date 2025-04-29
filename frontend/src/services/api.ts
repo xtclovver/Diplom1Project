@@ -81,11 +81,11 @@ api.interceptors.response.use(
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('token');
         
-        // Перенаправляем на страницу входа если мы не на странице логина
-        if (window.location.pathname !== '/login') {
-          console.log('[Auth] Перенаправление на страницу логина');
-          window.location.href = '/login';
-        }
+        // Убираем автоматическое перенаправление, т.к. это вызывает перезагрузку страницы
+        // if (window.location.pathname !== '/login') {
+        //   console.log('[Auth] Перенаправление на страницу логина');
+        //   window.location.href = '/login';
+        // }
       }
     }
     
@@ -148,7 +148,19 @@ export const hotelService = {
 // Сервис для работы с аутентификацией
 export const authService = {
   login: (credentials: { usernameOrEmail: string; password: string }) => {
-    return api.post('/auth/login', credentials);
+    return api.post('/auth/login', credentials)
+      .catch(error => {
+        console.error('[Auth API] Ошибка при попытке входа:', error.response?.status, error.response?.data);
+        if (error.response?.status === 401) {
+          // Проверяем сообщение об ошибке
+          const errorMsg = error.response.data?.error || '';
+          if (errorMsg.includes('invalid credentials')) {
+            console.error('[Auth API] Неверные учетные данные');
+            error.response.data.error = 'Неверное имя пользователя или пароль';
+          }
+        }
+        throw error;
+      });
   },
 
   register: (userData: { email: string; password: string; name: string }) => {

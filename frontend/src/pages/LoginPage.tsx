@@ -64,6 +64,11 @@ const LoginPage: React.FC = () => {
         console.error('[LoginPage] Ошибка авторизации:', result.payload);
         // В случае ошибки показываем сообщение
         setError(String(result.payload));
+        
+        // Предотвращаем потенциальные перенаправления или перезагрузки
+        setTimeout(() => {
+          if (loading) setLoading(false);
+        }, 100);
       }
     } catch (err: any) {
       console.error('[LoginPage] Исключение при авторизации:', err);

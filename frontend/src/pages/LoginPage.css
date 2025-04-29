@@ -30,6 +30,15 @@
   color: #c62828;
   border-radius: 4px;
   font-size: 0.9rem;
+  border-left: 4px solid #e53935;
+  display: flex;
+  align-items: center;
+}
+
+.error-message::before {
+  content: "⚠️";
+  margin-right: 8px;
+  font-size: 1.1rem;
 }
 
 .login-form .form-group {

@@ -10,6 +10,8 @@ import ProfilePage from './pages/ProfilePage';
 import OrdersPage from './pages/OrdersPage';
 import SupportPage from './pages/SupportPage';
 import AdminPage from './pages/AdminPage';
+import AboutPage from './pages/AboutPage';
+import ContactsPage from './pages/ContactsPage';
 import './App.css';
 
 const App: React.FC = () => {
@@ -26,6 +28,8 @@ const App: React.FC = () => {
           <Route path="orders" element={<OrdersPage />} />
           <Route path="support" element={<SupportPage />} />
           <Route path="admin/*" element={<AdminPage />} />
+          <Route path="about" element={<AboutPage />} />
+          <Route path="contacts" element={<ContactsPage />} />
         </Route>
       </Routes>
     </BrowserRouter>
