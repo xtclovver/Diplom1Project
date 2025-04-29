@@ -16,6 +16,7 @@ const SupportPage: React.FC = () => {
   const [selectedTicketId, setSelectedTicketId] = useState<number | null>(null);
   const [showNewTicketForm, setShowNewTicketForm] = useState(false);
   const [dataInitialized, setDataInitialized] = useState(false);
+  const [activeTab, setActiveTab] = useState<string>('tickets');
   
   const dispatch = useDispatch();
   const navigate = useNavigate();
@@ -71,6 +72,16 @@ const SupportPage: React.FC = () => {
     setSelectedTicketId(null);
   };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'tickets') {
+      setShowNewTicketForm(false);
+    } else if (tab === 'new') {
+      setShowNewTicketForm(true);
+      setSelectedTicketId(null);
+    }
+  };
+
   // Показываем индикатор загрузки пока данные не загружены
   if (loading || !dataInitialized) {
     return <div className="support-loading">Загрузка...</div>;
@@ -82,41 +93,91 @@ const SupportPage: React.FC = () => {
 
   return (
     <div className="support-page">
+      <div className="support-hero">
+        <div className="container">
+          <h1>Техническая поддержка</h1>
+          <p className="support-subtitle">Ваши запросы в службу поддержки</p>
+        </div>
+      </div>
+      
       <div className="support-container">
         <div className="support-sidebar">
-          <div className="support-header">
-            <h2>Техническая поддержка</h2>
+          <div className="support-menu">
             <button 
-              className="new-ticket-button" 
-              onClick={handleNewTicketClick}
+              className={`menu-item ${activeTab === 'tickets' ? 'active' : ''}`}
+              onClick={() => handleTabChange('tickets')}
             >
-              Новый тикет
+              Мои тикеты
+            </button>
+            <button 
+              className={`menu-item ${activeTab === 'new' ? 'active' : ''}`}
+              onClick={() => handleTabChange('new')}
+            >
+              Создать тикет
+            </button>
+            <button 
+              className="menu-item"
+              onClick={() => navigate('/profile')}
+            >
+              Личный кабинет
+            </button>
+            <button 
+              className="menu-item"
+              onClick={() => navigate('/orders')}
+            >
+              История заказов
             </button>
           </div>
-          
-          <SupportTicketList 
-            selectedTicketId={selectedTicketId}
-            onTicketSelect={handleTicketSelect}
-          />
         </div>
         
         <div className="support-content">
-          {showNewTicketForm ? (
-            <SupportTicketForm onSubmit={handleCreateTicket} />
-          ) : selectedTicketId ? (
-            <SupportTicketChat 
-              ticketId={selectedTicketId} 
-              onSendMessage={handleSendMessage}
-              onCloseTicket={handleCloseTicket}
-            />
-          ) : (
-            <div className="support-empty-state">
-              <h3>Выберите тикет или создайте новый</h3>
-              <p>
-                Здесь вы можете связаться с нашей службой поддержки по любым вопросам, 
-                связанным с бронированием туров или использованием сайта.
-              </p>
-            </div>
+          {activeTab === 'tickets' && (
+            <>
+              <div className="support-header">
+                <h2>Мои обращения</h2>
+                <button 
+                  className="new-ticket-button" 
+                  onClick={() => handleTabChange('new')}
+                >
+                  Новый тикет
+                </button>
+              </div>
+              
+              <div className="support-tickets-container">
+                <div className="tickets-list-container">
+                  <SupportTicketList 
+                    selectedTicketId={selectedTicketId}
+                    onTicketSelect={handleTicketSelect}
+                  />
+                </div>
+                
+                <div className="ticket-details-container">
+                  {selectedTicketId ? (
+                    <SupportTicketChat 
+                      ticketId={selectedTicketId} 
+                      onSendMessage={handleSendMessage}
+                      onCloseTicket={handleCloseTicket}
+                    />
+                  ) : (
+                    <div className="support-empty-state">
+                      <h3>Выберите тикет из списка</h3>
+                      <p>
+                        Здесь вы можете просмотреть историю общения по выбранному обращению
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </>
+          )}
+          
+          {activeTab === 'new' && (
+            <>
+              <div className="support-header">
+                <h2>Новое обращение</h2>
+              </div>
+              <SupportTicketForm onSubmit={handleCreateTicket} />
+            </>
           )}
         </div>
       </div>

@@ -2,47 +2,54 @@
   display: flex;
   flex-direction: column;
   height: 100%;
-  min-height: 600px;
+  min-height: 500px;
 }
 
 .ticket-chat-header {
-  padding: 1.5rem;
+  padding: 0 0 15px 0;
   border-bottom: 1px solid #e1e5e9;
+  margin-bottom: 20px;
 }
 
 .ticket-chat-header h3 {
-  margin-bottom: 0.75rem;
+  margin-bottom: 15px;
   font-size: 1.3rem;
-  color: #333;
+  color: var(--primary-color, #2c3e50);
+  font-weight: 600;
 }
 
 .ticket-chat-info {
   display: flex;
-  gap: 1rem;
-  margin-bottom: 1rem;
+  gap: 15px;
+  margin-bottom: 15px;
   font-size: 0.9rem;
 }
 
 .close-ticket-button {
-  padding: 0.5rem 1rem;
+  padding: 10px 20px;
   background-color: #f44336;
   color: white;
   border: none;
-  border-radius: 4px;
-  font-size: 0.9rem;
+  border-radius: 30px;
+  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 .close-ticket-button:hover {
   background-color: #d32f2f;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(244, 67, 54, 0.3);
 }
 
 .ticket-chat-messages {
   flex: 1;
-  padding: 1.5rem;
+  padding: 20px;
   overflow-y: auto;
-  background-color: #f5f8fa;
+  background-color: #f8f9fa;
+  border-radius: var(--border-radius, 8px);
+  margin-bottom: 20px;
 }
 
 .chat-loading, .no-messages {
@@ -52,13 +59,21 @@
   height: 200px;
   color: #666;
   font-size: 0.9rem;
+  font-style: italic;
 }
 
 .chat-message {
-  margin-bottom: 1.5rem;
+  margin-bottom: 20px;
   max-width: 80%;
-  border-radius: 8px;
+  border-radius: 12px;
   overflow: hidden;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+  transition: transform 0.3s ease;
+}
+
+.chat-message:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
 }
 
 .user-message {
@@ -75,13 +90,14 @@
 .message-header {
   display: flex;
   justify-content: space-between;
-  padding: 0.5rem 1rem;
+  padding: 10px 15px;
   background-color: rgba(0, 0, 0, 0.05);
   font-size: 0.8rem;
 }
 
 .message-author {
   font-weight: 500;
+  color: var(--primary-color, #2c3e50);
 }
 
 .message-time {
@@ -89,61 +105,71 @@
 }
 
 .message-content {
-  padding: 1rem;
-  line-height: 1.4;
+  padding: 15px;
+  line-height: 1.5;
 }
 
 .ticket-chat-form {
   display: flex;
-  padding: 1rem;
+  padding: 20px;
   border-top: 1px solid #e1e5e9;
   background-color: #fff;
+  border-radius: var(--border-radius, 8px);
 }
 
 .chat-input {
   flex: 1;
-  padding: 0.75rem;
-  border: 1px solid #ddd;
-  border-radius: 4px;
+  padding: 12px 15px;
+  border: 1px solid rgba(0, 0, 0, 0.1);
+  border-radius: var(--border-radius, 4px);
   resize: none;
-  height: 80px;
+  height: 100px;
   font-family: inherit;
-  font-size: 0.95rem;
+  font-size: 14px;
+  background-color: #fff;
+  transition: all 0.3s ease;
 }
 
 .chat-input:focus {
-  border-color: #1976d2;
+  border-color: var(--accent-color, #2196f3);
+  box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.2);
   outline: none;
 }
 
 .send-message-button {
-  margin-left: 1rem;
-  padding: 0 1.5rem;
+  margin-left: 15px;
+  padding: 0 20px;
   align-self: flex-end;
   height: 40px;
-  background-color: #1976d2;
+  background-color: var(--accent-color, #2196f3);
   color: white;
   border: none;
-  border-radius: 4px;
+  border-radius: 30px;
   font-weight: 500;
+  font-size: 14px;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
 }
 
 .send-message-button:hover {
-  background-color: #1565c0;
+  background-color: #1976d2;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(33, 150, 243, 0.3);
 }
 
 .send-message-button:disabled {
   background-color: #90caf9;
   cursor: not-allowed;
+  transform: none;
+  box-shadow: none;
 }
 
 .ticket-closed-message {
-  padding: 1rem;
+  padding: 15px;
   text-align: center;
   color: #d32f2f;
   font-weight: 500;
   background-color: #ffebee;
-  border-top: 1px solid #e1e5e9;
+  border-radius: var(--border-radius, 8px);
+  margin-top: 20px;
 } 

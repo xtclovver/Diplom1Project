@@ -1,6 +1,7 @@
 .support-ticket-list {
   overflow-y: auto;
-  max-height: calc(100vh - 200px);
+  max-height: calc(100vh - 300px);
+  padding-right: 5px;
 }
 
 .no-tickets-message {
@@ -8,6 +9,11 @@
   color: #666;
   font-size: 0.9rem;
   text-align: center;
+  font-style: italic;
+  line-height: 1.5;
+  background-color: rgba(240, 240, 240, 0.5);
+  border-radius: var(--border-radius, 8px);
+  padding: 20px;
 }
 
 .ticket-list {
@@ -17,39 +23,44 @@
 }
 
 .ticket-item {
-  padding: 1rem 1.5rem;
+  padding: 15px;
   border-bottom: 1px solid #e1e5e9;
   cursor: pointer;
-  transition: background-color 0.2s;
+  transition: all 0.3s ease;
+  border-radius: var(--border-radius, 8px);
+  margin-bottom: 10px;
 }
 
 .ticket-item:hover {
-  background-color: #f1f5f9;
+  background-color: #f8f9fa;
+  transform: translateY(-3px);
+  box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
 }
 
 .ticket-item.selected {
   background-color: #e3f2fd;
-  border-left: 3px solid #1976d2;
+  border-left: 3px solid var(--accent-color, #2196f3);
 }
 
 .ticket-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 0.5rem;
+  margin-bottom: 10px;
 }
 
 .ticket-subject {
   font-weight: 500;
-  color: #333;
+  color: var(--primary-color, #333);
   font-size: 0.95rem;
 }
 
 .ticket-status {
   font-size: 0.75rem;
   font-weight: 500;
-  padding: 0.25rem 0.5rem;
-  border-radius: 12px;
+  padding: 4px 10px;
+  border-radius: 15px;
+  display: inline-block;
 }
 
 .ticket-status-open {
@@ -70,4 +81,6 @@
 .ticket-date {
   font-size: 0.8rem;
   color: #666;
+  display: block;
+  margin-top: 5px;
 } 
