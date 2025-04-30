@@ -1,7 +1,7 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { tourService } from '../../services/api';
 
-// Типы данных
+// Интерфейс для ПОЛНОЙ информации о туре (используется для state.tour)
 interface Tour {
   id: number;
   name: string;
@@ -17,6 +17,21 @@ interface Tour {
       code: string;
     }
   };
+  duration: number;
+  isActive: boolean;
+  // Могут быть добавлены другие поля для детального просмотра
+}
+
+// Интерфейс для СОКРАЩЕННОЙ информации о туре (используется для state.tours - списка)
+interface TourSummary {
+  id: number;
+  name: string;
+  description: string; // Краткое описание?
+  basePrice: number;
+  imageUrl: string;
+  cityId: number; // Используем ID города для списка
+  cityName?: string; // Опционально, если API возвращает
+  countryName?: string; // Опционально, если API возвращает
   duration: number;
   isActive: boolean;
 }
@@ -48,8 +63,8 @@ interface PaginationParams {
 }
 
 interface ToursState {
-  tours: Tour[];
-  tour: Tour | null;
+  tours: TourSummary[]; // Используем TourSummary для списка
+  tour: Tour | null; // Используем Tour для детальной информации
   tourDates: TourDate[];
   filters: TourFilters;
   pagination: {
@@ -59,6 +74,21 @@ interface ToursState {
   };
   loading: boolean;
   error: string | null;
+}
+
+// Тип данных, как они приходят от API
+interface RawTourData {
+  id: number;
+  name: string;
+  description: string;
+  base_price: number; // snake_case
+  image_url: string; // snake_case
+  city_id: number; // snake_case
+  duration: number;
+  is_active: boolean;
+  created_at: string; // snake_case
+  // Могут быть и другие поля от API
+  [key: string]: any;
 }
 
 // Начальное состояние
@@ -78,15 +108,30 @@ const initialState: ToursState = {
 
 // Асинхронные action creators
 export const fetchTours = createAsyncThunk<
-  { tours: Tour[]; total: number },
+  { tours: TourSummary[]; total: number }, // Возвращаем TourSummary
   { filters: TourFilters; page: number; size: number }
 >(
   'tours/fetchTours',
   async ({ filters, page, size }, { rejectWithValue }) => {
     try {
       const response = await tourService.getTours(filters, page, size);
+      // Указываем тип RawTourData для tour
+      const toursData = response.data.tours as RawTourData[];
+      
       return {
-        tours: response.data.tours,
+        tours: toursData.map((tour: RawTourData): TourSummary => ({
+          // Преобразуем поля к camelCase, соответствующему интерфейсу TourSummary
+          id: tour.id,
+          name: tour.name,
+          description: tour.description,
+          basePrice: tour.base_price,
+          imageUrl: tour.image_url,
+          cityId: tour.city_id, // Добавляем cityId
+          // cityName: tour.city_name, // Если API возвращает имя города
+          // countryName: tour.country_name, // Если API возвращает имя страны
+          duration: tour.duration,
+          isActive: tour.is_active,
+        })),
         total: response.data.total
       };
     } catch (error: any) {
@@ -163,8 +208,9 @@ const toursSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchTours.fulfilled, (state, action: PayloadAction<{ tours: Tour[]; total: number }>) => {
+      .addCase(fetchTours.fulfilled, (state, action: PayloadAction<{ tours: TourSummary[]; total: number }>) => {
         state.loading = false;
+        // Здесь приходят данные типа TourSummary[]
         state.tours = action.payload.tours;
         state.pagination.total = action.payload.total;
       })

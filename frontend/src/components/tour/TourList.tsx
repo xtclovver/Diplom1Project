@@ -49,7 +49,10 @@ const TourList: React.FC<TourListProps> = ({ tours, loading }) => {
       {tours.map((tour) => (
         <div key={tour.id} className="tour-card">
           <div className="tour-image">
-            <img src={tour.imageUrl || '/images/tour-placeholder.jpg'} alt={tour.name} />
+            <img 
+              src={tour.imageUrl || '/images/tour-placeholder.jpg'} 
+              alt={tour.name} 
+            />
           </div>
           <div className="tour-content">
             <h3 className="tour-title">{tour.name}</h3>

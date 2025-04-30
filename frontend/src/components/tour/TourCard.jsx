@@ -11,7 +11,7 @@ const TourCard = ({ tour }) => {
   return (
     <div className="tour-card">
       <div className="tour-img">
-        <img src={tour.image} alt={tour.name} />
+        <img src={tour.imageUrl} alt={tour.name} />
         {tour.badge && (
           <span className="tour-badge">{tour.badge}</span>
         )}
