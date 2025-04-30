@@ -16,13 +16,24 @@ const initialState = {
 };
 
 // Асинхронные action creators
+/**
+ * Создает новый заказ
+ * @param {Object} orderData - Данные заказа
+ * @param {number} orderData.tour_id - ID тура
+ * @param {number} orderData.tour_date_id - ID даты тура
+ * @param {number|null} [orderData.room_id] - ID номера (опционально)
+ * @param {number} orderData.people_count - Количество человек
+ */
 export const createOrder = createAsyncThunk(
   'order/createOrder',
   async (orderData, { rejectWithValue }) => {
     try {
+      console.log('[OrderSlice] Отправка данных заказа:', orderData);
       const response = await orderService.createOrder(orderData);
+      console.log('[OrderSlice] Успешный ответ от сервера:', response.data);
       return response.data;
     } catch (error) {
+      console.error('[OrderSlice] Ошибка при создании заказа:', error.response?.data);
       return rejectWithValue(error.response?.data?.error || 'Ошибка при создании заказа');
     }
   }
@@ -71,6 +82,7 @@ const orderSlice = createSlice({
   reducers: {
     resetCreateOrderSuccess: (state) => {
       state.createOrderSuccess = false;
+      state.error = null;
     },
     setPage: (state, action) => {
       state.pagination.page = action.payload;
@@ -95,7 +107,10 @@ const orderSlice = createSlice({
         state.loading = false;
         state.order = action.payload;
         state.createOrderSuccess = true;
-        state.orders.unshift(action.payload); // Добавляем новый заказ в начало списка
+        // Добавляем новый заказ в начало списка, если он уже был загружен
+        if (state.orders.length > 0) {
+          state.orders.unshift(action.payload);
+        }
       })
       .addCase(createOrder.rejected, (state, action) => {
         state.loading = false;

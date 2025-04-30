@@ -1,21 +1,21 @@
 .tour-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 25px;
 }
 
 .tour-card {
   display: flex;
-  background-color: white;
-  border-radius: 8px;
+  background-color: var(--bg-white, white);
+  border-radius: 12px;
   overflow: hidden;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
   transition: transform 0.3s, box-shadow 0.3s;
 }
 
 .tour-card:hover {
   transform: translateY(-5px);
-  box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 12px 20px rgba(0, 0, 0, 0.1);
 }
 
 .tour-image {
@@ -23,6 +23,7 @@
   min-width: 300px;
   height: 220px;
   overflow: hidden;
+  position: relative;
 }
 
 .tour-image img {
@@ -38,35 +39,36 @@
 
 .tour-content {
   flex: 1;
-  padding: 20px;
+  padding: 25px;
   display: flex;
   flex-direction: column;
 }
 
 .tour-title {
-  margin: 0 0 8px;
-  font-size: 20px;
-  color: #2c3e50;
+  margin: 0 0 12px;
+  font-size: 22px;
+  color: var(--text-primary, #2c3e50);
+  font-weight: 600;
 }
 
 .tour-location, .tour-duration {
   display: flex;
   align-items: center;
-  color: #666;
-  font-size: 14px;
-  margin-bottom: 8px;
+  color: var(--text-secondary, #666);
+  font-size: 15px;
+  margin-bottom: 10px;
 }
 
 .tour-location i, .tour-duration i {
-  margin-right: 5px;
-  color: #2196f3;
+  margin-right: 8px;
+  color: var(--primary-color, #2196f3);
 }
 
 .tour-description {
-  margin: 10px 0;
-  color: #555;
-  font-size: 14px;
-  line-height: 1.5;
+  margin: 15px 0;
+  color: var(--text-secondary, #555);
+  font-size: 15px;
+  line-height: 1.6;
   flex-grow: 1;
 }
 
@@ -75,52 +77,79 @@
   justify-content: space-between;
   align-items: center;
   margin-top: auto;
+  border-top: 1px solid var(--border-light, #eef1f6);
+  padding-top: 15px;
 }
 
 .tour-price {
-  font-size: 14px;
-  color: #666;
+  font-size: 15px;
+  color: var(--text-secondary, #666);
 }
 
 .tour-price span {
-  font-size: 20px;
+  font-size: 22px;
   font-weight: bold;
-  color: #2c3e50;
+  color: var(--text-primary, #2c3e50);
+  margin: 0 4px;
 }
 
 .tour-button {
   display: inline-block;
-  padding: 8px 16px;
-  background-color: #2196f3;
+  padding: 10px 20px;
+  background-color: var(--primary-color, #2196f3);
   color: white;
-  border-radius: 4px;
+  border-radius: 8px;
   text-decoration: none;
   font-weight: 500;
-  transition: background-color 0.2s;
+  transition: background-color 0.2s, transform 0.2s;
 }
 
 .tour-button:hover {
-  background-color: #1976d2;
+  background-color: var(--primary-dark, #1976d2);
+  transform: translateY(-2px);
 }
 
 .empty-tours {
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  padding: 40px 20px;
+  background-color: var(--bg-white, white);
+  border-radius: 12px;
+  padding: 50px 20px;
   text-align: center;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
 }
 
 .empty-tours h3 {
-  margin: 0 0 10px;
-  color: #2c3e50;
+  margin: 0 0 15px;
+  color: var(--text-primary, #2c3e50);
+  font-size: 20px;
 }
 
 .empty-tours p {
-  color: #666;
+  color: var(--text-secondary, #666);
   margin: 0;
+  font-size: 16px;
 }
 
+.loading-tours {
+  padding: 50px 20px;
+  text-align: center;
+}
+
+.spinner {
+  display: inline-block;
+  width: 40px;
+  height: 40px;
+  border: 4px solid rgba(33, 150, 243, 0.2);
+  border-radius: 50%;
+  border-top-color: var(--primary-color, #2196f3);
+  animation: spin 1s ease-in-out infinite;
+  margin-bottom: 15px;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+/* Адаптивность */
 @media (max-width: 768px) {
   .tour-card {
     flex-direction: column;
@@ -128,7 +157,44 @@
   
   .tour-image {
     width: 100%;
-    min-width: auto;
     height: 200px;
+  }
+  
+  .tour-content {
+    padding: 20px;
+  }
+  
+  .tour-title {
+    font-size: 20px;
+  }
+  
+  .tour-footer {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 15px;
+  }
+  
+  .tour-button {
+    text-align: center;
+  }
+}
+
+@media (max-width: 480px) {
+  .tour-image {
+    height: 180px;
+  }
+  
+  .tour-content {
+    padding: 15px;
+  }
+  
+  .tour-title {
+    font-size: 18px;
+    margin-bottom: 8px;
+  }
+  
+  .tour-description {
+    font-size: 14px;
+    margin: 10px 0;
   }
 } 

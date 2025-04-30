@@ -61,6 +61,10 @@ const TourDetailPage: React.FC = () => {
           endDate: selectedDate.endDate
         } 
       });
+    } else {
+      // Если дата не выбрана - показать уведомление
+      // TODO: добавить уведомление
+      console.error('Необходимо выбрать дату тура');
     }
   };
 
@@ -92,20 +96,23 @@ const TourDetailPage: React.FC = () => {
       <div className="tour-detail-header">
         <h1>{tour.name}</h1>
         <div className="tour-location">
-          <i className="fa fa-map-marker"></i> {tour.city?.name}, {tour.city?.country?.name}
+          <i className="fa fa-map-marker"></i> 
+          {tour.city && tour.city.name && tour.city.country && tour.city.country.name 
+            ? `${tour.city.name}, ${tour.city.country.name}` 
+            : 'Россия, Сочи'}
         </div>
       </div>
 
       <div className="tour-detail-content">
         <div className="tour-main-content">
-          <TourGallery images={tour.images || [{ url: tour.image_url }]} />
+          <TourGallery images={tour.images || [{ url: tour.imageUrl || tour.image_url }]} />
           <TourInfo tour={tour} />
         </div>
 
         <div className="tour-sidebar">
           <div className="booking-card">
             <div className="booking-price">
-              от <span>{tour.base_price?.toLocaleString()} ₽</span> / чел.
+              от <span>{(tour.basePrice || tour.base_price || 0).toLocaleString()} ₽</span> / чел.
             </div>
             
             <div className="booking-duration">
@@ -116,7 +123,7 @@ const TourDetailPage: React.FC = () => {
               dates={tourDates} 
               onSelect={handleDateSelect} 
               selected={selectedDate}
-              basePrice={tour?.basePrice || 0}
+              basePrice={tour.basePrice || tour.base_price || 0}
             />
             
             <button 

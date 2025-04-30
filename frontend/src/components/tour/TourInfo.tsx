@@ -15,10 +15,11 @@ interface Tour {
   id: number;
   name: string;
   description: string;
-  basePrice: number;
+  basePrice?: number;
+  base_price?: number;
   imageUrl: string;
   duration: number;
-  city: {
+  city?: {
     id: number;
     name: string;
     country: {
@@ -62,6 +63,9 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
     );
   }
   
+  // Получаем цену, учитывая возможные разные названия свойств
+  const price = tour.basePrice || tour.base_price || 0;
+  
   return (
     <div className="tour-info">
       <div className="tour-info-tabs">
@@ -99,7 +103,11 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
             <div className="tour-details">
               <div className="detail-item">
                 <span className="detail-label">Направление:</span>
-                <span className="detail-value">{tour.city.name}, {tour.city.country.name}</span>
+                <span className="detail-value">
+                  {tour.city && tour.city.name && tour.city.country && tour.city.country.name 
+                    ? `${tour.city.name}, ${tour.city.country.name}` 
+                    : 'Россия, Сочи'}
+                </span>
               </div>
               <div className="detail-item">
                 <span className="detail-label">Продолжительность:</span>
@@ -107,7 +115,7 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
               </div>
               <div className="detail-item">
                 <span className="detail-label">Базовая стоимость:</span>
-                <span className="detail-value">{tour.basePrice.toLocaleString()} ₽</span>
+                <span className="detail-value">{price.toLocaleString()} ₽</span>
               </div>
             </div>
           </div>

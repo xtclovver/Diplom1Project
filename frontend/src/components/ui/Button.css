@@ -1,0 +1,81 @@
+.button {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease-in-out;
+  padding: 0 16px;
+  border: none;
+  font-family: inherit;
+}
+
+.button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Варианты */
+.button--primary {
+  background-color: #5271ff;
+  color: white;
+  box-shadow: 0 2px 4px rgba(82, 113, 255, 0.2);
+}
+
+.button--primary:hover:not(:disabled) {
+  background-color: #4060ee;
+  box-shadow: 0 4px 8px rgba(82, 113, 255, 0.3);
+}
+
+.button--secondary {
+  background-color: #eef0ff;
+  color: #5271ff;
+}
+
+.button--secondary:hover:not(:disabled) {
+  background-color: #dde0f5;
+}
+
+.button--outline {
+  background-color: transparent;
+  color: #5271ff;
+  border: 1px solid #5271ff;
+}
+
+.button--outline:hover:not(:disabled) {
+  background-color: rgba(82, 113, 255, 0.05);
+}
+
+.button--text {
+  background-color: transparent;
+  color: #5271ff;
+  padding: 0;
+}
+
+.button--text:hover:not(:disabled) {
+  color: #4060ee;
+  text-decoration: underline;
+}
+
+/* Размеры */
+.button--small {
+  height: 32px;
+  font-size: 14px;
+}
+
+.button--medium {
+  height: 40px;
+  font-size: 16px;
+}
+
+.button--large {
+  height: 48px;
+  font-size: 16px;
+  padding: 0 24px;
+}
+
+/* Ширина */
+.button--full-width {
+  width: 100%;
+} 

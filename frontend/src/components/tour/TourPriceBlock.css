@@ -1,0 +1,52 @@
+.tour-price-block {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  padding: 20px;
+  margin-bottom: 20px;
+}
+
+.price-info {
+  margin-bottom: 20px;
+}
+
+.price-label {
+  font-size: 14px;
+  color: #6c757d;
+  margin-bottom: 8px;
+}
+
+.price-value {
+  font-size: 28px;
+  font-weight: 700;
+  color: #212529;
+  margin-bottom: 4px;
+}
+
+.currency {
+  font-size: 20px;
+  font-weight: 400;
+}
+
+.base-price {
+  font-size: 13px;
+  color: #6c757d;
+  text-decoration: line-through;
+  margin-top: 4px;
+}
+
+.price-actions {
+  margin-bottom: 16px;
+}
+
+.date-info {
+  font-size: 14px;
+  color: #4a4a4a;
+  border-top: 1px solid #eee;
+  padding-top: 12px;
+}
+
+.date-info p {
+  margin: 4px 0;
+  line-height: 1.5;
+} 

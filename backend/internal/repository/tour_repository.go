@@ -143,6 +143,11 @@ func (r *tourRepository) List(ctx context.Context, filters map[string]interface{
 			conditions = append(conditions, "t.base_price <= ?")
 			args = append(args, priceMax)
 		}
+		// Добавляем поиск по названию тура
+		if searchQuery, ok := filters["search_query"]; ok && searchQuery.(string) != "" {
+			conditions = append(conditions, "t.name LIKE ?")
+			args = append(args, "%"+searchQuery.(string)+"%")
+		}
 	}
 
 	// Добавление условий к запросу
@@ -195,6 +200,11 @@ func (r *tourRepository) Count(ctx context.Context, filters map[string]interface
 			conditions = append(conditions, "t.base_price <= ?")
 			args = append(args, priceMax)
 		}
+		// Добавляем такой же поиск по названию для метода Count
+		if searchQuery, ok := filters["search_query"]; ok && searchQuery.(string) != "" {
+			conditions = append(conditions, "t.name LIKE ?")
+			args = append(args, "%"+searchQuery.(string)+"%")
+		}
 	}
 
 	// Добавление условий к запросу
@@ -239,13 +249,12 @@ func (r *tourRepository) AddTourDate(ctx context.Context, tourDate *domain.TourD
 	return id, nil
 }
 
-// GetTourDates получает даты проведения тура
+// GetTourDates возвращает список доступных дат тура
 func (r *tourRepository) GetTourDates(ctx context.Context, tourID int64) ([]*domain.TourDate, error) {
 	query := `
-		SELECT id, tour_id, start_date, end_date, availability
+		SELECT id, tour_id, start_date, end_date, availability, price_modifier
 		FROM tour_dates
 		WHERE tour_id = ?
-		ORDER BY start_date
 	`
 
 	var tourDates []*domain.TourDate
@@ -257,20 +266,42 @@ func (r *tourRepository) GetTourDates(ctx context.Context, tourID int64) ([]*dom
 	return tourDates, nil
 }
 
-// UpdateTourDate обновляет дату проведения тура
+// GetTourDateByID возвращает дату тура по ID
+func (r *tourRepository) GetTourDateByID(ctx context.Context, id int64) (*domain.TourDate, error) {
+	query := `
+		SELECT id, tour_id, start_date, end_date, availability, price_modifier
+		FROM tour_dates
+		WHERE id = ?
+	`
+
+	var tourDate domain.TourDate
+	err := r.db.GetContext(ctx, &tourDate, query, id)
+	if err != nil {
+		if err == sql.ErrNoRows {
+			return nil, fmt.Errorf("дата тура с ID %d не найдена", id)
+		}
+		return nil, fmt.Errorf("ошибка при поиске даты тура: %w", err)
+	}
+
+	return &tourDate, nil
+}
+
+// UpdateTourDate обновляет информацию о дате тура
 func (r *tourRepository) UpdateTourDate(ctx context.Context, tourDate *domain.TourDate) error {
 	query := `
-		UPDATE tour_dates
-		SET start_date = ?, end_date = ?, availability = ?
+		UPDATE tour_dates 
+		SET tour_id = ?, start_date = ?, end_date = ?, availability = ?, price_modifier = ?
 		WHERE id = ?
 	`
 
 	_, err := r.db.ExecContext(
 		ctx,
 		query,
+		tourDate.TourID,
 		tourDate.StartDate,
 		tourDate.EndDate,
 		tourDate.Availability,
+		tourDate.PriceModifier,
 		tourDate.ID,
 	)
 
@@ -281,7 +312,31 @@ func (r *tourRepository) UpdateTourDate(ctx context.Context, tourDate *domain.To
 	return nil
 }
 
-// DeleteTourDate удаляет дату проведения тура
+// UpdateTourDateAvailabilityTx обновляет доступность мест для даты тура в рамках транзакции
+func (r *tourRepository) UpdateTourDateAvailabilityTx(ctx context.Context, tx Tx, tourDateID int64, availability int) error {
+	query := `
+		UPDATE tour_dates 
+		SET availability = ?
+		WHERE id = ?
+	`
+
+	sqlxTx := tx.(*sqlxTx)
+
+	_, err := sqlxTx.tx.ExecContext(
+		ctx,
+		query,
+		availability,
+		tourDateID,
+	)
+
+	if err != nil {
+		return fmt.Errorf("ошибка при обновлении доступности мест даты тура в транзакции: %w", err)
+	}
+
+	return nil
+}
+
+// DeleteTourDate удаляет дату тура по ID
 func (r *tourRepository) DeleteTourDate(ctx context.Context, id int64) error {
 	query := "DELETE FROM tour_dates WHERE id = ?"
 

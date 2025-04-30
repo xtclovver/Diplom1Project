@@ -1,0 +1,299 @@
+.booking-success-page {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: calc(100vh - 250px);
+  padding: 40px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.success-container {
+  background-color: #fff;
+  border-radius: 12px;
+  box-shadow: 0 5px 30px rgba(0, 0, 0, 0.1);
+  padding: 40px;
+  width: 100%;
+  max-width: 700px;
+  text-align: center;
+  position: relative;
+  z-index: 10;
+}
+
+.success-icon {
+  width: 100px;
+  height: 100px;
+  background-color: #e8f5e9;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin: 0 auto 30px;
+  animation: scale-in 0.5s ease-out;
+}
+
+.success-icon i {
+  font-size: 50px;
+  color: #4caf50;
+}
+
+.booking-success-page h1 {
+  color: #333;
+  margin-bottom: 30px;
+  font-size: 28px;
+  animation: fade-in 0.8s ease-out;
+}
+
+.order-info {
+  background-color: #f9f9f9;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 30px;
+  text-align: left;
+  animation: slide-up 0.8s ease-out;
+}
+
+.order-info p {
+  margin: 10px 0;
+  color: #555;
+  font-size: 16px;
+}
+
+.order-number {
+  font-size: 18px !important;
+  color: #333 !important;
+}
+
+.payment-status {
+  display: flex;
+  align-items: center;
+  background-color: #e3f2fd;
+  border-radius: 10px;
+  padding: 20px;
+  margin-bottom: 30px;
+  animation: slide-up 1s ease-out;
+}
+
+.status-icon {
+  width: 60px;
+  height: 60px;
+  border-radius: 50%;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-right: 20px;
+}
+
+.status-icon.paid {
+  background-color: #e8f5e9;
+}
+
+.status-icon i {
+  font-size: 30px;
+  color: #4caf50;
+}
+
+.status-text {
+  text-align: left;
+}
+
+.status-text h3 {
+  margin: 0 0 5px;
+  font-size: 16px;
+  color: #666;
+}
+
+.status-text p {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #4caf50;
+}
+
+.next-steps {
+  background-color: #fff8e1;
+  border-radius: 10px;
+  padding: 24px;
+  margin-bottom: 30px;
+  text-align: left;
+  animation: slide-up 1.2s ease-out;
+}
+
+.next-steps h3 {
+  margin: 0 0 15px;
+  color: #ff9800;
+  font-size: 18px;
+}
+
+.next-steps ul {
+  list-style-type: none;
+  padding: 0;
+  margin: 0;
+}
+
+.next-steps li {
+  display: flex;
+  align-items: flex-start;
+  margin-bottom: 15px;
+}
+
+.next-steps li:last-child {
+  margin-bottom: 0;
+}
+
+.next-steps li i {
+  margin-right: 15px;
+  color: #ff9800;
+  font-size: 20px;
+  min-width: 20px;
+  text-align: center;
+}
+
+.next-steps li span {
+  color: #555;
+  font-size: 15px;
+  flex: 1;
+}
+
+.success-actions {
+  display: flex;
+  justify-content: center;
+  gap: 20px;
+  animation: fade-in 1.5s ease-out;
+}
+
+.view-orders-btn,
+.back-home-btn {
+  padding: 12px 24px;
+  border-radius: 5px;
+  font-size: 16px;
+  font-weight: 500;
+  text-decoration: none;
+  transition: all 0.3s ease;
+}
+
+.view-orders-btn {
+  background-color: #4c94fc;
+  color: white;
+}
+
+.view-orders-btn:hover {
+  background-color: #3a78e7;
+}
+
+.back-home-btn {
+  background-color: #f0f0f0;
+  color: #555;
+}
+
+.back-home-btn:hover {
+  background-color: #e0e0e0;
+}
+
+.view-orders-btn i,
+.back-home-btn i {
+  margin-right: 8px;
+}
+
+/* Анимация конфетти */
+.confetti {
+  position: fixed;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  top: -10px;
+  z-index: 5;
+  animation: confetti-fall linear forwards;
+}
+
+@keyframes confetti-fall {
+  0% {
+    transform: translateY(0) rotate(0);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+@keyframes scale-in {
+  0% {
+    transform: scale(0);
+    opacity: 0;
+  }
+  100% {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
+@keyframes fade-in {
+  0% {
+    opacity: 0;
+  }
+  100% {
+    opacity: 1;
+  }
+}
+
+@keyframes slide-up {
+  0% {
+    transform: translateY(30px);
+    opacity: 0;
+  }
+  100% {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+/* Адаптивность */
+@media (max-width: 600px) {
+  .booking-success-page {
+    padding: 20px 15px;
+  }
+  
+  .success-container {
+    padding: 30px 20px;
+  }
+  
+  .success-icon {
+    width: 80px;
+    height: 80px;
+    margin-bottom: 20px;
+  }
+  
+  .success-icon i {
+    font-size: 40px;
+  }
+  
+  .booking-success-page h1 {
+    font-size: 24px;
+    margin-bottom: 20px;
+  }
+  
+  .order-info, .payment-status, .next-steps {
+    padding: 15px;
+    margin-bottom: 20px;
+  }
+  
+  .status-icon {
+    width: 50px;
+    height: 50px;
+  }
+  
+  .status-icon i {
+    font-size: 25px;
+  }
+  
+  .success-actions {
+    flex-direction: column;
+    gap: 10px;
+  }
+  
+  .view-orders-btn, .back-home-btn {
+    width: 100%;
+    text-align: center;
+  }
+} 

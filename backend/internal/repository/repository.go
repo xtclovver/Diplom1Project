@@ -7,6 +7,12 @@ import (
 	"github.com/usedcvnt/Diplom1Project/backend/internal/domain"
 )
 
+// Tx представляет интерфейс транзакции
+type Tx interface {
+	Commit() error
+	Rollback() error
+}
+
 // Repository представляет собой главный репозиторий, включающий все репозитории
 type Repository struct {
 	User          UserRepository
@@ -51,8 +57,11 @@ type TourRepository interface {
 	Count(ctx context.Context, filters map[string]interface{}) (int, error)
 	AddTourDate(ctx context.Context, tourDate *domain.TourDate) (int64, error)
 	GetTourDates(ctx context.Context, tourID int64) ([]*domain.TourDate, error)
+	GetTourDateByID(ctx context.Context, id int64) (*domain.TourDate, error)
 	UpdateTourDate(ctx context.Context, tourDate *domain.TourDate) error
 	DeleteTourDate(ctx context.Context, id int64) error
+	// Транзакционные методы
+	UpdateTourDateAvailabilityTx(ctx context.Context, tx Tx, tourDateID int64, availability int) error
 }
 
 // HotelRepository интерфейс для работы с отелями
@@ -84,6 +93,10 @@ type OrderRepository interface {
 	List(ctx context.Context, filters map[string]interface{}, offset, limit int) ([]*domain.Order, error)
 	Count(ctx context.Context, filters map[string]interface{}) (int, error)
 	UpdateStatus(ctx context.Context, id int64, status string) error
+	// Транзакционные методы
+	BeginTx(ctx context.Context) (Tx, error)
+	CreateTx(ctx context.Context, tx Tx, order *domain.Order) (int64, error)
+	UpdateStatusTx(ctx context.Context, tx Tx, id int64, status string) error
 }
 
 // SupportTicketRepository интерфейс для работы с тикетами тех-поддержки

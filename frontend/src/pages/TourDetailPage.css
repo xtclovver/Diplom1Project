@@ -111,34 +111,41 @@
 }
 
 .error-container {
-  max-width: 500px;
-  margin: 50px auto;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
   text-align: center;
-  padding: 30px;
-  background-color: #f8f9fa;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  min-height: 60vh;
+  padding: 20px;
 }
 
 .error-container h2 {
-  color: #e53935;
-  margin-top: 0;
+  font-size: 24px;
+  margin-bottom: 15px;
+  color: #e74c3c;
+}
+
+.error-container p {
+  font-size: 16px;
+  margin-bottom: 20px;
+  color: #555;
+  max-width: 500px;
 }
 
 .error-container button {
-  padding: 10px 16px;
-  background-color: #2196f3;
+  background-color: #3498db;
   color: white;
+  padding: 10px 20px;
   border: none;
   border-radius: 4px;
-  font-size: 14px;
+  font-weight: 500;
   cursor: pointer;
-  transition: background-color 0.2s;
-  margin-top: 15px;
+  transition: background-color 0.3s;
 }
 
 .error-container button:hover {
-  background-color: #1976d2;
+  background-color: #2980b9;
 }
 
 @media (max-width: 768px) {

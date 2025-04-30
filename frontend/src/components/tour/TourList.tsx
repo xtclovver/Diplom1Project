@@ -9,10 +9,10 @@ interface Tour {
   imageUrl: string;
   basePrice: number;
   duration: number;
-  city: {
+  city?: {
     id: number;
     name: string;
-    country: {
+    country?: {
       id: number;
       name: string;
       code: string;
@@ -54,7 +54,10 @@ const TourList: React.FC<TourListProps> = ({ tours, loading }) => {
           <div className="tour-content">
             <h3 className="tour-title">{tour.name}</h3>
             <div className="tour-location">
-              <i className="fa fa-map-marker"></i> {tour.city?.name}, {tour.city?.country?.name}
+              <i className="fa fa-map-marker"></i> 
+              {tour.city?.name ? 
+                `${tour.city.name}${tour.city.country?.name ? `, ${tour.city.country.name}` : ''}` : 
+                'Место не указано'}
             </div>
             <div className="tour-duration">
               <i className="fa fa-clock-o"></i> {tour.duration} {getTourDurationText(tour.duration)}
@@ -62,7 +65,7 @@ const TourList: React.FC<TourListProps> = ({ tours, loading }) => {
             <p className="tour-description">{truncateText(tour.description, 150)}</p>
             <div className="tour-footer">
               <div className="tour-price">
-                от <span>{tour.basePrice?.toLocaleString() || '0'} ₽</span>
+                от <span>{(tour.basePrice || 0).toLocaleString()} ₽</span>
               </div>
               <Link to={`/tours/${tour.id}`} className="tour-button">
                 Подробнее

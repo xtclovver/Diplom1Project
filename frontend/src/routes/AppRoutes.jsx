@@ -12,6 +12,7 @@ import RegisterPage from '../pages/RegisterPage';
 import ProfilePage from '../pages/ProfilePage';
 import OrdersPage from '../pages/OrdersPage';
 import BookingPage from '../pages/BookingPage';
+import BookingSuccessPage from '../pages/BookingSuccessPage';
 import SupportPage from '../pages/SupportPage';
 import AdminPage from '../pages/AdminPage';
 import AboutPage from '../pages/AboutPage';
@@ -56,15 +57,23 @@ const AppRoutes = () => {
         </ProtectedRoute>
       } />
       
+      <Route path="/profile/orders" element={
+        <ProtectedRoute>
+          <OrdersPage />
+        </ProtectedRoute>
+      } />
+      
       <Route path="/orders" element={
         <ProtectedRoute>
           <OrdersPage />
         </ProtectedRoute>
       } />
       
-      <Route path="/booking/:tourId/:dateId" element={
+      <Route path="/booking" element={<BookingPage />} />
+      
+      <Route path="/booking/success" element={
         <ProtectedRoute>
-          <BookingPage />
+          <BookingSuccessPage />
         </ProtectedRoute>
       } />
       

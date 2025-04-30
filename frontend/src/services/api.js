@@ -150,7 +150,16 @@ export const hotelService = {
 export const orderService = {
   // Создание заказа
   createOrder: (orderData) => {
-    return api.post('/orders', orderData);
+    console.log('API: Отправка запроса на создание заказа', orderData);
+    return api.post('/orders', orderData)
+      .then(response => {
+        console.log('API: Успешный ответ при создании заказа', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('API: Ошибка при создании заказа', error.response?.data || error.message);
+        throw error;
+      });
   },
   
   // Получение списка заказов пользователя

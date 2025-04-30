@@ -21,6 +21,8 @@ interface OrderFormProps {
 
 const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit, loading }) => {
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [paymentMethod, setPaymentMethod] = useState<string>('card');
+  const [termsAccepted, setTermsAccepted] = useState<boolean>(false);
   
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -45,6 +47,22 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit, lo
     }
   };
   
+  const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPaymentMethod(e.target.value);
+  };
+  
+  const handleTermsChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setTermsAccepted(e.target.checked);
+    
+    if (e.target.checked && errors.terms) {
+      setErrors(prev => {
+        const newErrors = { ...prev };
+        delete newErrors.terms;
+        return newErrors;
+      });
+    }
+  };
+  
   const validateForm = (): boolean => {
     const newErrors: Record<string, string> = {};
     
@@ -62,6 +80,10 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit, lo
       newErrors.email = 'Введите email для связи';
     } else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(orderData.email)) {
       newErrors.email = 'Введите корректный email';
+    }
+    
+    if (!termsAccepted) {
+      newErrors.terms = 'Необходимо принять условия бронирования';
     }
     
     setErrors(newErrors);
@@ -130,6 +152,42 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit, lo
       </div>
       
       <div className="form-section">
+        <h3>Способ оплаты</h3>
+        
+        <div className="payment-methods">
+          <div className="payment-method">
+            <input
+              type="radio"
+              id="paymentCard"
+              name="paymentMethod"
+              value="card"
+              checked={paymentMethod === 'card'}
+              onChange={handlePaymentMethodChange}
+            />
+            <label htmlFor="paymentCard">
+              <span className="payment-icon card-icon"></span>
+              <span className="payment-label">Банковская карта</span>
+            </label>
+          </div>
+          
+          <div className="payment-method">
+            <input
+              type="radio"
+              id="paymentOnline"
+              name="paymentMethod"
+              value="online"
+              checked={paymentMethod === 'online'}
+              onChange={handlePaymentMethodChange}
+            />
+            <label htmlFor="paymentOnline">
+              <span className="payment-icon online-icon"></span>
+              <span className="payment-label">Онлайн-банкинг</span>
+            </label>
+          </div>
+        </div>
+      </div>
+      
+      <div className="form-section">
         <h3>Дополнительная информация</h3>
         
         <div className="form-group">
@@ -142,6 +200,22 @@ const OrderForm: React.FC<OrderFormProps> = ({ orderData, onChange, onSubmit, lo
             value={orderData.specialRequests || ''}
             onChange={handleChange}
           ></textarea>
+        </div>
+      </div>
+      
+      <div className="form-section terms-section">
+        <div className="form-group checkbox-group">
+          <input
+            type="checkbox"
+            id="termsAccepted"
+            checked={termsAccepted}
+            onChange={handleTermsChange}
+            className={errors.terms ? 'error' : ''}
+          />
+          <label htmlFor="termsAccepted" className="checkbox-label">
+            Я ознакомлен и согласен с <a href="#" target="_blank">условиями бронирования</a> и <a href="#" target="_blank">правилами отмены</a>
+          </label>
+          {errors.terms && <div className="error-message">{errors.terms}</div>}
         </div>
       </div>
       
