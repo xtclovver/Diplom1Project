@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { useLocation, useNavigate, Link } from 'react-router-dom';
+import { useLocation, useNavigate, Link, useSearchParams } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { fetchTourById } from '../store/tours/toursSlice';
 import { useAppDispatch } from '../store/hooks';
@@ -9,36 +9,66 @@ import Spinner from '../components/ui/Spinner';
 import { createOrder, resetCreateOrderSuccess } from '../store/order/orderSlice';
 import './BookingPage.css';
 
+interface BookingData {
+  tourId: string;
+  tourDateId: number;
+  roomId?: number | null;
+  startDate: string;
+  endDate: string;
+}
+
 const BookingPage: React.FC = () => {
+  console.log('BookingPage - компонент инициализируется');
+  
   const location = useLocation();
   const navigate = useNavigate();
   const dispatch = useAppDispatch();
+  const [searchParams] = useSearchParams();
   
-  const { tour, loading: tourLoading, error: tourError } = useSelector((state: any) => state.tours);
-  const { loading: orderLoading, error: orderError, createOrderSuccess } = useSelector((state: any) => state.order);
-  const { isAuthenticated, user } = useSelector((state: any) => state.auth);
+  // --- Извлекаем параметры напрямую --- 
+  const tourIdFromParams = searchParams.get('tourId');
+  const tourDateIdFromParams = searchParams.get('tourDateId');
+  const roomIdFromParams = searchParams.get('roomId');
+  const startDateFromParams = searchParams.get('startDate'); // Получаем даты, если они передаются
+  const endDateFromParams = searchParams.get('endDate');
+
+  // --- Логируем полученные параметры --- 
+  console.log('BookingPage - searchParams:', searchParams.toString());
+  console.log('BookingPage - tourId from params:', tourIdFromParams);
+  console.log('BookingPage - tourDateId from params:', tourDateIdFromParams);
+  console.log('BookingPage - roomId from params:', roomIdFromParams);
+  // --- Конец извлечения параметров ---
+
+  console.log('BookingPage - полный URL:', window.location.href);
+  console.log('BookingPage - location.pathname:', location.pathname);
+  console.log('BookingPage - location.search:', location.search);
+  console.log('BookingPage - location.state:', location.state);
   
-  // Значение по умолчанию для данных бронирования
-  const defaultBookingData = {
-    tourId: '',
-    tourDateId: 0,
-    startDate: '',
-    endDate: ''
-  };
+  console.log('BookingPage - Проверка импортов перед первым useSelector:');
+  console.log('- typeof useSelector:', typeof useSelector); // Логируем тип импорта
+  console.log('- useSelector:', useSelector); // Логируем сам импорт
+
+  // --- Используем useSelector (без try...catch) --- 
+  const tourData = useSelector((state: any) => state.tours);
+  const orderState = useSelector((state: any) => state.order);
+  const authState = useSelector((state: any) => state.auth);
+
+  // Деструктуризация
+  const { tour, loading: tourLoading, error: tourError } = tourData || {}; 
+  const { loading: orderLoading, error: orderError, createOrderSuccess } = orderState || {};
+  const { isAuthenticated, user } = authState || {};
+
+  console.log('BookingPage - isAuthenticated:', isAuthenticated);
   
-  // Получаем данные из параметров навигации
-  const bookingData = location.state ? 
-    (location.state as {
-      tourId: string;
-      tourDateId: number;
-      startDate: string;
-      endDate: string;
-    }) : defaultBookingData;
-  
+  // --- Проверка на наличие необходимых данных из параметров --- 
+  const hasRequiredData = !!(tourIdFromParams && tourDateIdFromParams);
+  console.log('BookingPage - hasRequiredData:', hasRequiredData);
+
   const [orderData, setOrderData] = useState({
-    tourId: bookingData.tourId,
-    tourDateId: bookingData.tourDateId,
-    roomId: null,
+    // Используем данные из параметров для инициализации state
+    tourId: tourIdFromParams || '',
+    tourDateId: tourDateIdFromParams ? parseInt(tourDateIdFromParams) : 0,
+    roomId: roomIdFromParams ? parseInt(roomIdFromParams) : null,
     peopleCount: 2,
     specialRequests: '',
     contactPhone: '',
@@ -48,29 +78,35 @@ const BookingPage: React.FC = () => {
   
   const [step, setStep] = useState(1);
   
-  // Проверка на наличие необходимых данных
-  const hasRequiredData = location.state && location.state.tourId && location.state.tourDateId;
-  
   useEffect(() => {
-    // Очищаем флаг успешного создания заказа при монтировании компонента
     dispatch(resetCreateOrderSuccess());
     
-    // Проверяем, авторизован ли пользователь
     if (!isAuthenticated) {
-      navigate('/login', { state: { from: location.pathname, bookingData } });
+      console.log('BookingPage - пользователь не авторизован, перенаправление на /login');
+      // Передаем параметры в state для возврата после логина
+      const originalParams = new URLSearchParams(location.search).toString();
+      navigate('/login', { 
+        state: { 
+          from: `${location.pathname}?${originalParams}` 
+        } 
+      });
       return;
     }
     
-    // При отсутствии данных для бронирования оставляем пользователя на странице
-    // и показываем ему сообщение об ошибке через рендеринг
-    
-    // Загружаем информацию о туре, только если у нас есть необходимые данные
-    if (hasRequiredData) {
-      dispatch(fetchTourById(bookingData.tourId));
+    if (!hasRequiredData) {
+      console.log('BookingPage - нет необходимых данных в URL, перенаправление на /tours');
+      navigate('/tours');
+      return;
     }
-  }, [dispatch, navigate, isAuthenticated, bookingData, location.pathname, hasRequiredData]);
+
+    // Загружаем информацию о туре, используя ID из параметров
+    console.log('BookingPage - загрузка информации о туре:', tourIdFromParams);
+    // Убедимся, что tourIdFromParams не null перед вызовом dispatch
+    if (tourIdFromParams) {
+        dispatch(fetchTourById(tourIdFromParams));
+    }
+  }, [dispatch, navigate, isAuthenticated, hasRequiredData, tourIdFromParams]);
   
-  // Если пользователь уже авторизован, обновляем email в данных заказа
   useEffect(() => {
     if (user && user.email) {
       setOrderData(prev => ({
@@ -78,9 +114,8 @@ const BookingPage: React.FC = () => {
         email: user.email
       }));
     }
-  }, [user]);
+  }, [user, orderData.email]);
   
-  // Отслеживаем успешное создание заказа и перенаправляем на страницу успеха
   useEffect(() => {
     if (createOrderSuccess) {
       navigate('/booking/success');
@@ -97,7 +132,6 @@ const BookingPage: React.FC = () => {
   const calculatePrice = () => {
     if (!tour) return 0;
     
-    // Находим выбранную дату тура, чтобы получить модификатор цены
     const selectedDate = tour.dates?.find((date: any) => date.id === orderData.tourDateId);
     const priceModifier = selectedDate?.priceModifier || 1;
     
@@ -121,19 +155,17 @@ const BookingPage: React.FC = () => {
   };
   
   const handleSubmit = () => {
-    // Отправляем заказ на сервер
+    // Используем данные из state (orderData), который инициализировался из параметров
     const submitData: any = {
-      tour_id: parseInt(orderData.tourId),
+      tour_id: parseInt(orderData.tourId), // tourId должен быть числом для бэкенда?
       tour_date_id: orderData.tourDateId,
       people_count: orderData.peopleCount
     };
     
-    // Добавляем необязательные поля, если они заполнены
     if (orderData.roomId) {
       submitData.room_id = orderData.roomId;
     }
     
-    // Добавляем дополнительные информационные поля, если они заполнены
     if (orderData.contactPhone) {
       submitData.contact_phone = orderData.contactPhone;
     }
@@ -143,15 +175,19 @@ const BookingPage: React.FC = () => {
     }
     
     console.log('Отправка заказа на сервер:', submitData);
-    dispatch(createOrder(submitData));
+    // Проверяем, что dispatch вызывается с правильными данными
+    if (submitData.tour_id && submitData.tour_date_id) {
+        dispatch(createOrder(submitData));
+    } else {
+        console.error('BookingPage - Ошибка: Недостаточно данных для отправки заказа.', submitData);
+    }
   };
   
-  // Если отсутствуют необходимые данные, показываем сообщение об ошибке
   if (!hasRequiredData) {
     return (
       <div className="booking-error">
         <h2>Недостаточно данных для бронирования</h2>
-        <p>Пожалуйста, выберите тур и дату поездки перед бронированием.</p>
+        <p>Не удалось получить ID тура или ID даты из URL.</p>
         <Link to="/tours" className="error-back-btn">Перейти к выбору тура</Link>
       </div>
     );
@@ -172,12 +208,16 @@ const BookingPage: React.FC = () => {
   }
   
   if (!tour) {
-    return (
-      <div className="booking-error">
-        <h2>Не удалось загрузить информацию о туре</h2>
-        <button onClick={() => navigate('/tours')}>Вернуться к списку туров</button>
-      </div>
-    );
+    if (!tourLoading) {
+        return (
+          <div className="booking-error">
+            <h2>Не удалось загрузить информацию о туре</h2>
+            <p>Пожалуйста, убедитесь, что URL корректен или попробуйте позже.</p>
+            <button onClick={() => navigate('/tours')}>Вернуться к списку туров</button>
+          </div>
+        );
+    }
+    return null; 
   }
 
   return (
@@ -216,8 +256,8 @@ const BookingPage: React.FC = () => {
             <OrderSummary 
               tour={tour}
               orderData={orderData}
-              startDate={bookingData.startDate}
-              endDate={bookingData.endDate}
+              startDate={startDateFromParams || 'Не указана'}
+              endDate={endDateFromParams || 'Не указана'}
             />
             
             <div className="booking-actions">

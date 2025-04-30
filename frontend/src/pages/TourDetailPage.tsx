@@ -46,26 +46,52 @@ const TourDetailPage: React.FC = () => {
   };
 
   const handleBooking = () => {
+    console.log('TourDetailPage - handleBooking вызвана');
+    
+    // Проверяем авторизацию
     if (!isAuthenticated) {
+      console.log('TourDetailPage - пользователь не авторизован, перенаправление на /login');
       navigate('/login', { state: { from: `/tours/${id}` } });
       return;
     }
     
-    if (selectedDate) {
-      navigate('/booking', { 
-        state: { 
-          tourId: id, 
-          tourDateId: selectedDate.id,
-          roomId: selectedRoom?.id || null,
-          startDate: selectedDate.startDate,
-          endDate: selectedDate.endDate
-        } 
-      });
-    } else {
-      // Если дата не выбрана - показать уведомление
-      // TODO: добавить уведомление
+    // Проверяем выбор даты
+    if (!selectedDate) {
       console.error('Необходимо выбрать дату тура');
+      return;
     }
+    
+    console.log('TourDetailPage - данные для бронирования:', { 
+      tourId: id, 
+      tourDateId: selectedDate.id,
+      roomId: selectedRoom?.id || null
+    });
+    
+    // Сохраняем данные в sessionStorage
+    const bookingData = {
+      tourId: id,
+      tourDateId: selectedDate.id,
+      roomId: selectedRoom?.id || null,
+      startDate: selectedDate.startDate || '',
+      endDate: selectedDate.endDate || ''
+    };
+    
+    sessionStorage.setItem('bookingData', JSON.stringify(bookingData));
+    
+    // Формируем URL параметры
+    const params = new URLSearchParams();
+    params.append('tourId', id || '');
+    params.append('tourDateId', selectedDate.id.toString());
+    
+    if (selectedRoom?.id) {
+      params.append('roomId', selectedRoom.id.toString());
+    }
+    
+    // Выполняем навигацию
+    const bookingUrl = `/booking?${params.toString()}`;
+    console.log('TourDetailPage - переход на:', bookingUrl);
+    
+    navigate(bookingUrl, { state: bookingData });
   };
 
   if (loading) {
