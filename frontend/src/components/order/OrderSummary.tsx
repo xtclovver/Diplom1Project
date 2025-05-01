@@ -168,7 +168,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   };
   
   // Рассчитываем базовую стоимость тура с учетом модификатора цены
-  const baseTourCost = tour.base_price * (tourDate?.priceModifier || 1); // Исправлено имя поля
+  const baseTourCost = (tour.base_price || 0) * (tourDate?.priceModifier || 1);
   
   // Рассчитываем стоимость проживания за все дни
   const roomCost = selectedRoom ? selectedRoom.price * (calculateDays() - 1) : 0; // -1 день, т.к. отель обычно бронируется на ночи
@@ -250,19 +250,19 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <h4>Детализация стоимости</h4>
         <div className="summary-item">
           <span className="summary-label">Базовая стоимость тура:</span>
-          <span className="summary-value">{baseTourCost.toLocaleString()} ₽ × {orderData.peopleCount || 0}</span>
+          <span className="summary-value">{isNaN(baseTourCost) ? '0' : baseTourCost.toLocaleString()} ₽ × {orderData.peopleCount || 0}</span>
         </div>
         {selectedRoom && (
           <div className="summary-item">
             <span className="summary-label">Проживание за {days-1} {getDaysText(days-1)}:</span>
-            <span className="summary-value">{roomCost.toLocaleString()} ₽</span>
+            <span className="summary-value">{isNaN(roomCost) ? '0' : roomCost.toLocaleString()} ₽</span>
           </div>
         )}
       </div>
       
       <div className="total-price">
         <span className="total-label">Итого:</span>
-        <span className="total-value">{orderData.totalPrice.toLocaleString()} ₽</span>
+        <span className="total-value">{isNaN(orderData.totalPrice) ? '0' : orderData.totalPrice.toLocaleString()} ₽</span>
       </div>
       
       {(onConfirm || onEdit) && (

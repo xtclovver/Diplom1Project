@@ -145,6 +145,11 @@ export const hotelService = {
     return api.get(`/hotels/${id}/rooms`);
   },
   
+  // Получение информации о конкретном номере по ID
+  getRoomById: (id) => {
+    return api.get(`/rooms/${id}`);
+  },
+  
   // Проверка доступности номера на указанные даты
   getRoomAvailability: (roomId, startDate, endDate) => {
     return api.get(`/rooms/${roomId}/availability`, { 

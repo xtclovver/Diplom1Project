@@ -23,6 +23,7 @@ const initialState = {
  * @param {number} orderData.tour_date_id - ID даты тура
  * @param {number|null} [orderData.room_id] - ID номера (опционально)
  * @param {number} orderData.people_count - Количество человек
+ * @param {number} [orderData.total_price] - Общая стоимость заказа (опционально)
  */
 export const createOrder = createAsyncThunk(
   'order/createOrder',
@@ -102,11 +103,13 @@ const orderSlice = createSlice({
         state.loading = true;
         state.error = null;
         state.createOrderSuccess = false;
+        console.log('[OrderSlice] createOrder.pending - createOrderSuccess установлен в false');
       })
       .addCase(createOrder.fulfilled, (state, action) => {
         state.loading = false;
         state.order = action.payload;
         state.createOrderSuccess = true;
+        console.log('[OrderSlice] createOrder.fulfilled - createOrderSuccess установлен в true, должно быть перенаправление');
         // Добавляем новый заказ в начало списка, если он уже был загружен
         if (state.orders.length > 0) {
           state.orders.unshift(action.payload);
@@ -116,6 +119,7 @@ const orderSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
         state.createOrderSuccess = false;
+        console.log('[OrderSlice] createOrder.rejected - createOrderSuccess установлен в false, ошибка:', action.payload);
       })
       
       // Обработка fetchUserOrders
@@ -177,4 +181,17 @@ const orderSlice = createSlice({
 });
 
 export const { resetCreateOrderSuccess, setPage, setSize, clearError } = orderSlice.actions;
+
+// Добавляем функцию для отладки состояния редьюсера
+export const debugOrderState = (state) => {
+  console.log('[OrderSlice] Текущее состояние:', {
+    orders: state.orders?.length || 0,
+    order: state.order ? 'имеется' : 'отсутствует',
+    loading: state.loading,
+    error: state.error,
+    createOrderSuccess: state.createOrderSuccess
+  });
+  return state;
+};
+
 export default orderSlice.reducer; 

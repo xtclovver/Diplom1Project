@@ -7,6 +7,7 @@ import OrderForm from '../components/order/OrderForm';
 import OrderSummary from '../components/order/OrderSummary';
 import Spinner from '../components/ui/Spinner';
 import { createOrder, resetCreateOrderSuccess } from '../store/order/orderSlice';
+import { hotelService } from '../services/api';
 import './BookingPage.css';
 
 interface BookingData {
@@ -78,6 +79,9 @@ const BookingPage: React.FC = () => {
   
   const [step, setStep] = useState(1);
   
+  // Добавляем состояние для выбранного номера
+  const [selectedRoom, setSelectedRoom] = useState<any>(null);
+  
   useEffect(() => {
     dispatch(resetCreateOrderSuccess());
     
@@ -118,7 +122,12 @@ const BookingPage: React.FC = () => {
   
   useEffect(() => {
     if (createOrderSuccess) {
-      navigate('/booking/success');
+      console.log('BookingPage - createOrderSuccess = true, перенаправление на /orders');
+      // Устанавливаем таймаут для гарантированного перенаправления
+      const redirectTimer = setTimeout(() => {
+        navigate('/orders');
+      }, 100);
+      return () => clearTimeout(redirectTimer);
     }
   }, [createOrderSuccess, navigate]);
   
@@ -135,16 +144,66 @@ const BookingPage: React.FC = () => {
     const selectedDate = tour.dates?.find((date: any) => date.id === orderData.tourDateId);
     const priceModifier = selectedDate?.priceModifier || 1;
     
-    const basePrice = tour.base_price || 0;
-    return basePrice * priceModifier * orderData.peopleCount;
+    // Используем basePrice или base_price, в зависимости от того, что доступно
+    const basePrice = tour.basePrice || tour.base_price || 0;
+    console.log('BookingPage - Базовая цена тура:', basePrice);
+    
+    // Базовая стоимость тура
+    const tourPrice = basePrice * priceModifier * (orderData.peopleCount || 1);
+    
+    // Стоимость номера в отеле (если выбран)
+    let roomPrice = 0;
+    if (orderData.roomId && selectedRoom) {
+      const days = selectedDate ? calculateDaysFromDates(selectedDate.startDate, selectedDate.endDate) : tour.duration || 1;
+      const nights = Math.max(1, days - 1); // Минимум 1 ночь
+      roomPrice = selectedRoom.price * nights * (orderData.peopleCount || 1);
+      console.log('BookingPage - Данные для расчета стоимости номера:', {
+        roomId: orderData.roomId,
+        roomPrice: selectedRoom.price,
+        nights,
+        peopleCount: orderData.peopleCount,
+        totalRoomPrice: roomPrice
+      });
+    }
+    
+    // Общая стоимость = стоимость тура + стоимость номера
+    const calculatedPrice = tourPrice + roomPrice;
+    console.log('BookingPage - Расчет полной стоимости:', {
+      tourPrice,
+      roomPrice,
+      calculatedPrice
+    });
+    
+    // Проверяем результат на NaN
+    return isNaN(calculatedPrice) ? 0 : calculatedPrice;
+  };
+  
+  // Вспомогательная функция для расчета количества дней
+  const calculateDaysFromDates = (startDateStr: string, endDateStr: string): number => {
+    try {
+      const start = new Date(startDateStr);
+      const end = new Date(endDateStr);
+      
+      if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+        return tour.duration || 1;
+      }
+      
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 чтобы учесть день отъезда
+    } catch (error) {
+      console.error("Ошибка при расчете длительности:", error);
+      return tour.duration || 1;
+    }
   };
   
   useEffect(() => {
+    const price = calculatePrice();
     setOrderData(prev => ({
       ...prev,
-      totalPrice: calculatePrice()
+      totalPrice: price
     }));
-  }, [orderData.peopleCount, tour]);
+    console.log('BookingPage - Рассчитанная стоимость с учетом номера:', price);
+  }, [selectedRoom, orderData.peopleCount, tour, orderData.tourDateId]);
   
   const handleNext = () => {
     setStep(2);
@@ -155,11 +214,15 @@ const BookingPage: React.FC = () => {
   };
   
   const handleSubmit = () => {
+    // Пересчитываем итоговую стоимость для отправки на сервер
+    const totalPrice = calculatePrice();
+    
     // Используем данные из state (orderData), который инициализировался из параметров
     const submitData: any = {
-      tour_id: parseInt(orderData.tourId), // tourId должен быть числом для бэкенда?
+      tour_id: parseInt(orderData.tourId),
       tour_date_id: orderData.tourDateId,
-      people_count: orderData.peopleCount
+      people_count: orderData.peopleCount,
+      total_price: totalPrice // Добавляем рассчитанную стоимость
     };
     
     if (orderData.roomId) {
@@ -174,14 +237,90 @@ const BookingPage: React.FC = () => {
       submitData.special_requests = orderData.specialRequests;
     }
     
-    console.log('Отправка заказа на сервер:', submitData);
+    console.log('Отправка заказа на сервер с указанием полной стоимости:', submitData);
     // Проверяем, что dispatch вызывается с правильными данными
     if (submitData.tour_id && submitData.tour_date_id) {
-        dispatch(createOrder(submitData));
+      // Очищаем возможные предыдущие флаги успеха
+      dispatch(resetCreateOrderSuccess());
+      
+      // Отправляем запрос на создание заказа
+      dispatch(createOrder(submitData))
+        .then((result) => {
+          // После успешного создания заказа
+          if (result.meta.requestStatus === 'fulfilled') {
+            console.log('BookingPage - Заказ успешно создан, результат:', result.payload);
+            // Принудительное перенаправление на страницу заказов
+            navigate('/orders');
+          }
+        })
+        .catch((error) => {
+          console.error('BookingPage - Ошибка при создании заказа:', error);
+        });
     } else {
-        console.error('BookingPage - Ошибка: Недостаточно данных для отправки заказа.', submitData);
+      console.error('BookingPage - Ошибка: Недостаточно данных для отправки заказа.', submitData);
     }
   };
+  
+  // Убираем дублирование кода
+  useEffect(() => {
+    // Если есть roomId, пытаемся найти информацию о номере в отеле
+    if (orderData.roomId && tour?.hotels) {
+      // Ищем номер в списке отелей тура
+      for (const hotel of tour.hotels) {
+        if (hotel.rooms) {
+          const room = hotel.rooms.find((r: any) => r.id === orderData.roomId);
+          if (room) {
+            console.log('BookingPage - Найден номер:', room);
+            setSelectedRoom(room);
+            return;
+          }
+        }
+      }
+      
+      // Если номер не найден в отелях тура, загружаем данные о номере
+      const fetchRoomData = async () => {
+        try {
+          console.log('BookingPage - Загрузка информации о номере с ID:', orderData.roomId);
+          
+          // Используем любой доступный метод для получения данных о номере
+          // Сначала пробуем получить номера отеля, а затем найти нужный номер
+          // Чтобы обойти отсутствие метода getRoomById в TypeScript версии
+          
+          // Если есть информация о номере, мы знаем к какому отелю он относится
+          if (tour.hotels && tour.hotels.length > 0) {
+            for (const hotel of tour.hotels) {
+              try {
+                const roomsResponse = await hotelService.getHotelRooms(hotel.id);
+                const rooms = roomsResponse.data;
+                const room = rooms.find((r: any) => r.id === orderData.roomId);
+                if (room) {
+                  console.log('BookingPage - Номер найден в отеле:', hotel.name);
+                  setSelectedRoom(room);
+                  return;
+                }
+              } catch (error) {
+                console.error(`Ошибка при загрузке номеров отеля ${hotel.id}:`, error);
+              }
+            }
+          }
+          
+          // Прямой запрос через API, используя any для обхода ограничений типа
+          // Этот код будет работать, если метод существует в JavaScript реализации
+          try {
+            const response = await (hotelService as any).getRoomById(orderData.roomId);
+            console.log('BookingPage - Получены данные о номере:', response.data);
+            setSelectedRoom(response.data);
+          } catch (roomError) {
+            console.error('Не удалось получить данные о номере через getRoomById:', roomError);
+          }
+        } catch (error) {
+          console.error('Ошибка при загрузке данных о номере:', error);
+        }
+      };
+      
+      fetchRoomData();
+    }
+  }, [orderData.roomId, tour]);
   
   if (!hasRequiredData) {
     return (
@@ -244,6 +383,15 @@ const BookingPage: React.FC = () => {
   }
 
   console.log('BookingPage - Итоговый selectedDate:', selectedDate); // Логируем итоговый результат
+  
+  // Подготавливаем данные тура для передачи в компонент OrderSummary
+  // Преобразуем данные, учитывая возможное различие в именах полей (camelCase vs snake_case)
+  const preparedTour = {
+    ...tour,
+    base_price: tour?.basePrice || tour?.base_price || 0, // Обеспечиваем совместимость с обоими вариантами имени поля
+  };
+  
+  console.log('BookingPage - Подготовленные данные тура:', preparedTour);
 
   return (
     <div className="booking-page">
@@ -279,8 +427,9 @@ const BookingPage: React.FC = () => {
         ) : (
           <div className="booking-confirm-container">
             <OrderSummary
-              tour={tour}
+              tour={preparedTour}
               tourDate={selectedDate} // Передаем найденный объект даты
+              selectedRoom={selectedRoom} // Передаем информацию о выбранном номере
               orderData={orderData}
               // startDate и endDate больше не нужны здесь, т.к. есть tourDate
             />
