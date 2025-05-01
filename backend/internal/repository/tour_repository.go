@@ -92,9 +92,13 @@ func (r *tourRepository) GetByID(ctx context.Context, id int64) (*domain.Tour, e
 	// Получаем отели в городе тура
 	hotels, err := r.getHotelsByCityID(ctx, tour.CityID)
 	if err != nil {
-		// Не возвращаем ошибку, если отели не найдены
+		// Логируем ошибку, чтобы понять, почему отели не загрузились
+		fmt.Printf("WARN: Failed to get hotels for city %d (tour %d): %v\n", tour.CityID, id, err) // Используйте ваш логгер
+		// Не прерываем выполнение, но оставляем tour.Hotels как nil или пустой срез
+		// В качестве альтернативы, можно было бы вернуть ошибку:
+		// return nil, fmt.Errorf("ошибка при получении отелей для тура: %w", err)
 	}
-	tour.Hotels = hotels
+	tour.Hotels = hotels // Присваиваем то, что вернулось (может быть пустым срезом)
 
 	return &tour, nil
 }

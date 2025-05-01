@@ -20,6 +20,20 @@ interface Tour {
   duration: number;
   isActive: boolean;
   // Могут быть добавлены другие поля для детального просмотра
+  hotels?: Hotel[] | null; // Добавляем поле для отелей
+}
+
+// Интерфейс для Отеля (соответствует domain.Hotel, но camelCase)
+interface Hotel {
+  id: number;
+  cityId: number;
+  name: string;
+  description: string;
+  address: string;
+  category: number;
+  imageUrl: string;
+  isActive: boolean;
+  createdAt: string; // Или Date, если нужно преобразование
 }
 
 // Интерфейс для СОКРАЩЕННОЙ информации о туре (используется для state.tours - списка)
@@ -87,6 +101,8 @@ interface RawTourData {
   duration: number;
   is_active: boolean;
   created_at: string; // snake_case
+  city?: any; // Добавляем city, так как он используется в преобразовании
+  hotels?: any[]; // Добавляем hotels для сырых данных
   // Могут быть и другие поля от API
   [key: string]: any;
 }
@@ -163,6 +179,18 @@ export const fetchTourById = createAsyncThunk<
         isActive: rawData.is_active, // Преобразование
         // Добавьте преобразование для других полей при необходимости
         // Например, если city приходит как city_id, нужно будет его загрузить или обработать иначе
+        // Добавляем преобразование для отелей
+        hotels: rawData.hotels?.map((hotel: any): Hotel => ({
+          id: hotel.id,
+          cityId: hotel.city_id,
+          name: hotel.name,
+          description: hotel.description,
+          address: hotel.address,
+          category: hotel.category,
+          imageUrl: hotel.image_url,
+          isActive: hotel.is_active,
+          createdAt: hotel.created_at,
+        })) || null, // Обрабатываем случай отсутствия отелей
       };
 
       return transformedData; // Возвращаем преобразованные данные

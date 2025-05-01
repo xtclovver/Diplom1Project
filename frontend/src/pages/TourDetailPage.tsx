@@ -164,18 +164,25 @@ const TourDetailPage: React.FC = () => {
         </div>
       </div>
       
-      {selectedDate && (
+      {/* Рендерим блок номеров только если выбрана дата И есть хотя бы один отель у тура */}
+      {selectedDate && tour?.hotels && tour.hotels.length > 0 && (
         <div className="tour-hotel-rooms">
-          <h2>Доступные номера в отеле</h2>
+          <h2>Доступные номера в отеле: {tour.hotels[0].name}</h2> {/* Показываем название отеля */}
           <HotelRooms
-            // Исправлено: используем первый отель из массива tour.hotels
-            hotelId={tour?.hotels?.[0]?.id}
+            hotelId={tour.hotels[0].id} // Теперь мы уверены, что tour.hotels[0].id существует
             tourDateId={selectedDate.id}
             startDate={selectedDate.startDate}
             endDate={selectedDate.endDate}
             onRoomSelect={handleRoomSelect}
             selectedRoomId={selectedRoom?.id || null}
           />
+        </div>
+      )}
+      {/* Добавим сообщение, если дата выбрана, но отелей нет */}
+      {selectedDate && (!tour?.hotels || tour.hotels.length === 0) && (
+        <div className="tour-hotel-rooms">
+           <h2>Отели для данного тура не найдены</h2>
+           <p>Информация об отелях для этого тура временно недоступна.</p>
         </div>
       )}
     </div>

@@ -515,6 +515,8 @@ func (h *Handler) getHotelRooms(c *gin.Context) {
 
 			roomID, err := h.services.Hotel.AddRoom(c.Request.Context(), room)
 			if err != nil {
+				// Логируем ошибку, чтобы понять причину
+				fmt.Printf("WARN: Failed to add default room for hotel %d: %v\n", id, err) // Используйте ваш логгер
 				continue
 			}
 

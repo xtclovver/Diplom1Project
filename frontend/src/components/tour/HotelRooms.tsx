@@ -59,15 +59,15 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
             );
             return {
               ...room,
-              // isAvailable: availabilityResponse.data.available // Оригинальная проверка доступности
-              isAvailable: true // Временно отображаем все номера как доступные
+              // isAvailable: availabilityResponse.data.available // Оригинальная проверка доступности - ЗАКОММЕНТИРОВАНО
+              isAvailable: true // Временно отображаем все номера как доступные - РАСКОММЕНТИРОВАНО
             };
           } catch (err) {
             console.error(`Error checking availability for room ${room.id}:`, err);
             return {
               ...room,
-              // isAvailable: false // Оригинальная логика при ошибке
-              isAvailable: true // Временно отображаем как доступные даже при ошибке API
+              // isAvailable: false // Оригинальная логика при ошибке - ЗАКОММЕНТИРОВАНО
+              isAvailable: true // Временно отображаем как доступные даже при ошибке API - РАСКОММЕНТИРОВАНО
             };
           }
         })
