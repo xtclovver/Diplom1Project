@@ -11,7 +11,7 @@ const Footer: React.FC = () => {
         <div className="footer-content">
           <div className="footer-section">
             <div className="footer-logo">
-              <span className="footer-logo-text">ПланетаТур</span>
+              <span className="footer-logo-text">АльфаТрэвел</span>
             </div>
             <p className="footer-description">
               Мы организуем лучшие туры по всему миру с 2010 года. Наша цель - сделать ваш отдых незабываемым и комфортным!
@@ -80,7 +80,7 @@ const Footer: React.FC = () => {
         </div>
         
         <div className="footer-bottom">
-          <p>© {currentYear} ПланетаТур. Все права защищены.</p>
+          <p>© {currentYear} АльфаТрэвел. Все права защищены.</p>
         </div>
         
         <div className="footer-policy">

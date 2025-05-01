@@ -93,17 +93,45 @@ api.interceptors.response.use(
   }
 );
 
+// Импортируем унифицированный интерфейс фильтров
+import { TourFilters } from '../components/tour/TourFilter';
+
+
 // Сервис для работы с турами
 export const tourService = {
   // Получение списка туров с фильтрацией и пагинацией
-  getTours: (filters: any, page: number, size: number) => {
-    return api.get('/tours', {
-      params: {
-        ...filters,
-        page,
-        size
+  getTours: (filters: TourFilters, page: number, size: number) => {
+    // Создаем объект параметров для API
+    const params: Record<string, any> = {
+      page,
+      size,
+    };
+
+    // Копируем фильтры и переименовываем поля дат
+    for (const key in filters) {
+      if (Object.prototype.hasOwnProperty.call(filters, key)) {
+        const value = filters[key as keyof TourFilters];
+        // Пропускаем неопределенные или пустые значения
+        if (value !== undefined && value !== '') {
+          if (key === 'dateFrom') {
+            params['startDateAfter'] = value; // Переименовываем
+          } else if (key === 'dateTo') {
+            params['startDateBefore'] = value; // Переименовываем
+          } else {
+            // Преобразуем ключи camelCase в snake_case для API, если это необходимо
+            // В данном случае API ожидает camelCase, кроме дат, так что оставляем как есть
+             params[key] = value;
+             // Если бы API ожидал snake_case:
+             // const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
+             // params[snakeKey] = value;
+          }
+        }
       }
-    });
+    }
+
+    console.log('[API Request Params] /tours:', params); // Логируем параметры запроса
+
+    return api.get('/tours', { params }); // Передаем сформированные параметры
   },
 
   // Получение информации о конкретном туре

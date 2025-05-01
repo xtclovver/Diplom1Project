@@ -164,27 +164,29 @@ func (r *tourRepository) Delete(ctx context.Context, id int64) error {
 
 // List возвращает список туров с фильтрацией и информацией о городе/стране
 func (r *tourRepository) List(ctx context.Context, filters map[string]interface{}, page, size int) ([]*domain.Tour, error) {
+	fmt.Printf("DEBUG: Received filters in Repository List: %#v\n", filters) // Добавляем логирование полученных фильтров
 	offset := (page - 1) * size
 	limit := size
 
-	// Временная структура больше не нужна
-
-	// Обновленный запрос для List с псевдонимами
-	query := `
-		SELECT
-			t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at,
-			c.id AS "city.id",
-			c.name AS "city.name",
-			co.id AS "city.country.id",
-			co.name AS "city.country.name",
-			co.code AS "city.country.code"
-		FROM tours t
-		LEFT JOIN cities c ON t.city_id = c.id        -- Используем LEFT JOIN
-		LEFT JOIN countries co ON c.country_id = co.id -- Используем LEFT JOIN
+	selectFields := `
+		DISTINCT -- Используем DISTINCT, если будет JOIN с tour_dates
+		t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at,
+		c.id AS "city.id",
+		c.name AS "city.name",
+		co.id AS "city.country.id",
+		co.name AS "city.country.name",
+		co.code AS "city.country.code"
 	`
+	fromClause := `
+		FROM tours t
+		LEFT JOIN cities c ON t.city_id = c.id
+		LEFT JOIN countries co ON c.country_id = co.id
+	`
+	joinClause := "" // Инициализируем пустой JOIN
 
 	var conditions []string
 	var args []interface{}
+	needsDateJoin := false // Флаг для определения необходимости JOIN с tour_dates
 
 	// Активные туры по умолчанию
 	conditions = append(conditions, "t.is_active = true")
@@ -207,29 +209,72 @@ func (r *tourRepository) List(ctx context.Context, filters map[string]interface{
 			conditions = append(conditions, "t.base_price <= ?")
 			args = append(args, priceMax)
 		}
-		// Добавляем поиск по названию тура
+		// Обновленный поиск по названию и описанию (регистронезависимый)
 		if searchQuery, ok := filters["search_query"]; ok && searchQuery.(string) != "" {
-			conditions = append(conditions, "t.name LIKE ?")
-			args = append(args, "%"+searchQuery.(string)+"%")
+			searchPattern := "%" + strings.ToLower(searchQuery.(string)) + "%"
+			conditions = append(conditions, "(LOWER(t.name) LIKE ? OR LOWER(t.description) LIKE ?)")
+			args = append(args, searchPattern, searchPattern)
+		}
+		// Фильтр по продолжительности
+		if durationMin, ok := filters["duration_min"]; ok {
+			conditions = append(conditions, "t.duration >= ?")
+			args = append(args, durationMin)
+		}
+		if durationMax, ok := filters["duration_max"]; ok {
+			conditions = append(conditions, "t.duration <= ?")
+			args = append(args, durationMax)
+		}
+		// Фильтры по дате
+		if startDateAfter, ok := filters["start_date_after"]; ok {
+			conditions = append(conditions, "td.start_date >= ?")
+			args = append(args, startDateAfter)
+			needsDateJoin = true
+		}
+		if startDateBefore, ok := filters["start_date_before"]; ok {
+			conditions = append(conditions, "td.start_date <= ?")
+			args = append(args, startDateBefore)
+			needsDateJoin = true
 		}
 	}
 
-	// Добавление условий к запросу
-	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
+	// Добавляем JOIN с tour_dates, если необходимо
+	if needsDateJoin {
+		joinClause = " LEFT JOIN tour_dates td ON t.id = td.tour_id "
 	}
 
-	// Сортировка и пагинация
-	query += " ORDER BY t.created_at DESC LIMIT ? OFFSET ?"
+	// Формируем WHERE clause
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Формируем ORDER BY clause
+	orderByClause := " ORDER BY t.created_at DESC" // Сортировка по умолчанию
+	if sortBy, ok := filters["sort_by"].(string); ok {
+		if sortOrder, ok := filters["sort_order"].(string); ok {
+			// Проверяем, что sortOrder 'asc' или 'desc' (уже сделано в хендлере, но для безопасности)
+			if sortOrder == "asc" || sortOrder == "desc" {
+				// sortBy уже содержит проверенное имя поля из хендлера (e.g., "t.base_price")
+				orderByClause = fmt.Sprintf(" ORDER BY %s %s", sortBy, strings.ToUpper(sortOrder))
+			}
+		}
+	}
+
+	// Формируем LIMIT и OFFSET
+	limitOffsetClause := " LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
+
+	// Собираем полный запрос
+	query := "SELECT " + selectFields + fromClause + joinClause + whereClause + orderByClause + limitOffsetClause
 
 	var tours []*domain.Tour // Сканируем напрямую в слайс domain.Tour
 	err := r.db.SelectContext(ctx, &tours, query, args...)
 	if err != nil {
+		// Добавим вывод самого запроса и аргументов для отладки
+		fmt.Printf("DEBUG: Error executing List query: %v\nQuery: %s\nArgs: %v\n", err, query, args)
 		return nil, fmt.Errorf("ошибка при поиске туров: %w", err)
 	}
 
-	// Преобразование больше не нужно, данные уже в правильной структуре
 	// Даты и отели для списка по-прежнему не загружаем для производительности
 
 	return tours, nil
@@ -237,26 +282,31 @@ func (r *tourRepository) List(ctx context.Context, filters map[string]interface{
 
 // Count возвращает количество туров с учетом фильтрации
 func (r *tourRepository) Count(ctx context.Context, filters map[string]interface{}) (int, error) {
-	query := `
-		SELECT COUNT(*)
+	fmt.Printf("DEBUG: Received filters in Repository Count: %#v\n", filters) // Добавляем логирование полученных фильтров
+	selectClause := "SELECT COUNT(DISTINCT t.id)"                             // Считаем уникальные ID туров
+	fromClause := `
 		FROM tours t
-		JOIN cities c ON t.city_id = c.id
+		LEFT JOIN cities c ON t.city_id = c.id -- Используем LEFT JOIN для консистентности с List
+		LEFT JOIN countries co ON c.country_id = co.id -- Добавляем JOIN с countries для фильтрации по country_id
 	`
+	joinClause := "" // Инициализируем пустой JOIN для дат
 
 	var conditions []string
 	var args []interface{}
+	needsDateJoin := false // Флаг для определения необходимости JOIN с tour_dates
 
 	// Активные туры по умолчанию
 	conditions = append(conditions, "t.is_active = true")
 
-	// Обработка фильтров
+	// Обработка фильтров (аналогично List)
 	if filters != nil {
 		if cityID, ok := filters["city_id"]; ok {
 			conditions = append(conditions, "t.city_id = ?")
 			args = append(args, cityID)
 		}
 		if countryID, ok := filters["country_id"]; ok {
-			conditions = append(conditions, "c.country_id = ?")
+			// Условие теперь применяется к co (countries)
+			conditions = append(conditions, "co.id = ?") // Используем co.id после JOIN с countries
 			args = append(args, countryID)
 		}
 		if priceMin, ok := filters["price_min"]; ok {
@@ -267,21 +317,53 @@ func (r *tourRepository) Count(ctx context.Context, filters map[string]interface
 			conditions = append(conditions, "t.base_price <= ?")
 			args = append(args, priceMax)
 		}
-		// Добавляем такой же поиск по названию для метода Count
+		// Обновленный поиск по названию и описанию (регистронезависимый)
 		if searchQuery, ok := filters["search_query"]; ok && searchQuery.(string) != "" {
-			conditions = append(conditions, "t.name LIKE ?")
-			args = append(args, "%"+searchQuery.(string)+"%")
+			searchPattern := "%" + strings.ToLower(searchQuery.(string)) + "%"
+			conditions = append(conditions, "(LOWER(t.name) LIKE ? OR LOWER(t.description) LIKE ?)")
+			args = append(args, searchPattern, searchPattern)
+		}
+		// Фильтр по продолжительности
+		if durationMin, ok := filters["duration_min"]; ok {
+			conditions = append(conditions, "t.duration >= ?")
+			args = append(args, durationMin)
+		}
+		if durationMax, ok := filters["duration_max"]; ok {
+			conditions = append(conditions, "t.duration <= ?")
+			args = append(args, durationMax)
+		}
+		// Фильтры по дате
+		if startDateAfter, ok := filters["start_date_after"]; ok {
+			conditions = append(conditions, "td.start_date >= ?")
+			args = append(args, startDateAfter)
+			needsDateJoin = true
+		}
+		if startDateBefore, ok := filters["start_date_before"]; ok {
+			conditions = append(conditions, "td.start_date <= ?")
+			args = append(args, startDateBefore)
+			needsDateJoin = true
 		}
 	}
 
-	// Добавление условий к запросу
-	if len(conditions) > 0 {
-		query += " WHERE " + strings.Join(conditions, " AND ")
+	// Добавляем JOIN с tour_dates, если необходимо
+	if needsDateJoin {
+		joinClause = " LEFT JOIN tour_dates td ON t.id = td.tour_id "
 	}
+
+	// Формируем WHERE clause
+	whereClause := ""
+	if len(conditions) > 0 {
+		whereClause = " WHERE " + strings.Join(conditions, " AND ")
+	}
+
+	// Собираем полный запрос
+	query := selectClause + fromClause + joinClause + whereClause
 
 	var count int
 	err := r.db.GetContext(ctx, &count, query, args...)
 	if err != nil {
+		// Добавим вывод самого запроса и аргументов для отладки
+		fmt.Printf("DEBUG: Error executing Count query: %v\nQuery: %s\nArgs: %v\n", err, query, args)
 		return 0, fmt.Errorf("ошибка при подсчете туров: %w", err)
 	}
 

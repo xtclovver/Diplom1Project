@@ -190,43 +190,119 @@ func corsMiddleware() gin.HandlerFunc {
 // @Failure 500 {object} ErrorResponse "Internal server error"
 // @Router /api/tours [get]
 func (h *Handler) getAllTours(c *gin.Context) {
-	filters := make(map[string]interface{})
-	if cityIDStr := c.Query("city_id"); cityIDStr != "" {
-		cityID, err := strconv.Atoi(cityIDStr)
-		if err != nil {
-			newErrorResponse(c, http.StatusBadRequest, "invalid city_id parameter")
-			return
-		}
-		filters["city_id"] = cityID
-	}
-	if countryIDStr := c.Query("country_id"); countryIDStr != "" {
+	// fmt.Println("DEBUG: Entering handler.getAllTours") // Можно добавить лог сюда, если нужно
+	// --- Начало логики из h.List ---
+	var filters = make(map[string]interface{})
+
+	// Обрабатываем ID страны (ожидаем countryId от фронтенда)
+	if countryIDStr := c.Query("countryId"); countryIDStr != "" {
 		countryID, err := strconv.Atoi(countryIDStr)
-		if err != nil {
-			newErrorResponse(c, http.StatusBadRequest, "invalid country_id parameter")
+		if err == nil && countryID > 0 {
+			filters["country_id"] = countryID // Ключ для репозитория
+		} else {
+			newErrorResponse(c, http.StatusBadRequest, "invalid countryId parameter")
 			return
 		}
-		filters["country_id"] = countryID // Предполагаем, что сервис может фильтровать по стране
-	}
-	if priceMinStr := c.Query("price_min"); priceMinStr != "" {
-		priceMin, err := strconv.ParseFloat(priceMinStr, 64)
-		if err != nil {
-			newErrorResponse(c, http.StatusBadRequest, "invalid price_min parameter")
-			return
-		}
-		filters["price_min"] = priceMin
-	}
-	if priceMaxStr := c.Query("price_max"); priceMaxStr != "" {
-		priceMax, err := strconv.ParseFloat(priceMaxStr, 64)
-		if err != nil {
-			newErrorResponse(c, http.StatusBadRequest, "invalid price_max parameter")
-			return
-		}
-		filters["price_max"] = priceMax
 	}
 
+	// Обрабатываем ID города (ожидаем cityId от фронтенда)
+	if cityIDStr := c.Query("cityId"); cityIDStr != "" {
+		cityID, err := strconv.Atoi(cityIDStr)
+		if err == nil && cityID > 0 {
+			filters["city_id"] = cityID // Ключ для репозитория
+		} else {
+			newErrorResponse(c, http.StatusBadRequest, "invalid cityId parameter")
+			return
+		}
+	}
+
+	// Обрабатываем минимальную цену (ожидаем priceMin от фронтенда)
+	if priceMinStr := c.Query("priceMin"); priceMinStr != "" {
+		priceMin, err := strconv.ParseFloat(priceMinStr, 64)
+		if err == nil && priceMin >= 0 {
+			filters["price_min"] = priceMin // Ключ для репозитория
+		} else {
+			newErrorResponse(c, http.StatusBadRequest, "invalid priceMin parameter")
+			return
+		}
+	}
+
+	// Обрабатываем максимальную цену (ожидаем priceMax от фронтенда)
+	if priceMaxStr := c.Query("priceMax"); priceMaxStr != "" {
+		priceMax, err := strconv.ParseFloat(priceMaxStr, 64)
+		if err == nil && priceMax > 0 {
+			filters["price_max"] = priceMax // Ключ для репозитория
+		} else {
+			newErrorResponse(c, http.StatusBadRequest, "invalid priceMax parameter")
+			return
+		}
+	}
+
+	// Добавляем поиск по названию (ожидаем searchQuery от фронтенда)
+	if searchQuery := c.Query("searchQuery"); searchQuery != "" {
+		filters["search_query"] = searchQuery // Ключ для репозитория
+	}
+
+	// Обрабатываем минимальную продолжительность (ожидаем durationMin от фронтенда)
+	if durationMinStr := c.Query("durationMin"); durationMinStr != "" {
+		durationMin, err := strconv.Atoi(durationMinStr)
+		if err == nil && durationMin > 0 {
+			filters["duration_min"] = durationMin // Ключ для репозитория
+		} else {
+			newErrorResponse(c, http.StatusBadRequest, "invalid durationMin parameter")
+			return
+		}
+	}
+
+	// Обрабатываем максимальную продолжительность (ожидаем durationMax от фронтенда)
+	if durationMaxStr := c.Query("durationMax"); durationMaxStr != "" {
+		durationMax, err := strconv.Atoi(durationMaxStr)
+		if err == nil && durationMax > 0 {
+			filters["duration_max"] = durationMax // Ключ для репозитория
+		} else {
+			newErrorResponse(c, http.StatusBadRequest, "invalid durationMax parameter")
+			return
+		}
+	}
+
+	// Обрабатываем дату начала "после" (ожидаем startDateAfter от фронтенда)
+	if startDateAfter := c.Query("startDateAfter"); startDateAfter != "" {
+		// TODO: Добавить валидацию формата даты, если необходимо
+		filters["start_date_after"] = startDateAfter // Ключ для репозитория
+	}
+
+	// Обрабатываем дату начала "до" (ожидаем startDateBefore от фронтенда)
+	if startDateBefore := c.Query("startDateBefore"); startDateBefore != "" {
+		// TODO: Добавить валидацию формата даты, если необходимо
+		filters["start_date_before"] = startDateBefore // Ключ для репозитория
+	}
+
+	// Обрабатываем параметры сортировки (ожидаем sortBy, sortOrder от фронтенда)
+	if sortBy := c.Query("sortBy"); sortBy != "" {
+		// Валидация допустимых полей для сортировки
+		allowedSortBy := map[string]string{
+			"price":    "t.base_price",
+			"duration": "t.duration",
+			"name":     "t.name",
+			// Добавьте другие поля при необходимости
+		}
+		if dbField, ok := allowedSortBy[sortBy]; ok {
+			filters["sort_by"] = dbField // Ключ для репозитория
+			sortOrder := c.DefaultQuery("sortOrder", "asc")
+			if sortOrder != "asc" && sortOrder != "desc" {
+				sortOrder = "asc" // По умолчанию asc
+			}
+			filters["sort_order"] = sortOrder // Ключ для репозитория
+		}
+		// Если sortBy невалидный, просто игнорируем сортировку
+	}
+	// --- Конец логики из h.List ---
+
+	// Извлекаем параметры пагинации (остается как было)
 	page, _ := strconv.Atoi(c.DefaultQuery("page", "1"))
 	size, _ := strconv.Atoi(c.DefaultQuery("size", "10"))
 
+	// Получаем туры с учетом ВСЕХ фильтров и пагинации
 	tours, total, err := h.services.Tour.List(c.Request.Context(), filters, page, size)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())

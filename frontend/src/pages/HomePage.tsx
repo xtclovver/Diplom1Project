@@ -225,7 +225,7 @@ const HomePage: React.FC = () => {
       <section className="features-section">
         <div className="features-bg"></div>
         <div className="container">
-          <h2 className="section-title">Почему именно ПланетаТур?</h2>
+          <h2 className="section-title">Почему именно АльфаТрэвел?</h2>
           
           <div className="features-grid">
             {features.map((feature, index) => (

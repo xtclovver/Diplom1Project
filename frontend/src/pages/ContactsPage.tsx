@@ -109,7 +109,7 @@ const ContactsPage: React.FC = () => {
               allowFullScreen={true}
               loading="lazy"
               referrerPolicy="no-referrer-when-downgrade"
-              title="Карта расположения офиса ПланетаТур"
+              title="Карта расположения офиса АльфаТрэвел"
             ></iframe>
           </div>
         </section>

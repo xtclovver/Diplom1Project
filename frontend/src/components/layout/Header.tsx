@@ -82,7 +82,7 @@ const Header: React.FC = () => {
         <div className="header-logo">
           <Link to="/">
             <div className="header-logo-text">
-              ПланетаТур
+              АльфаТрэвел
               <span>Путешествуй с нами</span>
             </div>
           </Link>

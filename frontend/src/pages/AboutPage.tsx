@@ -8,7 +8,7 @@ const AboutPage: React.FC = () => {
     <div className="about-page">
       <div className="about-hero">
         <div className="container">
-          <h1>О компании ПланетаТур</h1>
+          <h1>О компании АльфаТрэвел</h1>
           <p className="about-subtitle">С 2010 года создаем незабываемые путешествия для вас</p>
         </div>
       </div>
@@ -19,18 +19,18 @@ const AboutPage: React.FC = () => {
             <div className="about-content">
               <h2>Наша история</h2>
               <p>
-                Туристическое агентство <strong>ПланетаТур</strong> было основано в 2010 году группой энтузиастов, 
+                Туристическое агентство <strong>АльфаТрэвел</strong> было основано в 2010 году группой энтузиастов, 
                 объединенных общей страстью – любовью к путешествиям. Мы начинали как небольшая компания, 
                 специализирующаяся на турах по России, но быстро расширили свою географию.
               </p>
               <p>
                 За 13 лет работы мы организовали более 15 000 путешествий и помогли десяткам тысяч клиентов 
-                открыть для себя новые горизонты. Сегодня <strong>ПланетаТур</strong> – это команда профессионалов, 
+                открыть для себя новые горизонты. Сегодня <strong>АльфаТрэвел</strong> – это команда профессионалов, 
                 влюбленных в свое дело и постоянно стремящихся сделать ваш отдых незабываемым.
               </p>
             </div>
             <div className="about-image">
-              <img src={aboutHistory} alt="История ПланетаТур" />
+              <img src={aboutHistory} alt="История АльфаТрэвел" />
             </div>
           </div>
         </section>
@@ -72,12 +72,12 @@ const AboutPage: React.FC = () => {
         <section className="about-section">
           <div className="about-grid reverse">
             <div className="about-image">
-              <img src={aboutTeam} alt="Команда ПланетаТур" />
+              <img src={aboutTeam} alt="Команда АльфаТрэвел" />
             </div>
             <div className="about-content">
               <h2>Наша команда</h2>
               <p>
-                В <strong>ПланетаТур</strong> работают настоящие профессионалы туристической индустрии. 
+                В <strong>АльфаТрэвел</strong> работают настоящие профессионалы туристической индустрии. 
                 Наши сотрудники регулярно проходят обучение, посещают новые направления и отели, 
                 чтобы предоставлять вам актуальную информацию и рекомендации из первых рук.
               </p>
@@ -91,7 +91,7 @@ const AboutPage: React.FC = () => {
         </section>
 
         <section className="about-section facts-section">
-          <h2 className="section-title">ПланетаТур в цифрах</h2>
+          <h2 className="section-title">АльфаТрэвел в цифрах</h2>
           <div className="facts-grid">
             <div className="fact-card">
               <div className="fact-number">13+</div>

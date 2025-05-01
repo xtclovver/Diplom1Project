@@ -2,6 +2,7 @@ package service
 
 import (
 	"context"
+	"fmt"
 
 	"github.com/usedcvnt/Diplom1Project/backend/internal/domain"
 	"github.com/usedcvnt/Diplom1Project/backend/internal/repository"
@@ -41,6 +42,7 @@ func (s *TourServiceImpl) Delete(ctx context.Context, id int64) error {
 
 // List возвращает список туров с фильтрацией
 func (s *TourServiceImpl) List(ctx context.Context, filters map[string]interface{}, page, size int) ([]*domain.Tour, int, error) {
+	fmt.Println("DEBUG: Entering service.List") // Добавляем лог входа в сервис
 	tours, err := s.repos.List(ctx, filters, page, size)
 	if err != nil {
 		return nil, 0, err

@@ -87,8 +87,19 @@ export const fetchTours = createAsyncThunk<FetchToursResponse, FetchToursParams>
   'tour/fetchTours',
   async (params) => {
     try {
-      const response = await tourService.getTours(params.filters, params.page, params.size);
+      // Преобразуем строковые цены в числа перед передачей в сервис
+      const numericFilters = {
+        ...params.filters,
+        priceMin: params.filters.priceMin ? parseFloat(params.filters.priceMin) : undefined,
+        priceMax: params.filters.priceMax ? parseFloat(params.filters.priceMax) : undefined,
+      };
+      // Удаляем NaN значения, если parseFloat не смог распарсить
+      if (isNaN(numericFilters.priceMin as number)) numericFilters.priceMin = undefined;
+      if (isNaN(numericFilters.priceMax as number)) numericFilters.priceMax = undefined;
+
+      const response = await tourService.getTours(numericFilters, params.page, params.size);
       return {
+        // Предполагаем, что API возвращает данные, соответствующие интерфейсу Tour из этого файла
         tours: response.data.items,
         total: response.data.total
       };

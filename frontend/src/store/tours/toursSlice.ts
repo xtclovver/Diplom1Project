@@ -59,16 +59,20 @@ interface TourDate {
   priceModifier: number;
 }
 
+// Обновленный интерфейс, синхронизированный с TourFilter.tsx
 interface TourFilters {
-  countries?: number[];
-  cities?: number[];
+  countryId?: number;
+  cityId?: number;
   priceMin?: number;
   priceMax?: number;
-  dateFrom?: string;
-  dateTo?: string;
-  duration?: number[];
-  peopleCount?: number;
+  dateFrom?: string; // Будет преобразовано в startDateAfter при запросе
+  dateTo?: string;   // Будет преобразовано в startDateBefore при запросе
+  durationMin?: number;
+  durationMax?: number;
+  peopleCount?: number; // Не используется в бэкенде пока
   searchQuery?: string;
+  sortBy?: string;
+  sortOrder?: 'asc' | 'desc';
 }
 
 interface PaginationParams {
@@ -112,7 +116,12 @@ const initialState: ToursState = {
   tours: [],
   tour: null,
   tourDates: [],
-  filters: {},
+  filters: {
+    // Устанавливаем начальные значения сортировки по умолчанию
+    sortBy: 'price',
+    sortOrder: 'asc',
+    // Другие начальные фильтры можно добавить здесь при необходимости
+  },
   pagination: {
     page: 1,
     size: 10,

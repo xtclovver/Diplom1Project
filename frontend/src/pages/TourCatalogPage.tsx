@@ -2,6 +2,7 @@ import React, { useEffect, useState } from 'react';
 import { useAppDispatch, useAppSelector } from '../store/hooks';
 import { fetchTours, setFilters, setPage, setPageSize } from '../store/tours/toursSlice';
 import TourFilter from '../components/tour/TourFilter';
+import { TourFilters } from '../components/tour/TourFilter';
 import TourList from '../components/tour/TourList';
 import Pagination from '../components/ui/Pagination';
 import Spinner from '../components/ui/Spinner';
@@ -78,26 +79,20 @@ const TourCatalogPage: React.FC = () => {
   const filters = toursState?.filters || {};
   const pagination = toursState?.pagination || { page: 1, size: 10, total: 0 };
   
-  const [sortBy, setSortBy] = useState('popular');
+  // Убираем локальное состояние сортировки, она будет управляться через Redux filters
 
   useEffect(() => {
-    // Удаляем проверку на toursState и саму переменную из зависимостей
+    // Передаем все фильтры (включая сортировку) и пагинацию в fetchTours
+    // Убедитесь, что fetchTours и API используют эти параметры
     dispatch(fetchTours({ filters, page: pagination.page, size: pagination.size }));
-  }, [dispatch, filters, pagination.page, pagination.size]);
+  }, [dispatch, filters, pagination.page, pagination.size]); // Зависимость от всего объекта filters
 
-  const handleFilterChange = (newFilters: FilterComponentFilters) => {
-    // Преобразуем фильтры из компонента в формат для Redux store
-    const reduxFilters: ReduxTourFilters = {
-      countries: newFilters.country ? [Number(newFilters.country)] : undefined,
-      cities: newFilters.city ? [Number(newFilters.city)] : undefined,
-      priceMin: newFilters.priceMin ? Number(newFilters.priceMin) : undefined,
-      priceMax: newFilters.priceMax ? Number(newFilters.priceMax) : undefined,
-      dateFrom: newFilters.dateFrom,
-      dateTo: newFilters.dateTo,
-      peopleCount: newFilters.people
-    };
-    
-    dispatch(setFilters(reduxFilters));
+  // Обработчик принимает напрямую объект TourFilters
+  const handleFilterChange = (newFilters: TourFilters) => {
+    // Сбрасываем страницу на 1 при изменении фильтров
+    dispatch(setPage(1));
+    // Отправляем новые фильтры в Redux store без преобразований
+    dispatch(setFilters(newFilters));
   };
 
   const handlePageChange = (page: number) => {
@@ -108,69 +103,52 @@ const TourCatalogPage: React.FC = () => {
     dispatch(setPageSize(size));
   };
 
-  const handleSortChange = (sort: string) => {
-    setSortBy(sort);
-  };
+  // Убираем локальный обработчик сортировки
 
-  // Сортировка туров
-  const sortedTours = [...tours].sort((a, b) => {
-    if (sortBy === 'price-asc') return a.basePrice - b.basePrice;
-    if (sortBy === 'price-desc') return b.basePrice - a.basePrice;
-    if (sortBy === 'popular') return 0; // Реализовать когда появится данные о популярности
-    return 0;
-  });
+  // Убираем локальную сортировку, данные должны приходить отсортированными с бэкенда
+  // const sortedTours = [...tours].sort(...);
 
   if (error) {
     return <div className="error-message">Ошибка: {error}</div>;
   }
 
-  // Преобразуем фильтры из Redux store в формат для компонента TourFilter
-  const filterForComponent: FilterComponentFilters = {
-    country: filters.countries && filters.countries.length > 0 ? String(filters.countries[0]) : '',
-    city: filters.cities && filters.cities.length > 0 ? String(filters.cities[0]) : '',
-    dateFrom: filters.dateFrom || '',
-    dateTo: filters.dateTo || '',
-    people: filters.peopleCount || 1,
-    priceMin: filters.priceMin ? String(filters.priceMin) : '',
-    priceMax: filters.priceMax ? String(filters.priceMax) : ''
-  };
+  // Передаем фильтры из Redux store напрямую в TourFilter,
+  // так как теперь используется единый тип TourFilters.
+  // Убедитесь, что начальное состояние filters в Redux соответствует TourFilters.
+  const initialFiltersForComponent: TourFilters = filters;
 
   return (
     <div className="tour-catalog-page">
       <h1>Каталог туров</h1>
-      
+
       <div className="catalog-container">
         <div className="filter-panel">
-          <TourFilter onFilterChange={handleFilterChange as any} initialFilters={filterForComponent as any} />
+          {/* Передаем обработчик и начальные фильтры без 'as any' */}
+          <TourFilter
+            onFilterChange={handleFilterChange}
+            initialFilters={initialFiltersForComponent}
+          />
         </div>
-        
+
         <div className="tour-results">
           <div className="results-header">
             <div className="results-count">
               Найдено туров: {pagination.total}
             </div>
-            
-            <div className="sort-selector">
-              <SortSelector 
-                value={sortBy} 
-                onChange={handleSortChange} 
-                options={[
-                  { value: 'popular', label: 'По популярности' },
-                  { value: 'price-asc', label: 'От дешевых к дорогим' },
-                  { value: 'price-desc', label: 'От дорогих к дешевым' }
-                ]} 
-              />
-            </div>
+
+            {/* Убираем SortSelector, так как сортировка теперь часть TourFilter */}
+            {/* <div className="sort-selector"> ... </div> */}
           </div>
-          
+
           {loading ? (
             <Spinner />
           ) : (
             <>
-              <TourList tours={sortedTours as any} />
-              
+              {/* Передаем туры напрямую без локальной сортировки и 'as any' */}
+              <TourList tours={tours} />
+
               <div className="pagination-container">
-                <Pagination 
+                <Pagination
                   currentPage={pagination.page} 
                   totalPages={Math.ceil(pagination.total / pagination.size)} 
                   onPageChange={handlePageChange} 

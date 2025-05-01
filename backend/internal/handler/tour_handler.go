@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"fmt"
 	"net/http"
 	"strconv"
 
@@ -9,6 +10,7 @@ import (
 
 // Изменяю обработчик списка туров, добавляя поддержку поиска по названию
 func (h *Handler) List(c *gin.Context) {
+	fmt.Println("DEBUG: Entering handler.List") // Добавляем лог входа в обработчик
 	// Извлекаем и парсим параметры фильтрации
 	var filters = make(map[string]interface{})
 
@@ -47,6 +49,53 @@ func (h *Handler) List(c *gin.Context) {
 	// Добавляем поиск по названию
 	if searchQuery := c.Query("searchQuery"); searchQuery != "" {
 		filters["search_query"] = searchQuery
+	}
+
+	// Обрабатываем минимальную продолжительность
+	if durationMinStr := c.Query("durationMin"); durationMinStr != "" {
+		durationMin, err := strconv.Atoi(durationMinStr)
+		if err == nil && durationMin > 0 {
+			filters["duration_min"] = durationMin
+		}
+	}
+
+	// Обрабатываем максимальную продолжительность
+	if durationMaxStr := c.Query("durationMax"); durationMaxStr != "" {
+		durationMax, err := strconv.Atoi(durationMaxStr)
+		if err == nil && durationMax > 0 {
+			filters["duration_max"] = durationMax
+		}
+	}
+
+	// Обрабатываем дату начала "после"
+	if startDateAfter := c.Query("startDateAfter"); startDateAfter != "" {
+		// TODO: Добавить валидацию формата даты, если необходимо
+		filters["start_date_after"] = startDateAfter
+	}
+
+	// Обрабатываем дату начала "до"
+	if startDateBefore := c.Query("startDateBefore"); startDateBefore != "" {
+		// TODO: Добавить валидацию формата даты, если необходимо
+		filters["start_date_before"] = startDateBefore
+	}
+
+	// Обрабатываем параметры сортировки
+	if sortBy := c.Query("sortBy"); sortBy != "" {
+		// Валидация допустимых полей для сортировки
+		allowedSortBy := map[string]string{
+			"price":    "t.base_price",
+			"duration": "t.duration",
+			"name":     "t.name",
+			// Добавьте другие поля при необходимости
+		}
+		if dbField, ok := allowedSortBy[sortBy]; ok {
+			filters["sort_by"] = dbField
+			sortOrder := c.DefaultQuery("sortOrder", "asc")
+			if sortOrder != "asc" && sortOrder != "desc" {
+				sortOrder = "asc" // По умолчанию asc
+			}
+			filters["sort_order"] = sortOrder
+		}
 	}
 
 	// Извлекаем параметры пагинации
