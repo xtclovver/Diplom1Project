@@ -20,6 +20,12 @@
   border: 1px solid #a5d6a7;
 }
 
+.order-status.paid {
+  background-color: #e3f2fd;
+  color: #1976d2;
+  border: 1px solid #bbdefb;
+}
+
 .order-status.processing {
   background-color: #e1f5fe;
   color: #0288d1;

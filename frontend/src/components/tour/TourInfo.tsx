@@ -106,7 +106,7 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
                 <span className="detail-value">
                   {tour.city && tour.city.name && tour.city.country && tour.city.country.name 
                     ? `${tour.city.name}, ${tour.city.country.name}` 
-                    : 'Россия, Сочи'}
+                    : 'Направление не указано'}
                 </span>
               </div>
               <div className="detail-item">
@@ -127,7 +127,7 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
             {tour.program ? (
               <div dangerouslySetInnerHTML={{ __html: tour.program }} />
             ) : (
-              <p>Программа тура будет добавлена позже.</p>
+              <p className="no-data-message">Для данного тура программа не предоставлена</p>
             )}
           </div>
         )}
@@ -149,7 +149,7 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
                 <p>{tour.hotel.description}</p>
               </div>
             ) : (
-              <p>Информация об отеле будет добавлена позже.</p>
+              <p className="no-data-message">Информация об отеле для данного тура отсутствует</p>
             )}
           </div>
         )}
@@ -166,7 +166,7 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
                       <li key={index}>{item}</li>
                     ))
                   ) : (
-                    <li>Информация будет добавлена позже</li>
+                    <li className="no-data-item">Нет данных о включенных услугах</li>
                   )}
                 </ul>
               </div>
@@ -179,7 +179,7 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
                       <li key={index}>{item}</li>
                     ))
                   ) : (
-                    <li>Информация будет добавлена позже</li>
+                    <li className="no-data-item">Нет данных о дополнительно оплачиваемых услугах</li>
                   )}
                 </ul>
               </div>

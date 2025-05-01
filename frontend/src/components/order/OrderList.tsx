@@ -5,7 +5,7 @@ import './OrderList.css';
 
 interface Order {
   id: number;
-  tour: {
+  tour?: {
     id: number;
     name: string;
     image_url: string;
@@ -25,10 +25,21 @@ interface OrderListProps {
 }
 
 const OrderList: React.FC<OrderListProps> = ({ orders, onCancelOrder }) => {
-  // Форматирование даты
+  // Улучшенное форматирование даты с обработкой ошибок
   const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU');
+    if (!dateString) return "Дата не указана";
+    
+    try {
+      const date = new Date(dateString);
+      // Проверка на валидность даты
+      if (isNaN(date.getTime())) {
+        return "Некорректная дата";
+      }
+      return date.toLocaleDateString('ru-RU');
+    } catch (error) {
+      console.error("Ошибка при форматировании даты:", error);
+      return "Ошибка даты";
+    }
   };
 
   return (
@@ -46,12 +57,23 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onCancelOrder }) => {
           
           <div className="order-content">
             <div className="order-image">
-              <img src={order.tour.image_url || '/images/tour-placeholder.jpg'} alt={order.tour.name} />
+              {order.tour && order.tour.image_url ? (
+                <img src={order.tour.image_url} alt={order.tour.name} onError={(e) => {
+                  // Fallback если изображение не загрузилось
+                  e.currentTarget.src = '/images/tour-placeholder.jpg';
+                }} />
+              ) : (
+                <img src="/images/tour-placeholder.jpg" alt="Изображение тура недоступно" />
+              )}
             </div>
             
             <div className="order-details">
               <h3 className="order-tour-name">
-                <Link to={`/tours/${order.tour.id}`}>{order.tour.name}</Link>
+                {order.tour && order.tour.name ? (
+                  <Link to={`/tours/${order.tour.id}`}>{order.tour.name}</Link>
+                ) : (
+                  <span>Информация о туре недоступна</span>
+                )}
               </h3>
               
               <div className="order-tour-dates">
@@ -71,7 +93,8 @@ const OrderList: React.FC<OrderListProps> = ({ orders, onCancelOrder }) => {
             <div className="order-status-container">
               <OrderStatus status={order.status} />
               
-              {['PENDING', 'CONFIRMED'].includes(order.status) && (
+              {/* Проверяем статус с учетом возможных разных регистров */}
+              {(order.status.toUpperCase() === 'PENDING' || order.status.toUpperCase() === 'CONFIRMED') && (
                 <button 
                   className="cancel-order-button" 
                   onClick={() => onCancelOrder(order.id)}

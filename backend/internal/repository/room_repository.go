@@ -21,20 +21,18 @@ func NewRoomRepository(db *sqlx.DB) RoomRepository {
 // Create создает новый номер отеля
 func (r *roomRepository) Create(ctx context.Context, room *domain.Room) (int64, error) {
 	query := `
-		INSERT INTO rooms (hotel_id, room_type_id, name, description, price_per_night, capacity, is_available)
-		VALUES (?, ?, ?, ?, ?, ?, ?)
+		INSERT INTO rooms (hotel_id, description, beds, price, image_url)
+		VALUES (?, ?, ?, ?, ?)
 	`
 
 	result, err := r.db.ExecContext(
 		ctx,
 		query,
 		room.HotelID,
-		room.RoomTypeID,
-		room.Name,
 		room.Description,
-		room.PricePerNight,
-		room.Capacity,
-		room.IsAvailable,
+		room.Beds,
+		room.Price,
+		room.ImageURL,
 	)
 	if err != nil {
 		return 0, fmt.Errorf("ошибка при создании номера: %w", err)
@@ -51,7 +49,7 @@ func (r *roomRepository) Create(ctx context.Context, room *domain.Room) (int64, 
 // GetByID получает номер отеля по ID
 func (r *roomRepository) GetByID(ctx context.Context, id int64) (*domain.Room, error) {
 	query := `
-		SELECT id, hotel_id, room_type_id, name, description, price_per_night, capacity, is_available, created_at
+		SELECT id, hotel_id, description, beds, price, image_url
 		FROM rooms
 		WHERE id = ?
 	`
@@ -69,7 +67,7 @@ func (r *roomRepository) GetByID(ctx context.Context, id int64) (*domain.Room, e
 func (r *roomRepository) Update(ctx context.Context, room *domain.Room) error {
 	query := `
 		UPDATE rooms
-		SET hotel_id = ?, room_type_id = ?, name = ?, description = ?, price_per_night = ?, capacity = ?, is_available = ?
+		SET hotel_id = ?, description = ?, beds = ?, price = ?, image_url = ?
 		WHERE id = ?
 	`
 
@@ -77,12 +75,10 @@ func (r *roomRepository) Update(ctx context.Context, room *domain.Room) error {
 		ctx,
 		query,
 		room.HotelID,
-		room.RoomTypeID,
-		room.Name,
 		room.Description,
-		room.PricePerNight,
-		room.Capacity,
-		room.IsAvailable,
+		room.Beds,
+		room.Price,
+		room.ImageURL,
 		room.ID,
 	)
 	if err != nil {
@@ -107,10 +103,10 @@ func (r *roomRepository) Delete(ctx context.Context, id int64) error {
 // ListByHotelID возвращает список номеров отеля
 func (r *roomRepository) ListByHotelID(ctx context.Context, hotelID int64) ([]*domain.Room, error) {
 	query := `
-		SELECT id, hotel_id, room_type_id, name, description, price_per_night, capacity, is_available, created_at
+		SELECT id, hotel_id, description, beds, price, image_url
 		FROM rooms
-		WHERE hotel_id = ? AND is_available = true
-		ORDER BY price_per_night
+		WHERE hotel_id = ?
+		ORDER BY price
 	`
 
 	var rooms []*domain.Room

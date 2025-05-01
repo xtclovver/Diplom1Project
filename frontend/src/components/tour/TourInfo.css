@@ -137,7 +137,23 @@
 }
 
 .excluded-list li {
-  color: #777;
+  color: #555;
+  margin-bottom: 8px;
+}
+
+.no-data-message {
+  color: #888;
+  font-style: italic;
+  background-color: #f9f9f9;
+  padding: 15px;
+  border-radius: 5px;
+  text-align: center;
+  margin: 20px 0;
+}
+
+.no-data-item {
+  color: #888;
+  font-style: italic;
 }
 
 @media (max-width: 768px) {

@@ -143,6 +143,13 @@ export const hotelService = {
   // Получение номеров отеля
   getHotelRooms: (id) => {
     return api.get(`/hotels/${id}/rooms`);
+  },
+  
+  // Проверка доступности номера на указанные даты
+  getRoomAvailability: (roomId, startDate, endDate) => {
+    return api.get(`/rooms/${roomId}/availability`, { 
+      params: { startDate, endDate } 
+    });
   }
 };
 

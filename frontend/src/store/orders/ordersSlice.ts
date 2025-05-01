@@ -8,19 +8,18 @@ interface Order {
   tourId: number;
   tourDateId: number;
   roomId: number | null;
-  peopleCount: number;
-  totalPrice: number;
+  adults: number;
+  children: number;
+  total_price: number;
   status: 'pending' | 'confirmed' | 'paid' | 'cancelled' | 'completed';
-  createdAt: string;
+  created_at: string;
   tour: {
     id: number;
     name: string;
-    imageUrl: string;
+    image_url: string;
   };
-  tourDate: {
-    startDate: string;
-    endDate: string;
-  };
+  start_date: string;
+  end_date: string;
   room?: {
     id: number;
     description: string;
@@ -32,7 +31,8 @@ interface BookingData {
   tourId: string;
   tourDateId: number;
   roomId: number | null;
-  peopleCount: number;
+  adults: number;
+  children: number;
   totalPrice: number;
 }
 
@@ -50,7 +50,8 @@ const initialState: OrdersState = {
     tourId: '',
     tourDateId: 0,
     roomId: null,
-    peopleCount: 1,
+    adults: 1,
+    children: 0,
     totalPrice: 0
   },
   loading: false,
@@ -84,7 +85,7 @@ export const createOrder = createAsyncThunk<
       const { bookingData } = state.orders;
       
       // Проверка данных бронирования
-      if (!bookingData.tourId || !bookingData.tourDateId || bookingData.peopleCount < 1) {
+      if (!bookingData.tourId || !bookingData.tourDateId || bookingData.adults < 1) {
         return rejectWithValue('Не все данные для бронирования заполнены');
       }
       

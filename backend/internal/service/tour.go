@@ -64,6 +64,11 @@ func (s *TourServiceImpl) GetTourDates(ctx context.Context, tourID int64) ([]*do
 	return s.repos.GetTourDates(ctx, tourID)
 }
 
+// GetTourDateByID возвращает дату тура по ID
+func (s *TourServiceImpl) GetTourDateByID(ctx context.Context, id int64) (*domain.TourDate, error) {
+	return s.repos.GetTourDateByID(ctx, id)
+}
+
 // UpdateTourDate обновляет информацию о дате тура
 func (s *TourServiceImpl) UpdateTourDate(ctx context.Context, tourDate *domain.TourDate) error {
 	return s.repos.UpdateTourDate(ctx, tourDate)

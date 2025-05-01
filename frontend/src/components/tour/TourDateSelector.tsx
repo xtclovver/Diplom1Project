@@ -51,50 +51,40 @@ const TourDateSelector: React.FC<TourDateSelectorProps> = ({
   // Форматирование даты в формат "ДД.ММ.ГГГГ"
   const formatDate = (dateString: string): string => {
     if (!dateString || dateString.trim() === "") {
-      // Используем фиксированные даты для примера
-      const currentDate = new Date();
-      const nextMonth = new Date();
-      nextMonth.setMonth(currentDate.getMonth() + 1);
-      
-      // Если это начальная дата, возвращаем текущий месяц
-      if (dateString === '' && dates && dates.length > 0 && dateString === dates[0].startDate) {
-        return currentDate.toLocaleDateString('ru-RU');
-      }
-      
-      // Если это конечная дата, возвращаем следующий месяц
-      if (dateString === '' && dates && dates.length > 0 && dateString === dates[0].endDate) {
-        return nextMonth.toLocaleDateString('ru-RU');
-      }
-      
-      return "15.06.2024";
+      return "Нет даты";
     }
     
     try {
-      // Проверяем, в каком формате приходит дата
-      let dateParts: string[];
-      if (dateString.includes("-")) {
-        // Формат YYYY-MM-DD
-        dateParts = dateString.split("-");
-        if (dateParts.length !== 3) {
-          return "01.07.2024";
+      // Если дата в формате ISO (строка в формате YYYY-MM-DDTHH:mm:ss.sssZ)
+      const date = new Date(dateString);
+      
+      if (isNaN(date.getTime())) {
+        // Если не получилось распарсить как ISO, пробуем другие форматы
+        
+        // Проверяем формат YYYY-MM-DD
+        if (dateString.includes('-')) {
+          const dateParts = dateString.split("-");
+          if (dateParts.length === 3) {
+            // Преобразуем в формат ДД.ММ.ГГГГ
+            return `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
+          }
+        } 
+        
+        // Если дата уже в формате ДД.ММ.ГГГГ
+        if (dateString.includes('.')) {
+          return dateString;
         }
         
-        // Преобразуем в формат ДД.ММ.ГГГГ
-        return `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
-      } else if (dateString.includes(".")) {
-        // Уже в формате ДД.ММ.ГГГГ
-        return dateString;
-      } else {
-        // Попробуем преобразовать через Date
-        const date = new Date(dateString);
-        if (isNaN(date.getTime())) {
-          return "15.07.2024";
-        }
-        return date.toLocaleDateString('ru-RU');
+        // Если все проверки не сработали, возвращаем текущую дату
+        const currentDate = new Date();
+        return currentDate.toLocaleDateString('ru-RU');
       }
+      
+      // Используем русскую локаль для формата ДД.ММ.ГГГГ
+      return date.toLocaleDateString('ru-RU');
     } catch (error) {
       console.error("Ошибка при форматировании даты:", error);
-      return "01.08.2024";
+      return "Дата не распознана";
     }
   };
 

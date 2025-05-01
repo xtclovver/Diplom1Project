@@ -639,7 +639,49 @@ func (h *Handler) getUserOrders(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, orders)
+	// Обогащаем данные о заказах дополнительной информацией
+	enrichedOrders := make([]map[string]interface{}, 0, len(orders))
+	for _, order := range orders {
+		enrichedOrder := map[string]interface{}{
+			"id":          order.ID,
+			"created_at":  order.CreatedAt,
+			"status":      order.Status,
+			"total_price": order.TotalPrice,
+			"adults":      order.PeopleCount, // Используем PeopleCount как количество взрослых
+			"children":    0,                 // По умолчанию 0 детей
+		}
+
+		// Получаем информацию о туре
+		tour, err := h.services.Tour.GetByID(c.Request.Context(), order.TourID)
+		if err == nil && tour != nil {
+			enrichedOrder["tour"] = map[string]interface{}{
+				"id":        tour.ID,
+				"name":      tour.Name,
+				"image_url": tour.ImageURL,
+			}
+		} else {
+			enrichedOrder["tour"] = map[string]interface{}{
+				"id":        0,
+				"name":      "Информация о туре недоступна",
+				"image_url": "/images/tour-placeholder.jpg",
+			}
+		}
+
+		// Получаем информацию о датах тура
+		tourDate, err := h.services.Tour.GetTourDateByID(c.Request.Context(), order.TourDateID)
+		if err == nil && tourDate != nil {
+			enrichedOrder["start_date"] = tourDate.StartDate.Format("2006-01-02")
+			enrichedOrder["end_date"] = tourDate.EndDate.Format("2006-01-02")
+		} else {
+			// Установим даты по умолчанию, если не удалось получить
+			enrichedOrder["start_date"] = order.CreatedAt.Format("2006-01-02")
+			enrichedOrder["end_date"] = order.CreatedAt.AddDate(0, 0, 7).Format("2006-01-02")
+		}
+
+		enrichedOrders = append(enrichedOrders, enrichedOrder)
+	}
+
+	c.JSON(http.StatusOK, enrichedOrders)
 }
 
 // @Summary Get order by ID

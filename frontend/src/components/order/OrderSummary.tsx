@@ -8,7 +8,7 @@ interface Tour {
   basePrice: number;
   imageUrl: string;
   duration: number;
-  city: {
+  city?: {
     id: number;
     name: string;
     country: {
@@ -70,16 +70,79 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   onEdit
 }) => {
   const formatDate = (dateString: string): string => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString('ru-RU');
+    if (!dateString) return "Нет даты";
+    
+    try {
+      // Проверяем, если дата в ISO формате (YYYY-MM-DDTHH:mm:ss.sssZ)
+      const date = new Date(dateString);
+      
+      if (isNaN(date.getTime())) {
+        // Если не получилось распарсить, пробуем другие форматы
+        // Проверяем формат YYYY-MM-DD
+        if (dateString.includes('-')) {
+          const parts = dateString.split('-');
+          if (parts.length === 3) {
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1; // месяцы в JS с 0
+            const day = parseInt(parts[2], 10);
+            const newDate = new Date(year, month, day);
+            if (!isNaN(newDate.getTime())) {
+              return newDate.toLocaleDateString('ru-RU');
+            }
+          }
+        }
+        
+        // Если всё ещё не удалось, возвращаем исходную строку
+        return dateString;
+      }
+      
+      return date.toLocaleDateString('ru-RU');
+    } catch (error) {
+      console.error("Ошибка форматирования даты:", error);
+      return dateString;
+    }
   };
   
   // Рассчитываем количество дней тура
   const calculateDays = (): number => {
-    const start = new Date(tourDate?.startDate || '');
-    const end = new Date(tourDate?.endDate || '');
-    const diffTime = Math.abs(end.getTime() - start.getTime());
-    return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 чтобы учесть день отъезда
+    try {
+      if (!tourDate?.startDate || !tourDate?.endDate) {
+        return tour.duration || 1; // Используем duration из тура или 1 день по умолчанию
+      }
+      
+      // Парсим даты
+      const parseDate = (dateStr: string): Date | null => {
+        const date = new Date(dateStr);
+        if (!isNaN(date.getTime())) return date;
+        
+        // Если стандартный парсинг не сработал, проверяем формат YYYY-MM-DD
+        if (dateStr.includes('-')) {
+          const parts = dateStr.split('-');
+          if (parts.length === 3) {
+            const year = parseInt(parts[0], 10);
+            const month = parseInt(parts[1], 10) - 1;
+            const day = parseInt(parts[2], 10);
+            const newDate = new Date(year, month, day);
+            if (!isNaN(newDate.getTime())) return newDate;
+          }
+        }
+        
+        return null;
+      };
+      
+      const start = parseDate(tourDate.startDate);
+      const end = parseDate(tourDate.endDate);
+      
+      if (!start || !end) {
+        return tour.duration || 1;
+      }
+      
+      const diffTime = Math.abs(end.getTime() - start.getTime());
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 чтобы учесть день отъезда
+    } catch (error) {
+      console.error("Ошибка при расчете длительности тура:", error);
+      return tour.duration || 1;
+    }
   };
   
   // Функция для склонения слова "день"
@@ -121,14 +184,16 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       
       <div className="summary-tour-details">
         <div className="tour-image">
-          <img src={tour.imageUrl || '/images/tour-placeholder.jpg'} alt={tour.name} />
+          <img src={tour.imageUrl || ''} alt={tour.name} className={!tour.imageUrl ? 'no-image' : ''} />
         </div>
         
         <div className="tour-details">
           <h4>{tour.name}</h4>
-          <div className="tour-location">
-            <i className="fa fa-map-marker"></i> {tour.city.name}, {tour.city.country.name}
-          </div>
+          {tour.city && (
+            <div className="tour-location">
+              <i className="fa fa-map-marker"></i> {tour.city.name}, {tour.city.country.name}
+            </div>
+          )}
           <div className="tour-dates">
             <i className="fa fa-calendar"></i> {formatDate(tourDate?.startDate || '')} - {formatDate(tourDate?.endDate || '')}
             <span>({days} {getDaysText(days)})</span>

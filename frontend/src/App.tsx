@@ -30,7 +30,7 @@ const ProtectedRoute = ({ children, redirectPath = '/login', requiredRole = null
 
   if (!isAuthenticated) {
     console.log(`ProtectedRoute: Not authenticated, redirecting to ${redirectPath}`);
-    return <Navigate to={redirectPath} state={{ from: location }} replace />;
+    return <Navigate to={redirectPath} state={{ from: location.pathname + location.search }} replace />;
   }
   
   if (requiredRole && user?.roleId !== requiredRole) {
@@ -66,6 +66,11 @@ const App: React.FC = () => {
           </ProtectedRoute>
         } />
         <Route path="profile/orders" element={ 
+          <ProtectedRoute>
+            <OrdersPage />
+          </ProtectedRoute>
+        } />
+        <Route path="orders" element={ 
           <ProtectedRoute>
             <OrdersPage />
           </ProtectedRoute>

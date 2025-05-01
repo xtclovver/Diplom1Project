@@ -57,6 +57,28 @@ const OrdersPage: React.FC = () => {
     dispatch(fetchUserOrders());
   }, [dispatch, navigate, isAuthenticated]);
   
+  useEffect(() => {
+    if (!isAuthenticated) {
+      navigate('/login', { state: { from: '/orders' } });
+      return;
+    }
+    
+    // Добавляем обработку ошибок при загрузке заказов
+    try {
+      console.log("OrdersPage: Загружаем заказы пользователя");
+      dispatch(fetchUserOrders())
+        .unwrap()
+        .then(data => {
+          console.log("OrdersPage: Заказы успешно загружены", data);
+        })
+        .catch(error => {
+          console.error("OrdersPage: Ошибка при загрузке заказов", error);
+        });
+    } catch (error) {
+      console.error("OrdersPage: Критическая ошибка при загрузке заказов", error);
+    }
+  }, [dispatch, navigate, isAuthenticated]);
+  
   const handleFilterChange = (newFilter: string) => {
     setFilter(newFilter);
   };
@@ -79,13 +101,13 @@ const OrdersPage: React.FC = () => {
     console.log('Changing page size to', size);
   };
   
-  // Фильтрация заказов с проверкой на существование orders
+  // Фильтрация заказов с проверкой на существование orders и учетом регистра статусов
   const filteredOrders = orders.filter((order: any) => {
     if (!order || !order.status) return false;
     
     const status = order.status.toUpperCase();
     if (filter === 'all') return true;
-    if (filter === 'active') return ['PENDING', 'CONFIRMED', 'PROCESSING'].includes(status);
+    if (filter === 'active') return ['PENDING', 'CONFIRMED', 'PROCESSING', 'PAID'].includes(status);
     if (filter === 'completed') return status === 'COMPLETED';
     if (filter === 'cancelled') return status === 'CANCELLED';
     return true;

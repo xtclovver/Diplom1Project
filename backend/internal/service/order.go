@@ -82,8 +82,8 @@ func (s *OrderServiceImpl) Create(ctx context.Context, userID, tourID, tourDateI
 		}
 
 		// Проверка вместимости номера
-		if room.Capacity < peopleCount {
-			return 0, fmt.Errorf("выбранный номер вмещает максимум %d человек", room.Capacity)
+		if room.Beds < peopleCount {
+			return 0, fmt.Errorf("выбранный номер вмещает максимум %d человек", room.Beds)
 		}
 	}
 
@@ -289,7 +289,7 @@ func (s *OrderServiceImpl) CalculatePrice(ctx context.Context, tourID, tourDateI
 		duration := tour.Duration
 
 		// Добавляем стоимость номера за весь период пребывания
-		roomPrice = room.PricePerNight * float64(duration)
+		roomPrice = room.Price * float64(duration)
 	}
 
 	return basePrice + roomPrice, nil

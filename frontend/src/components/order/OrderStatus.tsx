@@ -6,6 +6,9 @@ interface OrderStatusProps {
 }
 
 const OrderStatus: React.FC<OrderStatusProps> = ({ status }) => {
+  // Приводим статус к верхнему регистру для обеспечения совместимости
+  const upperCaseStatus = status.toUpperCase();
+  
   // Функция для перевода статуса на русский язык
   const getStatusText = (status: string): string => {
     switch (status) {
@@ -13,6 +16,8 @@ const OrderStatus: React.FC<OrderStatusProps> = ({ status }) => {
         return 'Ожидает подтверждения';
       case 'CONFIRMED':
         return 'Подтвержден';
+      case 'PAID':
+        return 'Оплачен';
       case 'PROCESSING':
         return 'Обрабатывается';
       case 'COMPLETED':
@@ -31,6 +36,8 @@ const OrderStatus: React.FC<OrderStatusProps> = ({ status }) => {
         return 'pending';
       case 'CONFIRMED':
         return 'confirmed';
+      case 'PAID':
+        return 'paid';
       case 'PROCESSING':
         return 'processing';
       case 'COMPLETED':
@@ -43,8 +50,8 @@ const OrderStatus: React.FC<OrderStatusProps> = ({ status }) => {
   };
   
   return (
-    <div className={`order-status ${getStatusClass(status)}`}>
-      {getStatusText(status)}
+    <div className={`order-status ${getStatusClass(upperCaseStatus)}`}>
+      {getStatusText(upperCaseStatus)}
     </div>
   );
 };

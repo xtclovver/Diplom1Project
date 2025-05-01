@@ -33,15 +33,13 @@ type Hotel struct {
 
 // Room представляет номер в отеле
 type Room struct {
-	ID            int64     `db:"id" json:"id"`
-	HotelID       int64     `db:"hotel_id" json:"hotel_id"`
-	RoomTypeID    int64     `db:"room_type_id" json:"room_type_id"`
-	Name          string    `db:"name" json:"name"`
-	Description   string    `db:"description" json:"description"`
-	PricePerNight float64   `db:"price_per_night" json:"price_per_night"`
-	Capacity      int       `db:"capacity" json:"capacity"`
-	IsAvailable   bool      `db:"is_available" json:"is_available"`
-	CreatedAt     time.Time `db:"created_at" json:"created_at"`
+	ID          int64     `db:"id" json:"id"`
+	HotelID     int64     `db:"hotel_id" json:"hotel_id"`
+	Description string    `db:"description" json:"description"`
+	Beds        int       `db:"beds" json:"beds"`
+	Price       float64   `db:"price" json:"price"`
+	ImageURL    string    `db:"image_url" json:"image_url"`
+	CreatedAt   time.Time `db:"created_at,omitempty" json:"created_at,omitempty"`
 }
 
 // Tour представляет тур

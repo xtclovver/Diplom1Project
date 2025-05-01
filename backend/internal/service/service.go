@@ -57,6 +57,7 @@ type TourService interface {
 	List(ctx context.Context, filters map[string]interface{}, page, size int) ([]*domain.Tour, int, error)
 	AddTourDate(ctx context.Context, tourDate *domain.TourDate) (int64, error)
 	GetTourDates(ctx context.Context, tourID int64) ([]*domain.TourDate, error)
+	GetTourDateByID(ctx context.Context, id int64) (*domain.TourDate, error)
 	UpdateTourDate(ctx context.Context, tourDate *domain.TourDate) error
 	DeleteTourDate(ctx context.Context, id int64) error
 }

@@ -71,7 +71,11 @@ const TourList = () => {
               {tours.map(tour => (
                 <div key={tour.id} className="tour-card">
                   <div className="tour-card__image">
-                    <img src={tour.imageUrl || '/img/tour-placeholder.jpg'} alt={tour.name} />
+                    <img 
+                      src={tour.imageUrl || ''} 
+                      alt={tour.name} 
+                      className={!tour.imageUrl ? 'no-image' : ''}
+                    />
                   </div>
                   <div className="tour-card__content">
                     <h3 className="tour-card__title">{tour.name}</h3>

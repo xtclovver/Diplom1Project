@@ -95,28 +95,6 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
   }
 
   if (!rooms || rooms.length === 0) {
-    // Вместо сообщения об отсутствии номеров создаем демо-номера
-    const demoRooms: Room[] = [
-      {
-        id: 101,
-        hotelId: hotelId || 1,
-        description: 'Стандартный номер с 1 двуспальной кроватью, кондиционером и бесплатным Wi-Fi.',
-        beds: 2,
-        price: 5000,
-        imageUrl: '/images/room-standard.jpg',
-        isAvailable: true
-      },
-      {
-        id: 102,
-        hotelId: hotelId || 1,
-        description: 'Люкс с гостиной зоной, балконом и видом на море. Включен завтрак.',
-        beds: 3,
-        price: 12000,
-        imageUrl: '/images/room-lux.jpg',
-        isAvailable: true
-      }
-    ];
-    
     return (
       <div className="hotel-rooms">
         <div className="room-card no-room">
@@ -136,34 +114,11 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
             </div>
           </div>
         </div>
-
-        {demoRooms.map((room) => (
-          <div key={room.id} className="room-card">
-            <div className="room-image">
-              <img src={room.imageUrl || '/images/room-placeholder.jpg'} alt={room.description} />
-            </div>
-            <div className="room-content">
-              <h3 className="room-title">{getBedTypeText(room.beds)}</h3>
-              <div className="room-capacity">
-                <i className="fa fa-user"></i> {room.beds} {getCapacityText(room.beds)}
-              </div>
-              <p className="room-description">{room.description}</p>
-              
-              <div className="room-footer">
-                <div className="room-price">
-                  {room.price.toLocaleString()} ₽ <span>/ ночь</span>
-                </div>
-                
-                <button 
-                  className={`room-select-button ${selectedRoomId === room.id ? 'selected' : ''}`}
-                  onClick={() => onRoomSelect(room)}
-                >
-                  {selectedRoomId === room.id ? 'Выбрано' : 'Выбрать'}
-                </button>
-              </div>
-            </div>
-          </div>
-        ))}
+        
+        <div className="no-rooms-message">
+          <p>Нет доступных номеров для выбранного отеля на указанные даты.</p>
+          <p>Вы можете продолжить бронирование без выбора номера или выбрать другие даты.</p>
+        </div>
       </div>
     );
   }
@@ -191,7 +146,7 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
       {rooms.map((room) => (
         <div key={room.id} className={`room-card ${!room.isAvailable ? 'not-available' : ''}`}>
           <div className="room-image">
-            <img src={room.imageUrl || '/images/room-placeholder.jpg'} alt={room.description} />
+            <img src={room.imageUrl || ''} alt={room.description} className={!room.imageUrl ? 'no-image' : ''} />
           </div>
           <div className="room-content">
             <h3 className="room-title">{getBedTypeText(room.beds)}</h3>

@@ -104,7 +104,7 @@ const BookingSuccessPage: React.FC = () => {
         </div>
         
         <div className="success-actions">
-          <Link to="/profile/orders" className="view-orders-btn">
+          <Link to="/orders" className="view-orders-btn">
             <i className="fa fa-list-ul"></i> Мои заказы
           </Link>
           <Link to="/" className="back-home-btn">
