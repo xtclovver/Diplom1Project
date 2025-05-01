@@ -122,10 +122,11 @@ const TourDetailPage: React.FC = () => {
       <div className="tour-detail-header">
         <h1>{tour.name}</h1>
         <div className="tour-location">
-          <i className="fa fa-map-marker"></i> 
-          {tour.city && tour.city.name && tour.city.country && tour.city.country.name 
-            ? `${tour.city.name}, ${tour.city.country.name}` 
-            : 'Россия, Сочи'}
+          <i className="fa fa-map-marker"></i>
+          {/* Исправлено: используем tour.city и tour.country напрямую из ответа API */}
+          {tour.city && tour.country
+            ? `${tour.city}, ${tour.country}`
+            : 'Местоположение не указано'}
         </div>
       </div>
 
@@ -166,8 +167,9 @@ const TourDetailPage: React.FC = () => {
       {selectedDate && (
         <div className="tour-hotel-rooms">
           <h2>Доступные номера в отеле</h2>
-          <HotelRooms 
-            hotelId={tour?.hotel?.id} 
+          <HotelRooms
+            // Исправлено: используем первый отель из массива tour.hotels
+            hotelId={tour?.hotels?.[0]?.id}
             tourDateId={selectedDate.id}
             startDate={selectedDate.startDate}
             endDate={selectedDate.endDate}

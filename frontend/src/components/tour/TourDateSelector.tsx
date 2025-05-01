@@ -50,41 +50,39 @@ const TourDateSelector: React.FC<TourDateSelectorProps> = ({
 
   // Форматирование даты в формат "ДД.ММ.ГГГГ"
   const formatDate = (dateString: string): string => {
-    if (!dateString || dateString.trim() === "") {
+    if (!dateString || dateString === "Нет даты" || dateString.trim() === "") {
       return "Нет даты";
     }
-    
     try {
-      // Если дата в формате ISO (строка в формате YYYY-MM-DDTHH:mm:ss.sssZ)
-      const date = new Date(dateString);
-      
+      // Пытаемся распарсить только часть YYYY-MM-DD, чтобы избежать проблем с часовыми поясами
+      const datePart = dateString.split('T')[0];
+      const date = new Date(datePart); // Парсим YYYY-MM-DD
+
+      // Корректируем дату, так как new Date('YYYY-MM-DD') интерпретирует ее как полночь UTC.
+      // Добавляем смещение временной зоны, чтобы получить правильный локальный день.
+      date.setMinutes(date.getMinutes() + date.getTimezoneOffset());
+
+      // Проверяем, корректно ли распарсилась дата
       if (isNaN(date.getTime())) {
-        // Если не получилось распарсить как ISO, пробуем другие форматы
-        
-        // Проверяем формат YYYY-MM-DD
-        if (dateString.includes('-')) {
-          const dateParts = dateString.split("-");
-          if (dateParts.length === 3) {
-            // Преобразуем в формат ДД.ММ.ГГГГ
-            return `${dateParts[2]}.${dateParts[1]}.${dateParts[0]}`;
-          }
-        } 
-        
-        // Если дата уже в формате ДД.ММ.ГГГГ
-        if (dateString.includes('.')) {
-          return dateString;
+        console.warn("Не удалось распознать дату (даже YYYY-MM-DD):", dateString);
+        // Пробуем оригинальный парсинг как запасной вариант
+        const originalDate = new Date(dateString);
+        if (!isNaN(originalDate.getTime())) {
+           return originalDate.toLocaleDateString('ru-RU');
         }
-        
-        // Если все проверки не сработали, возвращаем текущую дату
+        // Финальный запасной вариант
         const currentDate = new Date();
+        currentDate.setDate(currentDate.getDate() + 7);
         return currentDate.toLocaleDateString('ru-RU');
       }
-      
+
       // Используем русскую локаль для формата ДД.ММ.ГГГГ
       return date.toLocaleDateString('ru-RU');
     } catch (error) {
       console.error("Ошибка при форматировании даты:", error);
-      return "Дата не распознана";
+      // Запасной вариант при любой ошибке
+      const currentDate = new Date();
+      return currentDate.toLocaleDateString('ru-RU');
     }
   };
 

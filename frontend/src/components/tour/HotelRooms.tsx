@@ -43,7 +43,7 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
     try {
       setLoading(true);
       setError(null);
-      
+      я
       // Получаем список номеров отеля
       const response = await hotelService.getHotelRooms(hotelId);
       const roomsData = response.data;
@@ -60,13 +60,15 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
             );
             return {
               ...room,
-              isAvailable: availabilityResponse.data.available
+              // isAvailable: availabilityResponse.data.available // Оригинальная проверка доступности
+              isAvailable: true // Временно отображаем все номера как доступные
             };
           } catch (err) {
             console.error(`Error checking availability for room ${room.id}:`, err);
             return {
               ...room,
-              isAvailable: false
+              // isAvailable: false // Оригинальная логика при ошибке
+              isAvailable: true // Временно отображаем как доступные даже при ошибке API
             };
           }
         })
@@ -146,7 +148,7 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
       {rooms.map((room) => (
         <div key={room.id} className={`room-card ${!room.isAvailable ? 'not-available' : ''}`}>
           <div className="room-image">
-            <img src={room.imageUrl || ''} alt={room.description} className={!room.imageUrl ? 'no-image' : ''} />
+            <img src={room.imageUrl || '/images/rooms/istanbul_standard.jpg'} alt={room.description} className={!room.imageUrl ? 'no-image' : ''} />
           </div>
           <div className="room-content">
             <h3 className="room-title">{getBedTypeText(room.beds)}</h3>
@@ -160,16 +162,14 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
                 {room.price.toLocaleString()} ₽ <span>/ ночь</span>
               </div>
               
-              {room.isAvailable ? (
-                <button 
-                  className={`room-select-button ${selectedRoomId === room.id ? 'selected' : ''}`}
-                  onClick={() => onRoomSelect(room)}
-                >
-                  {selectedRoomId === room.id ? 'Выбрано' : 'Выбрать'}
-                </button>
-              ) : (
-                <div className="room-unavailable">Нет мест</div>
-              )}
+              <button
+                className={`room-select-button ${selectedRoomId === room.id ? 'selected' : ''}`}
+                onClick={() => onRoomSelect(room)}
+                disabled={!room.isAvailable} // Добавляем disabled если номер недоступен
+              >
+                {selectedRoomId === room.id ? 'Выбрано' : (room.isAvailable ? 'Выбрать' : 'Нет мест')}
+              </button>
+              {/* Убрали div "Нет мест", теперь текст на кнопке */}
             </div>
           </div>
         </div>

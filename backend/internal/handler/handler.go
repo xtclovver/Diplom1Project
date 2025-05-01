@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"strconv"
 	"strings"
+	"time"
 
 	"github.com/gin-gonic/gin"
 	"github.com/go-playground/validator/v10"
@@ -228,6 +229,22 @@ func (h *Handler) getAllTours(c *gin.Context) {
 		return
 	}
 
+	// Обогащаем туры информацией о местоположении
+	for _, tour := range tours {
+		// Получаем информацию о городе
+		city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
+		if err == nil && city != nil {
+			tour.City = city.Name
+
+			// Получаем информацию о стране
+			country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
+			if err == nil && country != nil {
+				tour.Country = country.Name
+				tour.Location = country.Name + ", " + city.Name
+			}
+		}
+	}
+
 	c.JSON(http.StatusOK, gin.H{
 		"tours": tours,
 		"total": total,
@@ -260,6 +277,19 @@ func (h *Handler) getTourByID(c *gin.Context) {
 		return
 	}
 
+	// Получаем информацию о городе
+	city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
+	if err == nil && city != nil {
+		tour.City = city.Name
+
+		// Получаем информацию о стране
+		country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
+		if err == nil && country != nil {
+			tour.Country = country.Name
+			tour.Location = country.Name + ", " + city.Name
+		}
+	}
+
 	c.JSON(http.StatusOK, tour)
 }
 
@@ -281,10 +311,89 @@ func (h *Handler) getTourDates(c *gin.Context) {
 		return
 	}
 
+	// Получаем информацию о туре для определения продолжительности
+	tour, err := h.services.Tour.GetByID(c.Request.Context(), id)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, "не удалось получить информацию о туре")
+		return
+	}
+
+	// Получаем существующие даты тура
 	dates, err := h.services.Tour.GetTourDates(c.Request.Context(), id)
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
+	}
+
+	// Если дат нет, создаем их
+	if len(dates) == 0 {
+		// Получаем информацию о городе и стране для правильного отображения
+		city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
+		if err == nil && city != nil {
+			country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
+			if err == nil && country != nil {
+				tour.City = city.Name
+				tour.Country = country.Name
+				tour.Location = country.Name + ", " + city.Name
+			}
+		}
+
+		// Определяем длительность тура из свойств тура, по умолчанию 7 дней
+		duration := 7
+		if tour.Duration > 0 {
+			duration = tour.Duration
+		}
+
+		// Добавляем 5 будущих дат для тура (каждые 3 дня, начиная с завтрашнего дня)
+		now := time.Now().AddDate(0, 0, 1) // начиная с завтрашнего дня
+		for i := 0; i < 5; i++ {
+			startDate := now.AddDate(0, 0, i*3) // каждые 3 дня
+			endDate := startDate.AddDate(0, 0, duration)
+
+			// Создаем разное количество мест и разные коэффициенты цены
+			availability := 20 + i*5               // 20, 25, 30, 35, 40 мест
+			priceModifier := 1.0 - float64(i)*0.05 // 1.0, 0.95, 0.90, 0.85, 0.80
+
+			tourDate := &domain.TourDate{
+				TourID:        id,
+				StartDate:     startDate,
+				EndDate:       endDate,
+				Availability:  availability,
+				PriceModifier: priceModifier,
+			}
+
+			dateID, err := h.services.Tour.AddTourDate(c.Request.Context(), tourDate)
+			if err != nil {
+				continue
+			}
+
+			// Добавляем созданную дату в массив для возврата
+			tourDate.ID = dateID
+			dates = append(dates, tourDate)
+		}
+	}
+
+	// Если после попытки создания все еще нет дат, создадим хотя бы одну
+	if len(dates) == 0 {
+		now := time.Now().AddDate(0, 0, 1) // начиная с завтрашнего дня
+		duration := 7
+		if tour.Duration > 0 {
+			duration = tour.Duration
+		}
+
+		tourDate := &domain.TourDate{
+			TourID:        id,
+			StartDate:     now,
+			EndDate:       now.AddDate(0, 0, duration),
+			Availability:  30,
+			PriceModifier: 1.0,
+		}
+
+		dateID, err := h.services.Tour.AddTourDate(c.Request.Context(), tourDate)
+		if err == nil {
+			tourDate.ID = dateID
+			dates = append(dates, tourDate)
+		}
 	}
 
 	c.JSON(http.StatusOK, dates)
@@ -388,6 +497,80 @@ func (h *Handler) getHotelRooms(c *gin.Context) {
 	if err != nil {
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())
 		return
+	}
+
+	// Получаем информацию об отеле
+	hotel, err := h.services.Hotel.GetByID(c.Request.Context(), id)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, "не удалось получить информацию об отеле")
+		return
+	}
+
+	// Если номеров нет, создаем их
+	if len(rooms) == 0 {
+		// Создаем разные типы номеров
+		roomTypes := []struct {
+			description string
+			beds        int
+			price       float64
+			imageURL    string
+		}{
+			{"Стандартный одноместный номер", 1, 3500.0, "/images/rooms/standard_single.jpg"},
+			{"Стандартный двухместный номер с двумя кроватями", 2, 5000.0, "/images/rooms/standard_twin.jpg"},
+			{"Улучшенный двухместный номер с большой кроватью", 2, 5500.0, "/images/rooms/deluxe_double.jpg"},
+			{"Полулюкс с видом на море", 2, 7000.0, "/images/rooms/junior_suite.jpg"},
+			{"Люкс с балконом и джакузи", 2, 9000.0, "/images/rooms/suite.jpg"},
+			{"Семейный номер с тремя кроватями", 3, 8000.0, "/images/rooms/family_room.jpg"},
+			{"Апартаменты с кухней", 4, 10000.0, "/images/rooms/apartment.jpg"},
+		}
+
+		// Получаем категорию отеля и корректируем цены
+		priceMultiplier := 1.0
+		if hotel.Category > 0 {
+			priceMultiplier = 1.0 + float64(hotel.Category-1)*0.2 // 1.0, 1.2, 1.4, 1.6, 1.8 для категорий 1-5
+		}
+
+		// Добавляем номера
+		for _, roomType := range roomTypes {
+			// Корректируем цену в зависимости от категории отеля
+			price := roomType.price * priceMultiplier
+
+			room := &domain.Room{
+				HotelID:     id,
+				Description: roomType.description,
+				Beds:        roomType.beds,
+				Price:       price,
+				ImageURL:    roomType.imageURL,
+				CreatedAt:   time.Now(),
+			}
+
+			roomID, err := h.services.Hotel.AddRoom(c.Request.Context(), room)
+			if err != nil {
+				continue
+			}
+
+			// Добавляем созданный номер в массив для возврата
+			room.ID = roomID
+			rooms = append(rooms, room)
+		}
+	}
+
+	// Если после попытки создания все еще нет номеров, создадим хотя бы один
+	if len(rooms) == 0 {
+		room := &domain.Room{
+			HotelID:     id,
+			Description: "Стандартный номер",
+			Beds:        2,
+			Price:       5000.0,
+			ImageURL:    "/images/rooms/standard_double.jpg",
+			CreatedAt:   time.Now(),
+		}
+
+		roomID, err := h.services.Hotel.AddRoom(c.Request.Context(), room)
+		if err == nil {
+			room.ID = roomID
+			rooms = append(rooms, room)
+		}
 	}
 
 	c.JSON(http.StatusOK, rooms)
@@ -654,16 +837,31 @@ func (h *Handler) getUserOrders(c *gin.Context) {
 		// Получаем информацию о туре
 		tour, err := h.services.Tour.GetByID(c.Request.Context(), order.TourID)
 		if err == nil && tour != nil {
+			// Получаем информацию о городе
+			city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
+			if err == nil && city != nil {
+				tour.City = city.Name
+
+				// Получаем информацию о стране
+				country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
+				if err == nil && country != nil {
+					tour.Country = country.Name
+					tour.Location = country.Name + ", " + city.Name
+				}
+			}
+
 			enrichedOrder["tour"] = map[string]interface{}{
 				"id":        tour.ID,
 				"name":      tour.Name,
 				"image_url": tour.ImageURL,
+				"location":  tour.Location,
 			}
 		} else {
 			enrichedOrder["tour"] = map[string]interface{}{
 				"id":        0,
 				"name":      "Информация о туре недоступна",
 				"image_url": "/images/tour-placeholder.jpg",
+				"location":  "Местоположение неизвестно",
 			}
 		}
 

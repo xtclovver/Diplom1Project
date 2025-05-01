@@ -16,6 +16,8 @@ type Service struct {
 	Hotel         HotelService
 	Order         OrderService
 	SupportTicket SupportTicketService
+	City          CityService
+	Country       CountryService
 }
 
 // NewService создает новый экземпляр Service
@@ -27,6 +29,8 @@ func NewService(repos *repository.Repository, tokenManager auth.TokenManager) *S
 		Hotel:         NewHotelService(repos.Hotel, repos.Room),
 		Order:         NewOrderService(repos.Order, repos.Tour, repos.User, repos.Room),
 		SupportTicket: NewSupportTicketService(repos.SupportTicket, repos.User),
+		City:          NewCityService(repos.City),
+		Country:       NewCountryService(repos.Country),
 	}
 }
 
@@ -100,4 +104,17 @@ type SupportTicketService interface {
 	AddMessage(ctx context.Context, ticketID, userID int64, message string) (int64, error)
 	GetMessages(ctx context.Context, ticketID int64) ([]*domain.TicketMessage, error)
 	CloseTicket(ctx context.Context, id int64) error
+}
+
+// CityService интерфейс для работы с городами
+type CityService interface {
+	GetByID(ctx context.Context, id int64) (*domain.City, error)
+	List(ctx context.Context, page, size int) ([]*domain.City, int, error)
+	ListByCountryID(ctx context.Context, countryID int64) ([]*domain.City, error)
+}
+
+// CountryService интерфейс для работы со странами
+type CountryService interface {
+	GetByID(ctx context.Context, id int64) (*domain.Country, error)
+	List(ctx context.Context, page, size int) ([]*domain.Country, int, error)
 }

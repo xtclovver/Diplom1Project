@@ -21,6 +21,8 @@ type Repository struct {
 	Room          RoomRepository
 	Order         OrderRepository
 	SupportTicket SupportTicketRepository
+	City          CityRepository
+	Country       CountryRepository
 }
 
 // NewRepository создает новый экземпляр Repository
@@ -32,6 +34,8 @@ func NewRepository(db *sqlx.DB) *Repository {
 		Room:          NewRoomRepository(db),
 		Order:         NewOrderRepository(db),
 		SupportTicket: NewSupportTicketRepository(db),
+		City:          NewCityRepository(db),
+		Country:       NewCountryRepository(db),
 	}
 }
 
@@ -111,4 +115,19 @@ type SupportTicketRepository interface {
 	UpdateStatus(ctx context.Context, id int64, status string) error
 	AddMessage(ctx context.Context, message *domain.TicketMessage) (int64, error)
 	GetMessages(ctx context.Context, ticketID int64) ([]*domain.TicketMessage, error)
+}
+
+// CityRepository интерфейс для работы с городами
+type CityRepository interface {
+	GetByID(ctx context.Context, id int64) (*domain.City, error)
+	List(ctx context.Context, offset, limit int) ([]*domain.City, error)
+	Count(ctx context.Context) (int, error)
+	ListByCountryID(ctx context.Context, countryID int64) ([]*domain.City, error)
+}
+
+// CountryRepository интерфейс для работы со странами
+type CountryRepository interface {
+	GetByID(ctx context.Context, id int64) (*domain.Country, error)
+	List(ctx context.Context, offset, limit int) ([]*domain.Country, error)
+	Count(ctx context.Context) (int, error)
 }

@@ -53,6 +53,15 @@ type Tour struct {
 	Duration    int       `db:"duration" json:"duration"`
 	IsActive    bool      `db:"is_active" json:"is_active"`
 	CreatedAt   time.Time `db:"created_at" json:"created_at"`
+
+	// Поля для отображения (не сохраняются в БД)
+	City     string `db:"-" json:"city,omitempty"`
+	Country  string `db:"-" json:"country,omitempty"`
+	Location string `db:"-" json:"location,omitempty"`
+
+	// Связанные данные
+	TourDates []*TourDate `json:"tour_dates,omitempty"`
+	Hotels    []*Hotel    `json:"hotels,omitempty"`
 }
 
 // TourDate представляет доступную дату тура

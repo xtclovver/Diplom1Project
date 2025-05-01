@@ -27,6 +27,8 @@ CREATE TABLE IF NOT EXISTS hotels (
     address VARCHAR(255) NOT NULL,
     category SMALLINT NOT NULL, -- Количество звезд
     image_url VARCHAR(255),
+    is_active BOOLEAN DEFAULT TRUE,
+    created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
     FOREIGN KEY (city_id) REFERENCES cities(id) ON DELETE CASCADE
 );
 

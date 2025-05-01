@@ -238,9 +238,17 @@ const toursSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(fetchTourDates.fulfilled, (state, action: PayloadAction<TourDate[]>) => {
+      .addCase(fetchTourDates.fulfilled, (state, action: PayloadAction<any[]>) => { // Принимаем any[], так как API возвращает snake_case
         state.loading = false;
-        state.tourDates = action.payload;
+        // Преобразуем snake_case из API в camelCase для нашего состояния и интерфейса TourDate
+        state.tourDates = action.payload.map((date: any) => ({
+          id: date.id,
+          tourId: date.tour_id, // Преобразуем tour_id
+          startDate: date.start_date, // Преобразуем start_date
+          endDate: date.end_date, // Преобразуем end_date
+          availability: date.availability,
+          priceModifier: date.price_modifier // Преобразуем price_modifier
+        }));
       })
       .addCase(fetchTourDates.rejected, (state, action) => {
         state.loading = false;

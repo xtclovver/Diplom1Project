@@ -51,16 +51,28 @@ func (r *tourRepository) Create(ctx context.Context, tour *domain.Tour) (int64, 
 	return id, nil
 }
 
-// GetByID получает тур по ID
+// GetByID получает тур по ID вместе со связанными данными (город, страна, даты, отели)
 func (r *tourRepository) GetByID(ctx context.Context, id int64) (*domain.Tour, error) {
+	// Временная структура для сканирования данных тура вместе с названиями города и страны
+	type tourWithDetails struct {
+		domain.Tour
+		CityName    string `db:"city_name"`
+		CountryName string `db:"country_name"`
+	}
+
 	query := `
-		SELECT id, city_id, name, description, base_price, image_url, duration, is_active, created_at
-		FROM tours
-		WHERE id = ?
+		SELECT 
+			t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at,
+			c.name AS city_name, 
+			co.name AS country_name
+		FROM tours t
+		JOIN cities c ON t.city_id = c.id
+		JOIN countries co ON c.country_id = co.id
+		WHERE t.id = ?
 	`
 
-	var tour domain.Tour
-	err := r.db.GetContext(ctx, &tour, query, id)
+	var tourDetails tourWithDetails
+	err := r.db.GetContext(ctx, &tourDetails, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("тур с ID %d не найден", id)
@@ -68,7 +80,47 @@ func (r *tourRepository) GetByID(ctx context.Context, id int64) (*domain.Tour, e
 		return nil, fmt.Errorf("ошибка при поиске тура: %w", err)
 	}
 
+	// Копируем основные данные тура
+	tour := tourDetails.Tour
+	tour.City = tourDetails.CityName
+	tour.Country = tourDetails.CountryName
+	tour.Location = fmt.Sprintf("%s, %s", tour.City, tour.Country) // Формируем локацию
+
+	// Получаем даты тура
+	tourDates, err := r.GetTourDates(ctx, tour.ID)
+	if err != nil {
+		// Не возвращаем ошибку, если даты не найдены, просто оставляем поле пустым
+		// Можно добавить логирование при необходимости
+	}
+	tour.TourDates = tourDates
+
+	// Получаем отели в городе тура
+	hotels, err := r.getHotelsByCityID(ctx, tour.CityID)
+	if err != nil {
+		// Не возвращаем ошибку, если отели не найдены
+	}
+	tour.Hotels = hotels
+
 	return &tour, nil
+}
+
+// getHotelsByCityID вспомогательный метод для получения отелей по ID города
+func (r *tourRepository) getHotelsByCityID(ctx context.Context, cityID int64) ([]*domain.Hotel, error) {
+	query := `
+		SELECT id, city_id, name, description, address, category, image_url, is_active, created_at
+		FROM hotels
+		WHERE city_id = ? AND is_active = true
+	`
+	var hotels []*domain.Hotel
+	err := r.db.SelectContext(ctx, &hotels, query, cityID)
+	if err != nil {
+		// Не возвращаем sql.ErrNoRows как ошибку, просто пустой список
+		if err == sql.ErrNoRows {
+			return []*domain.Hotel{}, nil
+		}
+		return nil, fmt.Errorf("ошибка при получении отелей для города ID %d: %w", cityID, err)
+	}
+	return hotels, nil
 }
 
 // Update обновляет информацию о туре
@@ -111,12 +163,26 @@ func (r *tourRepository) Delete(ctx context.Context, id int64) error {
 	return nil
 }
 
-// List возвращает список туров с фильтрацией
-func (r *tourRepository) List(ctx context.Context, filters map[string]interface{}, offset, limit int) ([]*domain.Tour, error) {
+// List возвращает список туров с фильтрацией и информацией о городе/стране
+func (r *tourRepository) List(ctx context.Context, filters map[string]interface{}, page, size int) ([]*domain.Tour, error) {
+	offset := (page - 1) * size
+	limit := size
+
+	// Временная структура для сканирования
+	type tourWithDetails struct {
+		domain.Tour
+		CityName    string `db:"city_name"`
+		CountryName string `db:"country_name"`
+	}
+
 	query := `
-		SELECT t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at
+		SELECT 
+			t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at,
+			c.name AS city_name, 
+			co.name AS country_name
 		FROM tours t
 		JOIN cities c ON t.city_id = c.id
+		JOIN countries co ON c.country_id = co.id
 	`
 
 	var conditions []string
@@ -159,10 +225,21 @@ func (r *tourRepository) List(ctx context.Context, filters map[string]interface{
 	query += " ORDER BY t.created_at DESC LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
 
-	var tours []*domain.Tour
-	err := r.db.SelectContext(ctx, &tours, query, args...)
+	var tourDetailsList []*tourWithDetails
+	err := r.db.SelectContext(ctx, &tourDetailsList, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка при поиске туров: %w", err)
+	}
+
+	// Преобразуем результат в []*domain.Tour, заполняя поля City и Country
+	tours := make([]*domain.Tour, 0, len(tourDetailsList))
+	for _, td := range tourDetailsList {
+		tour := td.Tour // Копируем основные данные
+		tour.City = td.CityName
+		tour.Country = td.CountryName
+		tour.Location = fmt.Sprintf("%s, %s", tour.City, tour.Country)
+		// Даты и отели для списка не загружаем для производительности
+		tours = append(tours, &tour)
 	}
 
 	return tours, nil
