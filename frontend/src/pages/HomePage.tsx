@@ -1,5 +1,5 @@
-import React from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './HomePage.css';
 
 // Импорт изображений - этот способ не требуется при использовании папки public
@@ -9,13 +9,20 @@ import './HomePage.css';
 // import japanImage from '../assets/images/japan.jpg';
 
 const HomePage: React.FC = () => {
+  const navigate = useNavigate();
+
+  // Состояния для формы поиска
+  const [destination, setDestination] = useState('');
+  const [date, setDate] = useState('');
+  const [guests, setGuests] = useState('1'); // По умолчанию 1 гость
+
   // Данные для популярных направлений (эмуляция данных с API)
   const popularDestinations = [
     { 
       id: 1, 
       name: 'Таиланд', 
       location: 'Юго-Восточная Азия', 
-      image: '/images/bali.jpg',
+      image: '/images/tours/thailand_paradise.jpg',
       price: 85000,
       badge: 'Хит продаж'
     },
@@ -23,7 +30,7 @@ const HomePage: React.FC = () => {
       id: 2, 
       name: 'Турция', 
       location: 'Анталия, Средиземное море', 
-      image: '/images/europe.jpg',
+      image: '/images/tours/istanbul_historic.jpg', // Используем Стамбул для Турции
       price: 45000,
       badge: 'Популярно'
     },
@@ -31,7 +38,7 @@ const HomePage: React.FC = () => {
       id: 3, 
       name: 'Бали', 
       location: 'Индонезия', 
-      image: '/images/egypt.jpg',
+      image: '/images/tours/bali.jpg',
       price: 120000,
       badge: 'Экзотика'
     },
@@ -39,7 +46,7 @@ const HomePage: React.FC = () => {
       id: 4, 
       name: 'Италия', 
       location: 'Рим, Венеция, Флоренция', 
-      image: '/images/japan.jpg',
+      image: '/images/tours/Italy.jpg',
       price: 90000
     }
   ];
@@ -95,6 +102,18 @@ const HomePage: React.FC = () => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
+  // Обработчик отправки формы поиска
+  const handleSearchSubmit = () => {
+    // Формируем строку запроса
+    const queryParams = new URLSearchParams();
+    if (destination) queryParams.append('destination', destination);
+    if (date) queryParams.append('date', date);
+    if (guests) queryParams.append('guests', guests);
+
+    // Перенаправляем на страницу каталога с параметрами
+    navigate(`/tours?${queryParams.toString()}`);
+  };
+
   return (
     <div className="home-page">
       {/* Секция с баннером */}
@@ -110,7 +129,12 @@ const HomePage: React.FC = () => {
               <div className="form-row">
                 <div className="form-group">
                   <label htmlFor="destination">Куда</label>
-                  <select id="destination" className="form-control">
+                  <select
+                    id="destination"
+                    className="form-control"
+                    value={destination}
+                    onChange={(e) => setDestination(e.target.value)}
+                  >
                     <option value="">Выберите направление</option>
                     <option value="turkey">Турция</option>
                     <option value="egypt">Египет</option>
@@ -124,15 +148,22 @@ const HomePage: React.FC = () => {
                   <label htmlFor="date">Дата вылета</label>
                   <input 
                     type="date" 
-                    id="date" 
-                    className="form-control" 
+                    id="date"
+                    className="form-control"
                     min={new Date().toISOString().split('T')[0]}
+                    value={date}
+                    onChange={(e) => setDate(e.target.value)}
                   />
                 </div>
                 
                 <div className="form-group">
                   <label htmlFor="guests">Количество человек</label>
-                  <select id="guests" className="form-control">
+                  <select
+                    id="guests"
+                    className="form-control"
+                    value={guests}
+                    onChange={(e) => setGuests(e.target.value)}
+                  >
                     <option value="1">1</option>
                     <option value="2">2</option>
                     <option value="3">3</option>
@@ -142,7 +173,7 @@ const HomePage: React.FC = () => {
                 </div>
               </div>
               
-              <button type="submit" className="search-btn">Найти тур</button>
+              <button type="button" className="search-btn" onClick={handleSearchSubmit}>Найти тур</button>
             </div>
           </div>
         </div>
