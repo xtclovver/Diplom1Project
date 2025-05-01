@@ -8,6 +8,17 @@ const TourCard = ({ tour }) => {
     return price.toString().replace(/\B(?=(\d{3})+(?!\d))/g, " ");
   };
 
+  // Получаем местоположение из города и страны
+  const getLocation = () => {
+    if (tour.city && tour.city.name) {
+      if (tour.city.country && tour.city.country.name) {
+        return `${tour.city.name}, ${tour.city.country.name}`;
+      }
+      return tour.city.name;
+    }
+    return 'Место не указано';
+  };
+
   return (
     <div className="tour-card">
       <div className="tour-img">
@@ -38,14 +49,12 @@ const TourCard = ({ tour }) => {
         <h3 className="tour-title">{tour.name}</h3>
         
         <div className="tour-details">
-          {tour.location && (
-            <div className="tour-location">
-              <i className="fas fa-map-marker-alt"></i> {tour.location}
-            </div>
-          )}
-          {tour.days && (
+          <div className="tour-location">
+            <i className="fas fa-map-marker-alt"></i> {getLocation()}
+          </div>
+          {tour.duration && (
             <div className="tour-duration">
-              <i className="far fa-calendar-alt"></i> {tour.days} {tour.days > 1 ? 'дней' : 'день'}
+              <i className="far fa-calendar-alt"></i> {tour.duration} {tour.duration > 1 ? 'дней' : 'день'}
             </div>
           )}
         </div>
@@ -54,7 +63,7 @@ const TourCard = ({ tour }) => {
           {tour.oldPrice && (
             <span className="old-price">{formatPrice(tour.oldPrice)} ₽</span>
           )}
-          <span className="current-price">от {formatPrice(tour.price)} ₽</span>
+          <span className="current-price">от {formatPrice(tour.price || tour.basePrice || tour.base_price || 0)} ₽</span>
         </div>
         
         <Link to={`/tours/${tour.id}`} className="view-tour-btn">

@@ -104,9 +104,11 @@ const TourInfo: React.FC<TourInfoProps> = ({ tour, loading }) => {
               <div className="detail-item">
                 <span className="detail-label">Направление:</span>
                 <span className="detail-value">
-                  {tour.city && tour.city.name && tour.city.country && tour.city.country.name 
+                  {tour.city?.name && tour.city?.country?.name 
                     ? `${tour.city.name}, ${tour.city.country.name}` 
-                    : 'Направление не указано'}
+                    : tour.city?.name 
+                      ? tour.city.name 
+                      : 'Направление не указано'}
                 </span>
               </div>
               <div className="detail-item">

@@ -67,6 +67,10 @@ func (h *Handler) InitRoutes() *gin.Engine {
 			hotels.GET("/:id/rooms", h.getHotelRooms)
 		}
 
+		// Страны и города (доступны без аутентификации)
+		api.GET("/countries", h.getAllCountries)
+		api.GET("/cities", h.getCitiesByCountry)
+
 		// Маршруты, требующие аутентификации
 		authenticated := api.Group("/")
 		authenticated.Use(h.authMiddleware())
@@ -2179,3 +2183,100 @@ func (h *Handler) updateTicketStatus(c *gin.Context) {
 // login
 // refreshToken
 // ... rest of the file ...
+
+// @Summary Get all countries
+// @Description Get a list of all countries
+// @Tags countries
+// @Accept json
+// @Produce json
+// @Param page query int false "Page number" default(1)
+// @Param size query int false "Page size" default(50)
+// @Success 200 {object} map[string]interface{} "List of countries and total count"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/countries [get]
+func (h *Handler) getAllCountries(c *gin.Context) {
+	pageStr := c.DefaultQuery("page", "1")
+	sizeStr := c.DefaultQuery("size", "50")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil || size < 1 {
+		size = 50
+	}
+
+	countries, total, err := h.services.Country.List(c.Request.Context(), page, size)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"data":  countries,
+		"total": total,
+	})
+}
+
+// @Summary Get cities by country
+// @Description Get cities filtered by country IDs
+// @Tags cities
+// @Accept json
+// @Produce json
+// @Param countryIds query string false "Comma-separated country IDs"
+// @Param page query int false "Page number" default(1)
+// @Param size query int false "Page size" default(100)
+// @Success 200 {object} map[string]interface{} "List of cities and total count"
+// @Failure 400 {object} ErrorResponse "Invalid query parameters"
+// @Failure 500 {object} ErrorResponse "Internal server error"
+// @Router /api/cities [get]
+func (h *Handler) getCitiesByCountry(c *gin.Context) {
+	countryIdsStr := c.Query("countryIds")
+	pageStr := c.DefaultQuery("page", "1")
+	sizeStr := c.DefaultQuery("size", "100")
+
+	page, err := strconv.Atoi(pageStr)
+	if err != nil || page < 1 {
+		page = 1
+	}
+
+	size, err := strconv.Atoi(sizeStr)
+	if err != nil || size < 1 {
+		size = 100
+	}
+
+	// Если указаны ID стран, получаем города по странам
+	if countryIdsStr != "" {
+		countryIdStrs := strings.Split(countryIdsStr, ",")
+		var cities []*domain.City
+
+		for _, idStr := range countryIdStrs {
+			countryID, err := strconv.ParseInt(idStr, 10, 64)
+			if err != nil {
+				continue
+			}
+
+			countryCities, err := h.services.City.ListByCountryID(c.Request.Context(), countryID)
+			if err == nil && countryCities != nil {
+				cities = append(cities, countryCities...)
+			}
+		}
+
+		c.JSON(http.StatusOK, cities)
+		return
+	}
+
+	// Иначе получаем все города с пагинацией
+	cities, total, err := h.services.City.List(c.Request.Context(), page, size)
+	if err != nil {
+		newErrorResponse(c, http.StatusInternalServerError, err.Error())
+		return
+	}
+
+	c.JSON(http.StatusOK, map[string]interface{}{
+		"data":  cities,
+		"total": total,
+	})
+}

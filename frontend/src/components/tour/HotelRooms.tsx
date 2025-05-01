@@ -147,7 +147,11 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
       {rooms.map((room) => (
         <div key={room.id} className={`room-card ${!room.isAvailable ? 'not-available' : ''}`}>
           <div className="room-image">
-            <img src={room.imageUrl || '/images/rooms/istanbul_standard.jpg'} alt={room.description} className={!room.imageUrl ? 'no-image' : ''} />
+            <img 
+              src={room.imageUrl || (room.beds === 3 ? '/images/rooms/hotel_lux.jpg' : '/images/rooms/hotel_standart.jpg')} 
+              alt={room.description} 
+              className={!room.imageUrl ? 'no-image' : ''} 
+            />
           </div>
           <div className="room-content">
             <h3 className="room-title">{getBedTypeText(room.beds)}</h3>
