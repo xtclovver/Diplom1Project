@@ -43,7 +43,6 @@ const HotelRooms: React.FC<HotelRoomsProps> = ({
     try {
       setLoading(true);
       setError(null);
-      я
       // Получаем список номеров отеля
       const response = await hotelService.getHotelRooms(hotelId);
       const roomsData = response.data;

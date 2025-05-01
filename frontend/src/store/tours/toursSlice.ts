@@ -148,7 +148,24 @@ export const fetchTourById = createAsyncThunk<
   async (tourId, { rejectWithValue }) => {
     try {
       const response = await tourService.getTourById(tourId);
-      return response.data;
+      // Указываем, что response.data имеет тип RawTourData (или более точный тип ответа API)
+      const rawData: RawTourData = response.data;
+
+      // Преобразуем snake_case в camelCase
+      const transformedData: Tour = {
+        id: rawData.id,
+        name: rawData.name,
+        description: rawData.description,
+        basePrice: rawData.base_price, // Преобразование
+        imageUrl: rawData.image_url,   // Преобразование
+        city: rawData.city, // Предполагаем, что city уже в нужном формате или его тоже нужно преобразовать
+        duration: rawData.duration,
+        isActive: rawData.is_active, // Преобразование
+        // Добавьте преобразование для других полей при необходимости
+        // Например, если city приходит как city_id, нужно будет его загрузить или обработать иначе
+      };
+
+      return transformedData; // Возвращаем преобразованные данные
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось загрузить информацию о туре');
     }

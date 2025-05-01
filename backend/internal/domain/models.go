@@ -13,9 +13,10 @@ type Country struct {
 
 // City представляет город
 type City struct {
-	ID        int64  `db:"id" json:"id"`
-	CountryID int64  `db:"country_id" json:"countryId"`
-	Name      string `db:"name" json:"name"`
+	ID        int64    `db:"id" json:"id"`
+	CountryID int64    `db:"country_id" json:"-"` // Скроем из JSON здесь, так как будет внутри Country
+	Name      string   `db:"name" json:"name"`
+	Country   *Country `json:"country,omitempty"` // Добавляем вложенную страну
 }
 
 // Hotel представляет отель
@@ -54,10 +55,11 @@ type Tour struct {
 	IsActive    bool      `db:"is_active" json:"is_active"`
 	CreatedAt   time.Time `db:"created_at" json:"created_at"`
 
-	// Поля для отображения (не сохраняются в БД)
-	City     string `db:"-" json:"city,omitempty"`
-	Country  string `db:"-" json:"country,omitempty"`
-	Location string `db:"-" json:"location,omitempty"`
+	// Поля для отображения (не сохраняются в БД) - УДАЛЯЕМ СТАРЫЕ ПОЛЯ
+	// City     string `db:"-" json:"city,omitempty"`
+	// Country  string `db:"-" json:"country,omitempty"`
+	// Location string `db:"-" json:"location,omitempty"`
+	City *City `json:"city,omitempty"` // Добавляем вложенный город
 
 	// Связанные данные
 	TourDates []*TourDate `json:"tour_dates,omitempty"`

@@ -5,7 +5,7 @@ interface Tour {
   id: number;
   name: string;
   description: string;
-  basePrice: number;
+  base_price: number; // Исправлено имя поля
   imageUrl: string;
   duration: number;
   city?: {
@@ -168,7 +168,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
   };
   
   // Рассчитываем базовую стоимость тура с учетом модификатора цены
-  const baseTourCost = tour.basePrice * (tourDate?.priceModifier || 1);
+  const baseTourCost = tour.base_price * (tourDate?.priceModifier || 1); // Исправлено имя поля
   
   // Рассчитываем стоимость проживания за все дни
   const roomCost = selectedRoom ? selectedRoom.price * (calculateDays() - 1) : 0; // -1 день, т.к. отель обычно бронируется на ночи
@@ -191,7 +191,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
           <h4>{tour.name}</h4>
           {tour.city && (
             <div className="tour-location">
-              <i className="fa fa-map-marker"></i> {tour.city.name}, {tour.city.country.name}
+              <i className="fa fa-map-marker"></i> {tour.city.name}{tour.city.country ? `, ${tour.city.country.name}` : ''}
             </div>
           )}
           <div className="tour-dates">

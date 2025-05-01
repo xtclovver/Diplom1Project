@@ -220,6 +220,31 @@ const BookingPage: React.FC = () => {
     return null; 
   }
 
+  // Находим объект выбранной даты тура
+  let selectedDate: any = undefined; // Инициализируем как undefined
+
+  // Пытаемся получить даты из location.state, если они там есть
+  if (location.state?.startDate && location.state?.endDate) {
+    console.log('BookingPage - Используем даты из location.state');
+    // Формируем объект даты, используя ID из orderData и даты из state
+    selectedDate = {
+      id: orderData.tourDateId,
+      startDate: location.state.startDate,
+      endDate: location.state.endDate,
+      // Пытаемся добавить priceModifier и availability из загруженного тура, если возможно
+      priceModifier: tour?.dates?.find((d: any) => d.id === orderData.tourDateId)?.priceModifier || 1,
+      availability: tour?.dates?.find((d: any) => d.id === orderData.tourDateId)?.availability || 0,
+    };
+  }
+
+  // Если в state дат не было, ищем в загруженном массиве tour.dates
+  if (!selectedDate) {
+    console.log('BookingPage - Пытаемся найти дату в tour.dates');
+    selectedDate = tour?.dates?.find((date: any) => date.id === orderData.tourDateId);
+  }
+
+  console.log('BookingPage - Итоговый selectedDate:', selectedDate); // Логируем итоговый результат
+
   return (
     <div className="booking-page">
       <h1>Бронирование тура</h1>
@@ -253,11 +278,11 @@ const BookingPage: React.FC = () => {
           </div>
         ) : (
           <div className="booking-confirm-container">
-            <OrderSummary 
+            <OrderSummary
               tour={tour}
+              tourDate={selectedDate} // Передаем найденный объект даты
               orderData={orderData}
-              startDate={startDateFromParams || 'Не указана'}
-              endDate={endDateFromParams || 'Не указана'}
+              // startDate и endDate больше не нужны здесь, т.к. есть tourDate
             />
             
             <div className="booking-actions">

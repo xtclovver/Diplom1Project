@@ -229,21 +229,8 @@ func (h *Handler) getAllTours(c *gin.Context) {
 		return
 	}
 
-	// Обогащаем туры информацией о местоположении
-	for _, tour := range tours {
-		// Получаем информацию о городе
-		city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
-		if err == nil && city != nil {
-			tour.City = city.Name
-
-			// Получаем информацию о стране
-			country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
-			if err == nil && country != nil {
-				tour.Country = country.Name
-				tour.Location = country.Name + ", " + city.Name
-			}
-		}
-	}
+	// Информация о городе/стране теперь автоматически заполняется репозиторием
+	// Старый код обогащения (строки 233-246) удален
 
 	c.JSON(http.StatusOK, gin.H{
 		"tours": tours,
@@ -277,18 +264,8 @@ func (h *Handler) getTourByID(c *gin.Context) {
 		return
 	}
 
-	// Получаем информацию о городе
-	city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
-	if err == nil && city != nil {
-		tour.City = city.Name
-
-		// Получаем информацию о стране
-		country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
-		if err == nil && country != nil {
-			tour.Country = country.Name
-			tour.Location = country.Name + ", " + city.Name
-		}
-	}
+	// Информация о городе/стране теперь автоматически заполняется репозиторием
+	// Старый код обогащения (строки 280-291) удален
 
 	c.JSON(http.StatusOK, tour)
 }
@@ -327,16 +304,8 @@ func (h *Handler) getTourDates(c *gin.Context) {
 
 	// Если дат нет, создаем их
 	if len(dates) == 0 {
-		// Получаем информацию о городе и стране для правильного отображения
-		city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
-		if err == nil && city != nil {
-			country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
-			if err == nil && country != nil {
-				tour.City = city.Name
-				tour.Country = country.Name
-				tour.Location = country.Name + ", " + city.Name
-			}
-		}
+		// Информация о городе/стране уже есть в объекте tour, полученном на строке 315
+		// Старый код обогащения (строки 331-339) удален
 
 		// Определяем длительность тура из свойств тура, по умолчанию 7 дней
 		duration := 7
@@ -834,27 +803,23 @@ func (h *Handler) getUserOrders(c *gin.Context) {
 			"children":    0,                 // По умолчанию 0 детей
 		}
 
-		// Получаем информацию о туре
+		// Получаем информацию о туре (город/страна уже должны быть внутри)
 		tour, err := h.services.Tour.GetByID(c.Request.Context(), order.TourID)
 		if err == nil && tour != nil {
-			// Получаем информацию о городе
-			city, err := h.services.City.GetByID(c.Request.Context(), tour.CityID)
-			if err == nil && city != nil {
-				tour.City = city.Name
-
-				// Получаем информацию о стране
-				country, err := h.services.Country.GetByID(c.Request.Context(), city.CountryID)
-				if err == nil && country != nil {
-					tour.Country = country.Name
-					tour.Location = country.Name + ", " + city.Name
+			// Формируем location из вложенных данных, проверяя на nil
+			location := "Местоположение неизвестно"
+			if tour.City != nil {
+				location = tour.City.Name
+				if tour.City.Country != nil {
+					location = tour.City.Name + ", " + tour.City.Country.Name
 				}
 			}
 
 			enrichedOrder["tour"] = map[string]interface{}{
 				"id":        tour.ID,
 				"name":      tour.Name,
-				"image_url": tour.ImageURL,
-				"location":  tour.Location,
+				"image_url": tour.ImageURL, // Используем image_url как есть
+				"location":  location,      // Используем сформированную строку
 			}
 		} else {
 			enrichedOrder["tour"] = map[string]interface{}{

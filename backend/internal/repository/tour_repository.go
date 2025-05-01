@@ -53,26 +53,25 @@ func (r *tourRepository) Create(ctx context.Context, tour *domain.Tour) (int64, 
 
 // GetByID получает тур по ID вместе со связанными данными (город, страна, даты, отели)
 func (r *tourRepository) GetByID(ctx context.Context, id int64) (*domain.Tour, error) {
-	// Временная структура для сканирования данных тура вместе с названиями города и страны
-	type tourWithDetails struct {
-		domain.Tour
-		CityName    string `db:"city_name"`
-		CountryName string `db:"country_name"`
-	}
+	// Больше не нужна временная структура, будем сканировать напрямую в domain.Tour
 
+	// Обновленный запрос с псевдонимами для вложенных структур
 	query := `
-		SELECT 
+		SELECT
 			t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at,
-			c.name AS city_name, 
-			co.name AS country_name
+			c.id AS "city.id",
+			c.name AS "city.name",
+			co.id AS "city.country.id",
+			co.name AS "city.country.name",
+			co.code AS "city.country.code"
 		FROM tours t
-		JOIN cities c ON t.city_id = c.id
-		JOIN countries co ON c.country_id = co.id
+		LEFT JOIN cities c ON t.city_id = c.id        -- Используем LEFT JOIN на случай, если город не указан
+		LEFT JOIN countries co ON c.country_id = co.id -- Используем LEFT JOIN на случай, если страна не указана
 		WHERE t.id = ?
 	`
 
-	var tourDetails tourWithDetails
-	err := r.db.GetContext(ctx, &tourDetails, query, id)
+	var tour domain.Tour // Сканируем напрямую в основную структуру
+	err := r.db.GetContext(ctx, &tour, query, id)
 	if err != nil {
 		if err == sql.ErrNoRows {
 			return nil, fmt.Errorf("тур с ID %d не найден", id)
@@ -80,11 +79,7 @@ func (r *tourRepository) GetByID(ctx context.Context, id int64) (*domain.Tour, e
 		return nil, fmt.Errorf("ошибка при поиске тура: %w", err)
 	}
 
-	// Копируем основные данные тура
-	tour := tourDetails.Tour
-	tour.City = tourDetails.CityName
-	tour.Country = tourDetails.CountryName
-	tour.Location = fmt.Sprintf("%s, %s", tour.City, tour.Country) // Формируем локацию
+	// Данные города и страны теперь заполнены автоматически sqlx
 
 	// Получаем даты тура
 	tourDates, err := r.GetTourDates(ctx, tour.ID)
@@ -168,21 +163,20 @@ func (r *tourRepository) List(ctx context.Context, filters map[string]interface{
 	offset := (page - 1) * size
 	limit := size
 
-	// Временная структура для сканирования
-	type tourWithDetails struct {
-		domain.Tour
-		CityName    string `db:"city_name"`
-		CountryName string `db:"country_name"`
-	}
+	// Временная структура больше не нужна
 
+	// Обновленный запрос для List с псевдонимами
 	query := `
-		SELECT 
+		SELECT
 			t.id, t.city_id, t.name, t.description, t.base_price, t.image_url, t.duration, t.is_active, t.created_at,
-			c.name AS city_name, 
-			co.name AS country_name
+			c.id AS "city.id",
+			c.name AS "city.name",
+			co.id AS "city.country.id",
+			co.name AS "city.country.name",
+			co.code AS "city.country.code"
 		FROM tours t
-		JOIN cities c ON t.city_id = c.id
-		JOIN countries co ON c.country_id = co.id
+		LEFT JOIN cities c ON t.city_id = c.id        -- Используем LEFT JOIN
+		LEFT JOIN countries co ON c.country_id = co.id -- Используем LEFT JOIN
 	`
 
 	var conditions []string
@@ -225,22 +219,14 @@ func (r *tourRepository) List(ctx context.Context, filters map[string]interface{
 	query += " ORDER BY t.created_at DESC LIMIT ? OFFSET ?"
 	args = append(args, limit, offset)
 
-	var tourDetailsList []*tourWithDetails
-	err := r.db.SelectContext(ctx, &tourDetailsList, query, args...)
+	var tours []*domain.Tour // Сканируем напрямую в слайс domain.Tour
+	err := r.db.SelectContext(ctx, &tours, query, args...)
 	if err != nil {
 		return nil, fmt.Errorf("ошибка при поиске туров: %w", err)
 	}
 
-	// Преобразуем результат в []*domain.Tour, заполняя поля City и Country
-	tours := make([]*domain.Tour, 0, len(tourDetailsList))
-	for _, td := range tourDetailsList {
-		tour := td.Tour // Копируем основные данные
-		tour.City = td.CityName
-		tour.Country = td.CountryName
-		tour.Location = fmt.Sprintf("%s, %s", tour.City, tour.Country)
-		// Даты и отели для списка не загружаем для производительности
-		tours = append(tours, &tour)
-	}
+	// Преобразование больше не нужно, данные уже в правильной структуре
+	// Даты и отели для списка по-прежнему не загружаем для производительности
 
 	return tours, nil
 }
