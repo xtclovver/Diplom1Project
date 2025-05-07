@@ -1,12 +1,29 @@
 #!/bin/sh
 
-# Nginx port is now hardcoded in nginx.conf
+# Настройка переменных окружения для бэкенда
+export PORT=${PORT:-8081}
 
-echo "Starting backend on port 8081..." # Updated port
-# Start the backend application in the background
-# Backend now listens on 8081 as configured in config.go and nginx.conf
+# Проверяем наличие файла конфигурации
+if [ ! -f "/app/configs/config.json" ]; then
+    echo "Ошибка: Файл конфигурации не найден!"
+    exit 1
+fi
+
+# Стартуем бэкенд на порту 8081
+echo "Запуск бэкенда на порту 8081..."
+cd /app
 /app/api &
 
-echo "Starting Nginx on port 8080..." # Nginx port is hardcoded
-# Start Nginx in the foreground
-nginx -g 'daemon off;'
+echo "Проверка готовности бэкенда..."
+# Даем бэкенду время на запуск
+sleep 5
+
+# Проверяем, запустился ли бэкенд
+if ! ps aux | grep -v grep | grep "/app/api" > /dev/null; then
+    echo "Ошибка: Бэкенд не запустился!"
+    exit 1
+fi
+
+echo "Запуск Nginx на порту 8080..."
+# Запускаем Nginx в фоновом режиме
+nginx -g 'daemon off;' 
