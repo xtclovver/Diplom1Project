@@ -9,8 +9,10 @@ export GIN_MODE=release
 export NGINX_PORT=${PORT:-8080}
 echo "Настройка портов: Nginx будет работать на порту ${NGINX_PORT}, бэкенд на порту ${BACKEND_PORT}"
 
-# Обновляем конфигурацию Nginx
+# Обновляем конфигурацию Nginx - порт слушателя
 sed -i "s/listen 8080/listen ${NGINX_PORT}/g" /etc/nginx/nginx.conf
+
+# Обновляем порт бэкенда в Nginx - правильный путь к директиве в контексте server
 sed -i "s/set \$backend_port \"[0-9]*\"/set \$backend_port \"${BACKEND_PORT}\"/g" /etc/nginx/nginx.conf
 
 # Настраиваем порт в конфигурации бэкенда
@@ -31,6 +33,10 @@ cd /app
 # Пауза для запуска бэкенда
 echo "Ожидание запуска бэкенда..."
 sleep 3
+
+# Проверка конфигурации Nginx перед запуском
+echo "Проверка конфигурации Nginx..."
+nginx -t
 
 # Запускаем Nginx в фоновом режиме
 echo "Запуск Nginx..."
