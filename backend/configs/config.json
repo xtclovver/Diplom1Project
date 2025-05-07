@@ -6,10 +6,10 @@
     },
     "database": {
         "driver": "mysql",
-        "host": "localhost",
+        "host": "35.228.77.198",
         "port": "3306",
         "username": "root",
-        "password": "123123",
+        "password": "k\EIgg%r>$}E~zo@",
         "dbname": "tour_agency"
     },
     "jwt": {
