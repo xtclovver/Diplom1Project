@@ -1,6 +1,6 @@
 {
     "server": {
-        "port": "8081",
+        "port": "8080",
         "read_timeout": 10,
         "write_timeout": 10
     },

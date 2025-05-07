@@ -6,7 +6,7 @@ WORKDIR /app/backend
 # Копируем Go модули и скачиваем зависимости
 # Это использует кэш Docker
 COPY backend/go.mod backend/go.sum ./
-RUN go mod download
+RUN go mod download && go mod verify # Добавил verify
 
 # Копируем остальной исходный код бэкенда
 COPY backend/ ./
@@ -68,8 +68,8 @@ RUN chmod +x /entrypoint.sh
 # Убедимся, что все необходимые папки существуют
 RUN mkdir -p /app/configs /var/log/nginx
 
-# Экспонируем порт 8080 (стандартный порт для многих облачных сервисов)
-EXPOSE 8080
+# Экспонируем порт 8081 (для Cloud Run)
+EXPOSE 8081
 
 # Устанавливаем entrypoint скрипт в качестве команды запуска
-ENTRYPOINT ["/entrypoint.sh"] 
+ENTRYPOINT ["/entrypoint.sh"]

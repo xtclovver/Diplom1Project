@@ -2,11 +2,11 @@
 set -e
 
 # Настройка переменных окружения
-export BACKEND_PORT=8081
+export BACKEND_PORT=8080
 export GIN_MODE=release
 
 # Cloud Run использует порт из переменной PORT
-export NGINX_PORT=${PORT:-8080}
+export NGINX_PORT=${PORT:-8081}
 echo "Настройка портов: Nginx будет работать на порту ${NGINX_PORT}, бэкенд на порту ${BACKEND_PORT}"
 
 # Показываем информацию о сети для отладки
