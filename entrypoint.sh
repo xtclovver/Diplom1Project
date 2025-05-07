@@ -1,37 +1,37 @@
 #!/bin/sh
+set -e
 
-# Настройка переменных окружения для бэкенда
-export PORT=${PORT:-8081}
-export GIN_MODE=${GIN_MODE:-release}
+# Настройка переменных окружения
+export BACKEND_PORT=8081
+export GIN_MODE=release
 
-# Проверяем наличие файла конфигурации
-if [ ! -f "/app/configs/config.json" ]; then
-    echo "Ошибка: Файл конфигурации не найден!"
-    exit 1
+# Cloud Run использует порт из переменной PORT
+export NGINX_PORT=${PORT:-8080}
+echo "Настройка портов: Nginx будет работать на порту ${NGINX_PORT}, бэкенд на порту ${BACKEND_PORT}"
+
+# Обновляем конфигурацию Nginx
+sed -i "s/listen 8080/listen ${NGINX_PORT}/g" /etc/nginx/nginx.conf
+sed -i "s/set \$backend_port \"[0-9]*\"/set \$backend_port \"${BACKEND_PORT}\"/g" /etc/nginx/nginx.conf
+
+# Настраиваем порт в конфигурации бэкенда
+if [ -f "/app/configs/config.json" ]; then
+    TMP_CONFIG=$(mktemp)
+    cat /app/configs/config.json | sed 's/"port": "[0-9]*"/"port": "'${BACKEND_PORT}'"/g' > ${TMP_CONFIG}
+    mv ${TMP_CONFIG} /app/configs/config.json
+    echo "Порт бэкенда настроен: ${BACKEND_PORT}"
+else
+    echo "Предупреждение: Конфигурация бэкенда не найдена, используем значения по умолчанию"
 fi
 
-# Убедимся, что каталог для логов Nginx существует
-mkdir -p /var/log/nginx
-
-# Стартуем бэкенд на порту 8081
-echo "Запуск бэкенда на порту 8081..."
+# Запускаем бэкенд
+echo "Запуск бэкенда..."
 cd /app
 /app/api &
-BACKEND_PID=$!
 
-echo "Проверка готовности бэкенда..."
-# Даем бэкенду время на запуск
-sleep 5
-
-# Проверяем, запустился ли бэкенд
-if ! ps -p $BACKEND_PID > /dev/null; then
-    echo "Ошибка: Бэкенд не запустился!"
-    exit 1
-fi
-
-echo "Запуск Nginx на порту 8080..."
-# Сначала проверяем конфигурацию Nginx
-nginx -t
+# Пауза для запуска бэкенда
+echo "Ожидание запуска бэкенда..."
+sleep 3
 
 # Запускаем Nginx в фоновом режиме
-nginx -g 'daemon off;' 
+echo "Запуск Nginx..."
+exec nginx -g 'daemon off;' 

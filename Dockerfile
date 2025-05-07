@@ -42,8 +42,14 @@ RUN npm run build
 # ---- Stage 3: Final Image ----
 FROM nginx:1.25-alpine
 
-# Устанавливаем gettext для envsubst в entrypoint.sh
-RUN apk add --no-cache gettext
+# Устанавливаем gettext для envsubst и дополнительные инструменты для отладки
+RUN apk update && apk add --no-cache \
+    gettext \
+    curl \
+    procps \
+    net-tools \
+    busybox-extras \
+    bash
 
 # Копируем собранный бэкенд из этапа backend-builder
 COPY --from=backend-builder /app/api /app/api
@@ -58,6 +64,9 @@ COPY backend/configs/config.json /app/configs/config.json
 # Копируем entrypoint скрипт
 COPY entrypoint.sh /entrypoint.sh
 RUN chmod +x /entrypoint.sh
+
+# Убедимся, что все необходимые папки существуют
+RUN mkdir -p /app/configs /var/log/nginx
 
 # Экспонируем порт 8080 (стандартный порт для многих облачных сервисов)
 EXPOSE 8080
