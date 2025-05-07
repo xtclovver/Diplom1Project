@@ -49,7 +49,8 @@ RUN apk update && apk add --no-cache \
     procps \
     net-tools \
     busybox-extras \
-    bash
+    bash \
+    jq
 
 # Копируем собранный бэкенд из этапа backend-builder
 COPY --from=backend-builder /app/api /app/api

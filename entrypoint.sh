@@ -20,10 +20,25 @@ sed -i "s/listen 8080/listen ${NGINX_PORT}/g" /etc/nginx/nginx.conf
 # Обновляем порт бэкенда в Nginx - правильный путь к директиве в контексте server
 sed -i "s/set \$backend_port \"[0-9]*\"/set \$backend_port \"${BACKEND_PORT}\"/g" /etc/nginx/nginx.conf
 
-# Настраиваем порт в конфигурации бэкенда
+# Настраиваем порты в конфигурации бэкенда
 if [ -f "/app/configs/config.json" ]; then
     TMP_CONFIG=$(mktemp)
-    cat /app/configs/config.json | sed 's/"port": "[0-9]*"/"port": "'${BACKEND_PORT}'"/g' > ${TMP_CONFIG}
+    # Обновляем порт сервера
+    cat /app/configs/config.json | \
+    jq --arg port "${BACKEND_PORT}" '.server.port = $port' | \
+    # Устанавливаем правильный порт для MySQL - 3306
+    jq '.database.port = "3306"' | \
+    # Устанавливаем правильный порт для Redis - 6379
+    jq '.redis.port = "6379"' > ${TMP_CONFIG}
+    
+    # Если jq не доступен, используем sed
+    if [ $? -ne 0 ]; then
+        cat /app/configs/config.json | \
+        sed 's/"port": "[0-9]*"/"port": "'${BACKEND_PORT}'"/g' | \
+        sed 's/"database":{[^}]*"port": "[0-9]*"/"database":{\n        "driver": "mysql",\n        "host": "35.228.77.198",\n        "port": "3306"/g' | \
+        sed 's/"redis":{[^}]*"port": "[0-9]*"/"redis":{\n        "host": "localhost",\n        "port": "6379"/g' > ${TMP_CONFIG}
+    fi
+    
     mv ${TMP_CONFIG} /app/configs/config.json
     echo "Порт бэкенда настроен: ${BACKEND_PORT}"
     echo "Содержимое конфигурации бэкенда:"
