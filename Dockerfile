@@ -33,7 +33,8 @@ RUN chmod -R +x node_modules/.bin
 COPY frontend/ ./
 
 # Создаем .env файл для настройки API_URL для продакшн сборки
-RUN echo "REACT_APP_API_URL=http://localhost:8080/api" > .env
+# Используем относительный путь к API вместо абсолютного
+RUN echo "REACT_APP_API_URL=/api" > .env
 
 # Собираем фронтенд
 RUN npm run build

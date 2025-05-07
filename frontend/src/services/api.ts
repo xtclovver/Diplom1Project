@@ -1,13 +1,18 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8080/api';
+// Импортируем унифицированный интерфейс фильтров
+import { TourFilters } from '../components/tour/TourFilter'; // Убедитесь, что путь к TourFilter.tsx корректен
+
+// Используем переменную окружения или значение по умолчанию
+const API_URL = process.env.REACT_APP_API_URL || '/api';
 
 // Создаем экземпляр axios с базовым URL
 const api = axios.create({
   baseURL: API_URL,
   headers: {
     'Content-Type': 'application/json'
-  }
+  },
+  withCredentials: false // Отключаем credentials для избежания проблем с CORS
 });
 
 // Интерцептор для добавления токена авторизации
@@ -34,20 +39,16 @@ api.interceptors.response.use(
     console.error('[API Error]', error.config?.url, error.response?.status, error.response?.data);
     const originalRequest = error.config;
     
-    // Если ошибка 401 (Unauthorized) и запрос еще не повторялся
     if (error.response && error.response.status === 401 && !originalRequest._retry) {
       console.log('[Auth] Попытка обновить токен после 401 ошибки');
       originalRequest._retry = true;
       
       try {
-        // Пытаемся обновить токен
         const refreshToken = localStorage.getItem('refreshToken');
         console.log('[Auth] Refresh token из localStorage:', refreshToken ? 'получен' : 'отсутствует');
         
         if (refreshToken) {
-          // Используем axios напрямую, а не api, чтобы избежать интерцепторов
           console.log('[Auth] Отправляем запрос на обновление токена');
-          // Отправляем запрос с правильным форматом данных
           const res = await axios.post(`${API_URL}/auth/refresh`, JSON.stringify({ refreshToken }), {
             headers: {
               'Content-Type': 'application/json'
@@ -55,14 +56,12 @@ api.interceptors.response.use(
           });
           console.log('[Auth] Ответ обновления токена:', res.status, res.data);
           
-          // Если получили новые токены, сохраняем их
           if (res.data.accessToken && res.data.refreshToken) {
             console.log('[Auth] Сохраняем новые токены');
             localStorage.setItem('accessToken', res.data.accessToken);
             localStorage.setItem('refreshToken', res.data.refreshToken);
             localStorage.setItem('token', res.data.accessToken); // Для совместимости
             
-            // Повторяем исходный запрос с новым токеном
             console.log('[Auth] Повторный запрос с новым токеном');
             originalRequest.headers.Authorization = `Bearer ${res.data.accessToken}`;
             return api(originalRequest);
@@ -76,16 +75,9 @@ api.interceptors.response.use(
         } else {
           console.error('[Auth] Ошибка обновления токена:', err);
         }
-        // Если не удалось обновить токен, выходим из системы
         localStorage.removeItem('accessToken');
         localStorage.removeItem('refreshToken');
         localStorage.removeItem('token');
-        
-        // Убираем автоматическое перенаправление, т.к. это вызывает перезагрузку страницы
-        // if (window.location.pathname !== '/login') {
-        //   console.log('[Auth] Перенаправление на страницу логина');
-        //   window.location.href = '/login';
-        // }
       }
     }
     
@@ -93,53 +85,30 @@ api.interceptors.response.use(
   }
 );
 
-// Импортируем унифицированный интерфейс фильтров
-import { TourFilters } from '../components/tour/TourFilter';
-
-
 // Сервис для работы с турами
 export const tourService = {
-  // Получение списка туров с фильтрацией и пагинацией
   getTours: (filters: TourFilters, page: number, size: number) => {
-    // Создаем объект параметров для API
-    const params: Record<string, any> = {
-      page,
-      size,
-    };
-
-    // Копируем фильтры и переименовываем поля дат
+    const params: Record<string, any> = { page, size };
     for (const key in filters) {
       if (Object.prototype.hasOwnProperty.call(filters, key)) {
         const value = filters[key as keyof TourFilters];
-        // Пропускаем неопределенные или пустые значения
         if (value !== undefined && value !== '') {
           if (key === 'dateFrom') {
-            params['startDateAfter'] = value; // Переименовываем
+            params['startDateAfter'] = value;
           } else if (key === 'dateTo') {
-            params['startDateBefore'] = value; // Переименовываем
+            params['startDateBefore'] = value;
           } else {
-            // Преобразуем ключи camelCase в snake_case для API, если это необходимо
-            // В данном случае API ожидает camelCase, кроме дат, так что оставляем как есть
              params[key] = value;
-             // Если бы API ожидал snake_case:
-             // const snakeKey = key.replace(/[A-Z]/g, letter => `_${letter.toLowerCase()}`);
-             // params[snakeKey] = value;
           }
         }
       }
     }
-
-    console.log('[API Request Params] /tours:', params); // Логируем параметры запроса
-
-    return api.get('/tours', { params }); // Передаем сформированные параметры
+    console.log('[API Request Params] /tours:', params);
+    return api.get('/tours', { params });
   },
-
-  // Получение информации о конкретном туре
   getTourById: (id: string) => {
     return api.get(`/tours/${id}`);
   },
-
-  // Получение доступных дат для тура
   getTourDates: (tourId: string) => {
     return api.get(`/tours/${tourId}/dates`);
   }
@@ -147,28 +116,22 @@ export const tourService = {
 
 // Сервис для работы с отелями
 export const hotelService = {
-  // Получение списка отелей с фильтрацией
   getHotels: (filters = {}, page = 1, size = 10) => {
     return api.get('/hotels', { params: { ...filters, page, size } });
   },
-  
-  // Получение информации об отеле
   getHotelById: (id: string) => {
     return api.get(`/hotels/${id}`);
   },
-  
-  // Получение номеров отеля
   getHotelRooms: (hotelId: number) => {
     return api.get(`/hotels/${hotelId}/rooms`);
   },
-  
-  // Получение доступности номеров
+  // Добавлено из api.js
+  getRoomById: (id: string | number) => { // Уточнил тип id
+    return api.get(`/rooms/${id}`);
+  },
   getRoomAvailability: (roomId: string, startDate: string, endDate: string) => {
     return api.get(`/hotels/rooms/${roomId}/availability`, {
-      params: {
-        startDate,
-        endDate
-      }
+      params: { startDate, endDate }
     });
   }
 };
@@ -180,7 +143,6 @@ export const authService = {
       .catch(error => {
         console.error('[Auth API] Ошибка при попытке входа:', error.response?.status, error.response?.data);
         if (error.response?.status === 401) {
-          // Проверяем сообщение об ошибке
           const errorMsg = error.response.data?.error || '';
           if (errorMsg.includes('invalid credentials')) {
             console.error('[Auth API] Неверные учетные данные');
@@ -190,51 +152,38 @@ export const authService = {
         throw error;
       });
   },
-
   register: (userData: { email: string; password: string; name: string }) => {
     return api.post('/auth/register', userData);
   },
-  
-  // Обновление токена
   refreshToken: (refreshToken: string) => {
     console.log('[Auth API] Отправка запроса на обновление токена', {refreshToken: refreshToken ? 'Токен есть' : 'Токен отсутствует'});
-    // Используем axios напрямую вместо api
     return axios.post(`${API_URL}/auth/refresh`, { refreshToken });
   },
-
   logout: () => {
     localStorage.removeItem('token');
     localStorage.removeItem('accessToken');
     localStorage.removeItem('refreshToken');
   },
-
   getCurrentUser: async () => {
     console.log('[Auth API] Запрос данных текущего пользователя');
     try {
-      const response = await api.get('/auth/me');
+      const response = await api.get('/auth/me'); // Используем /auth/me как в оригинальном api.ts
       console.log('[Auth API] Ответ от сервера:', response.status);
       console.log('[Auth API] Данные пользователя:', JSON.stringify(response.data, null, 2));
-      
-      // Проверка структуры данных
       if (!response.data || typeof response.data !== 'object') {
         console.error('[Auth API] Некорректный формат данных пользователя:', response.data);
         throw new Error('Некорректный формат данных пользователя');
       }
-      
-      // Проверка наличия обязательных полей
       if (!response.data.role) {
         console.error('[Auth API] Отсутствует поле role в данных пользователя');
-        response.data.role = { id: 0, name: 'user' }; // Устанавливаем роль по умолчанию
+        response.data.role = { id: 0, name: 'user' };
       }
-      
       return response;
     } catch (error) {
       console.error('[Auth API] Ошибка получения данных пользователя:', error);
       throw error;
     }
   },
-  
-  // Обновление профиля пользователя
   updateUserProfile: (profileData: { 
     firstName: string;
     lastName: string;
@@ -243,7 +192,6 @@ export const authService = {
     birthDate: string; 
   }) => {
     console.log('[Auth API] Отправка запроса на обновление профиля:', profileData);
-    // Преобразуем имена полей для соответствия API бэкенда
     const backendData = {
       first_name: profileData.firstName,
       last_name: profileData.lastName, 
@@ -252,25 +200,30 @@ export const authService = {
       birth_date: profileData.birthDate
     };
     console.log('[Auth API] Преобразованные данные для бэкенда:', backendData);
-    return api.put('/users/me', backendData);
+    return api.put('/users/me', backendData); // Эндпоинт /users/me
   }
 };
 
 // Сервис для работы с заказами
 export const orderService = {
   createOrder: (orderData: any) => {
-    return api.post('/orders', orderData);
+    console.log('API: Отправка запроса на создание заказа', orderData); // Лог из api.js
+    return api.post('/orders', orderData)
+      .then(response => { // then/catch из api.js
+        console.log('API: Успешный ответ при создании заказа', response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error('API: Ошибка при создании заказа', error.response?.data || error.message);
+        throw error;
+      });
   },
-
   getUserOrders: () => {
     return api.get('/orders');
   },
-
   getOrderById: (id: string) => {
     return api.get(`/orders/${id}`);
   },
-  
-  // Отмена заказа
   cancelOrder: (id: string) => {
     return api.delete(`/orders/${id}`);
   }
@@ -278,35 +231,83 @@ export const orderService = {
 
 // Сервис для работы с тикетами тех-поддержки
 export const supportService = {
-  // Создание тикета
   createTicket: (ticketData: { subject: string; message: string }) => {
     return api.post('/tickets', ticketData);
   },
-  
-  // Получение списка тикетов пользователя
   getUserTickets: () => {
     return api.get('/tickets');
   },
-  
-  // Получение тикета по ID
   getTicketById: (id: number) => {
     return api.get(`/tickets/${id}`);
   },
-  
-  // Добавление сообщения в тикет
   addTicketMessage: (id: number, message: string) => {
     return api.post(`/tickets/${id}/messages`, { message });
   },
-  
-  // Получение сообщений тикета
   getTicketMessages: (id: number) => {
     return api.get(`/tickets/${id}/messages`);
   },
-  
-  // Закрытие тикета
   closeTicket: (id: number) => {
     return api.put(`/tickets/${id}/close`);
   }
 };
 
-export default api; 
+// Сервис для работы с пользователями (добавлен из api.js)
+// Обратите внимание: getCurrentUser дублируется с authService.getCurrentUser.
+// Рекомендуется выбрать один или убедиться, что они служат разным целям.
+export const userService = {
+  getCurrentUser: () => { // Этот метод дублирует authService.getCurrentUser
+    return api.get('/users/me'); // Эндпоинт из api.js
+  },
+  updateUser: (userData: any) => { // Типизируйте userData при необходимости
+    return api.put('/users/me', userData);
+  },
+  changePassword: (passwordData: any) => { // Типизируйте passwordData
+    return api.put('/users/me/password', passwordData);
+  }
+};
+
+// Админ-сервис (добавлен из api.js)
+export const adminService = {
+  // Пользователи
+  getAllUsers: (page = 1, size = 10) => {
+    return api.get('/admin/users', { params: { page, size } });
+  },
+  getUserById: (id: string | number) => { // Уточнил тип id
+    return api.get(`/admin/users/${id}`);
+  },
+  updateUser: (id: string | number, userData: any) => { // Типизируйте userData
+    return api.put(`/admin/users/${id}`, userData);
+  },
+  deleteUser: (id: string | number) => {
+    return api.delete(`/admin/users/${id}`);
+  },
+  // Туры
+  createTour: (tourData: any) => { // Типизируйте tourData
+    return api.post('/admin/tours', tourData);
+  },
+  updateTour: (id: string | number, tourData: any) => { // Типизируйте tourData
+    return api.put(`/admin/tours/${id}`, tourData);
+  },
+  deleteTour: (id: string | number) => {
+    return api.delete(`/admin/tours/${id}`);
+  },
+  // Отели
+  createHotel: (hotelData: any) => { // Типизируйте hotelData
+    return api.post('/admin/hotels', hotelData);
+  },
+  updateHotel: (id: string | number, hotelData: any) => { // Типизируйте hotelData
+    return api.put(`/admin/hotels/${id}`, hotelData);
+  },
+  deleteHotel: (id: string | number) => {
+    return api.delete(`/admin/hotels/${id}`);
+  },
+  // Заказы
+  getAllOrders: (filters = {}, page = 1, size = 10) => {
+    return api.get('/admin/orders', { params: { ...filters, page, size } });
+  },
+  updateOrderStatus: (id: string | number, status: string) => { // Типизируйте status
+    return api.put(`/admin/orders/${id}/status`, { status });
+  }
+};
+
+export default api;
