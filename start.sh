@@ -42,6 +42,40 @@ else
 fi
 echo "-------------------------------------------------------------"
 
+# Убедимся, что необходимые переменные окружения для БД экспортированы и установим значения по умолчанию, если нужно
+# Эти имена должны соответствовать плейсхолдерам в config.json.template
+export DB_HOST=${DB_HOST}                     # Должна быть предоставлена в среде Cloud Run
+export DB_USER=${DB_USER}                     # Должна быть предоставлена в среде Cloud Run
+export DB_PASSWORD=${DB_PASSWORD}             # Должна быть предоставлена в среде Cloud Run
+export DB_NAME=${DB_NAME}                     # Должна быть предоставлена в среде Cloud Run
+export DB_PORT_NUMBER=${DB_PORT_NUMBER:-3306} # Для числового значения порта в JSON
+export APP_PORT=${APP_PORT:-8081}             # Порт, на котором слушает Go-приложение
+
+# Определяем список переменных для envsubst, чтобы избежать подстановки непреднамеренных переменных
+# Убедитесь, что они соответствуют плейсхолдерам в вашем config.json.template
+# Важно: если переменная не установлена, envsubst удалит плейсхолдер или заменит пустой строкой,
+# если не используется конструкция ${VAR:-default} в самом шаблоне.
+# Для безопасности лучше перечислить все переменные, которые должны быть подставлены.
+VARIABLES_TO_SUBSTITUTE='${DB_HOST} ${DB_USER} ${DB_PASSWORD} ${DB_NAME} ${DB_PORT_NUMBER} ${APP_PORT}'
+
+echo "--- Подстановка переменных окружения в конфигурацию бэкенда ---"
+CONFIG_TEMPLATE_PATH="/app/backend/configs/config.json.template"
+CONFIG_OUTPUT_PATH="/app/backend/configs/config.json"
+
+if [ ! -f "$CONFIG_TEMPLATE_PATH" ]; then
+    echo "ОШИБКА: Шаблон конфигурации бэкенда $CONFIG_TEMPLATE_PATH не найден!"
+    # Можно завершить работу, если конфигурация критична:
+    # exit 1
+else
+    echo "Генерация $CONFIG_OUTPUT_PATH из $CONFIG_TEMPLATE_PATH..."
+    # Используем кавычки вокруг VARIABLES_TO_SUBSTITUTE, чтобы envsubst правильно обработал список
+    envsubst "$VARIABLES_TO_SUBSTITUTE" < "$CONFIG_TEMPLATE_PATH" > "$CONFIG_OUTPUT_PATH"
+    
+    echo "Итоговая конфигурация бэкенда ($CONFIG_OUTPUT_PATH) после подстановки:"
+    cat "$CONFIG_OUTPUT_PATH"
+fi
+echo "-------------------------------------------------------------"
+
 # Переходим в директорию бэкенда и запускаем его в фоновом режиме
 cd /app/backend
 ./server &
