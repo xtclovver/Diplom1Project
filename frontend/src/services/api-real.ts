@@ -1,6 +1,6 @@
 import axios from 'axios';
 
-const API_URL = process.env.REACT_APP_API_URL || 'http://localhost:8081/api';
+const API_URL = '/api'; // Используем относительный путь для API в развернутом приложении
 
 // Создаем экземпляр axios с базовым URL
 const api = axios.create({
