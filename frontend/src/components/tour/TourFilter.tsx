@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import axios from 'axios';
+// Используем настроенный экземпляр api из сервисов
+import api from '../../services/api'; // Убедитесь, что путь корректен
 import './TourFilter.css';
 
 // Типы данных для фильтрации туров
@@ -61,7 +62,7 @@ const TourFilter: React.FC<FilterProps> = ({ onFilterChange, initialFilters }) =
     const fetchCountries = async () => {
       try {
         setLoading(true);
-        const response = await axios.get('/api/countries');
+        const response = await api.get('/countries'); // Используем api и относительный путь
         // Проверяем, является ли ответ массивом
         if (Array.isArray(response.data)) {
           setCountries(response.data);
@@ -87,7 +88,7 @@ const TourFilter: React.FC<FilterProps> = ({ onFilterChange, initialFilters }) =
         if (filters.countryId) { // Проверяем наличие countryId
           setLoading(true);
           // Запрашиваем города для одной страны
-          const response = await axios.get(`/api/countries/${filters.countryId}/cities`);
+          const response = await api.get(`/countries/${filters.countryId}/cities`); // Используем api и относительный путь
           // Предполагаем, что API вернет массив городов для указанной страны
           if (Array.isArray(response.data)) {
             setCities(response.data);
