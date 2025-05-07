@@ -15,7 +15,7 @@ ip addr show
 echo "=========================="
 
 # Обновляем конфигурацию Nginx - порт слушателя
-sed -i "s/listen 8080/listen ${NGINX_PORT}/g" /etc/nginx/nginx.conf
+sed -i "s/listen 8081/listen ${NGINX_PORT}/g" /etc/nginx/nginx.conf
 
 # Обновляем порт бэкенда в Nginx - правильный путь к директиве в контексте server
 sed -i "s/set \$backend_port \"[0-9]*\"/set \$backend_port \"${BACKEND_PORT}\"/g" /etc/nginx/nginx.conf
@@ -47,6 +47,36 @@ else
     echo "Предупреждение: Конфигурация бэкенда не найдена, используем значения по умолчанию"
 fi
 
+# Проверка конфигурации Nginx перед запуском
+echo "Проверка конфигурации Nginx..."
+nginx -t || { echo "Ошибка в конфигурации Nginx"; exit 1; }
+
+# Запускаем Nginx в фоновом режиме
+echo "Запуск Nginx..."
+nginx -g 'daemon off;' &
+NGINX_PID=$!
+
+# Проверяем, запустился ли Nginx
+sleep 1
+if ! ps | grep "nginx" | grep -v grep > /dev/null; then
+    echo "ОШИБКА: Nginx не запустился!"
+    echo "Активные процессы:"
+    ps
+    exit 1
+fi
+
+# Проверка доступности Nginx health-check
+echo "Проверка доступности Nginx health-check:"
+NGINX_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${NGINX_PORT}/healthz)
+if [ "$NGINX_HEALTH" != "200" ]; then
+    echo "ОШИБКА: Nginx health-check не отвечает (код $NGINX_HEALTH)"
+    echo "Активные процессы:"
+    ps
+    exit 1
+else
+    echo "Nginx health-check отвечает кодом 200 OK"
+fi
+
 # Запускаем бэкенд
 echo "Запуск бэкенда..."
 cd /app
@@ -71,23 +101,31 @@ netstat -tulpn || echo "Команда netstat недоступна"
 
 # Проверка доступности бэкенда
 echo "Проверка доступности бэкенда:"
-curl -v http://127.0.0.1:${BACKEND_PORT}/api/countries || echo "Бэкенд не отвечает на запрос /api/countries"
+BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${BACKEND_PORT}/api/health || \
+                  curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${BACKEND_PORT}/api/countries)
+if [ "$BACKEND_HEALTH" != "200" ]; then
+    echo "ПРЕДУПРЕЖДЕНИЕ: Бэкенд не отвечает корректно (код $BACKEND_HEALTH)"
+    # Не завершаем работу, так как эндпоинт может быть другим
+else
+    echo "Бэкенд отвечает кодом $BACKEND_HEALTH"
+fi
 
-# Проверка конфигурации Nginx перед запуском
-echo "Проверка конфигурации Nginx..."
-nginx -t
-
-# Запускаем Nginx в фоновом режиме
-echo "Запуск Nginx..."
-nginx -g 'daemon off;' &
-NGINX_PID=$!
-
-# Даём немного времени на запуск Nginx
+# Даём немного времени для инициализации
 sleep 2
 
-# Проверяем доступность через Nginx
+# Проверяем доступность API через Nginx
 echo "Проверка доступности через Nginx:"
-curl -v http://127.0.0.1:${NGINX_PORT}/api/countries || echo "Nginx не проксирует запрос к бэкенду"
+PROXY_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${NGINX_PORT}/api/health || \
+               curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${NGINX_PORT}/api/countries)
+if [ "$PROXY_HEALTH" != "200" ]; then
+    echo "ПРЕДУПРЕЖДЕНИЕ: API через Nginx не отвечает корректно (код $PROXY_HEALTH)"
+    # Не завершаем работу, так как и этот эндпоинт может быть другим
+else
+    echo "API через Nginx отвечает кодом $PROXY_HEALTH"
+fi
+
+# Сообщаем Cloud Run что сервис готов к работе
+echo "Сервис успешно запущен на порту ${NGINX_PORT}"
 
 # Ожидаем завершения Nginx
 wait $NGINX_PID 
