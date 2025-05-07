@@ -1,87 +1,61 @@
-# Stage 1: Build Backend
-FROM golang:1.21-alpine AS builder-backend
+# ---- Stage 1: Build Backend ----
+FROM golang:1.24-alpine AS backend-builder
 
 WORKDIR /app/backend
 
-# Копируем файлы модулей и загружаем зависимости для кэширования Docker
+# Copy Go module files and download dependencies first
+# This leverages Docker cache
 COPY backend/go.mod backend/go.sum ./
-RUN go mod download && go mod verify # Добавил verify
+RUN go mod download
 
-# Копируем остальной исходный код бэкенда
+# Copy the rest of the backend source code
 COPY backend/ ./
 
-# Собираем бэкенд приложение
-# CGO_ENABLED=0 для статической сборки
-# Используем ваш путь ./cmd/api
-RUN CGO_ENABLED=0 GOOS=linux go build -a -installsuffix cgo -o /app/server ./cmd/api
+# Build the backend application
+# Main package is in cmd/api
+RUN CGO_ENABLED=0 GOOS=linux go build -o /app/api ./cmd/api/main.go
 
-# Копируем существующую конфигурацию бэкенда
-COPY backend/configs/config.json /app/backend_configs/config.json
-
-
-# Stage 2: Build Frontend
-FROM node:18-alpine AS builder-frontend
+# ---- Stage 2: Build Frontend ----
+FROM node:20-alpine AS frontend-builder
 
 WORKDIR /app/frontend
 
-# Копируем package.json и package-lock.json для кэширования Docker
-COPY frontend/package.json frontend/package-lock.json* ./
-# Копируем tsconfig.json, если используется TypeScript для сборки
-COPY frontend/tsconfig.json ./
+# Copy package.json and package-lock.json
+COPY frontend/package.json frontend/package-lock.json ./
 
-RUN npm install
+# Install dependencies (including devDependencies needed for build)
+RUN npm ci
 
-# Копируем остальной исходный код фронтенда
+# Ensure scripts in node_modules/.bin are executable
+RUN chmod -R +x node_modules/.bin
+
+# Copy the rest of the frontend source code
 COPY frontend/ ./
 
-# Переменная окружения для URL API бэкенда
-# Это значение будет встроено в статические файлы фронтенда во время сборки.
-# Оно указывает, что API доступно на localhost:BACKEND_PORT ВНУТРИ контейнера.
-# BACKEND_PORT будет определен позже, например, 8081
-ARG REACT_APP_API_URL_ARG="http://localhost:8081" # Убедитесь, что порт совпадает с тем, на котором будет слушать бэкенд
-ENV REACT_APP_API_URL=$REACT_APP_API_URL_ARG
+# Build the frontend application
+RUN node node_modules/react-scripts/bin/react-scripts.js build
 
-# Собираем фронтенд
-RUN npm run build
+# ---- Stage 3: Final Image ----
+FROM nginx:1.27-alpine
 
+# Install gettext for envsubst used in entrypoint.sh
+RUN apk add --no-cache gettext
 
-# Stage 3: Final image (без Nginx)
-FROM node:18-alpine # Используем Node.js образ, чтобы иметь npm/npx для 'serve'
+# Copy the built backend binary from the backend-builder stage
+COPY --from=backend-builder /app/api /app/api
 
-# Устанавливаем gettext для envsubst и ca-certificates
-# gettext может быть не нужен, если config.json статический, но оставим для общности или удалим, если точно не нужен.
-RUN apk add --no-cache gettext ca-certificates
+# Copy the built frontend static files from the frontend-builder stage
+COPY --from=frontend-builder /app/frontend/build /usr/share/nginx/html
 
-WORKDIR /app
+# Copy the Nginx configuration file
+COPY nginx.conf /etc/nginx/nginx.conf
 
-# Создаем директории для бэкенд приложения и его конфигурации
-RUN mkdir -p /app/backend/configs
+# Copy the entrypoint script
+COPY entrypoint.sh /entrypoint.sh
+RUN chmod +x /entrypoint.sh
 
-# Копируем собранный бэкенд из этапа builder-backend
-COPY --from=builder-backend /app/server /app/backend/server
-# Копируем конфигурацию бэкенда из этапа builder-backend
-COPY --from=builder-backend /app/backend_configs/config.json /app/backend/configs/config.json
+# Expose the default Cloud Run port (though Cloud Run uses the PORT env var)
+EXPOSE 8080
 
-# Копируем собранные статические файлы фронтенда из этапа builder-frontend
-RUN mkdir -p /app/frontend_static
-COPY --from=builder-frontend /app/frontend/build /app/frontend_static
-
-# Копируем новый скрипт запуска и делаем его исполняемым
-COPY start_services.sh /start_services.sh
-RUN chmod +x /start_services.sh
-
-# Порт, на котором будет слушать frontend-сервер (serve)
-# Этот порт будет доступен снаружи контейнера
-EXPOSE 3000
-
-# Переменные окружения для конфигурации (могут быть переопределены при запуске)
-ENV DB_HOST=db_host_placeholder
-ENV DB_USER=db_user_placeholder
-ENV DB_PASSWORD=db_password_placeholder
-ENV DB_NAME=db_name_placeholder
-ENV DB_PORT_NUMBER=3306
-ENV BACKEND_INTERNAL_PORT=8081 # Порт, на котором Go-приложение будет слушать внутри контейнера
-ENV FRONTEND_PORT=3000        # Порт, на котором 'serve' будет слушать
-
-# Устанавливаем команду для запуска
-CMD ["/start_services.sh"]
+# Set the entrypoint script as the command to run
+ENTRYPOINT ["/entrypoint.sh"]
