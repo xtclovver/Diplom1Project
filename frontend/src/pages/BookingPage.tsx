@@ -148,20 +148,26 @@ const BookingPage: React.FC = () => {
     const basePrice = tour.basePrice || tour.base_price || 0;
     console.log('BookingPage - Базовая цена тура:', basePrice);
     
-    // Базовая стоимость тура
+    // Базовая стоимость тура с учетом количества людей
     const tourPrice = basePrice * priceModifier * (orderData.peopleCount || 1);
     
     // Стоимость номера в отеле (если выбран)
     let roomPrice = 0;
+    let days = 0;
+    let nights = 0;
     if (orderData.roomId && selectedRoom) {
-      const days = selectedDate ? calculateDaysFromDates(selectedDate.startDate, selectedDate.endDate) : tour.duration || 1;
-      const nights = Math.max(1, days - 1); // Минимум 1 ночь
-      roomPrice = selectedRoom.price * nights * (orderData.peopleCount || 1);
+      days = selectedDate ? calculateDaysFromDates(selectedDate.startDate, selectedDate.endDate) : tour.duration || 1;
+      nights = days - 1; // Рассчитываем количество ночей (всегда на 1 меньше, чем дней тура)
+      
+      // Стоимость за все ночи проживания
+      roomPrice = selectedRoom.price * nights;
+      
       console.log('BookingPage - Данные для расчета стоимости номера:', {
         roomId: orderData.roomId,
-        roomPrice: selectedRoom.price,
+        roomPricePerNight: selectedRoom.price,
+        days,
         nights,
-        peopleCount: orderData.peopleCount,
+        roomPriceCalculation: `${selectedRoom.price} × ${nights} = ${roomPrice}`,
         totalRoomPrice: roomPrice
       });
     }
@@ -169,13 +175,21 @@ const BookingPage: React.FC = () => {
     // Общая стоимость = стоимость тура + стоимость номера
     const calculatedPrice = tourPrice + roomPrice;
     console.log('BookingPage - Расчет полной стоимости:', {
+      basePrice,
+      priceModifier,
+      peopleCount: orderData.peopleCount,
+      tourPriceCalculation: `${basePrice} × ${priceModifier} × ${orderData.peopleCount || 1} = ${tourPrice}`,
       tourPrice,
+      roomPricePerNight: selectedRoom?.price,
+      days,
+      nights,
       roomPrice,
+      finalCalculation: `${tourPrice} + ${roomPrice} = ${calculatedPrice}`,
       calculatedPrice
     });
     
-    // Проверяем результат на NaN
-    return isNaN(calculatedPrice) ? 0 : calculatedPrice;
+    // Округляем до целого числа рублей
+    return Math.round(calculatedPrice);
   };
   
   // Вспомогательная функция для расчета количества дней

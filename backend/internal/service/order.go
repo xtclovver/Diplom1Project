@@ -28,7 +28,7 @@ func NewOrderService(orderRepo repository.OrderRepository, tourRepo repository.T
 }
 
 // Create создает новый заказ
-func (s *OrderServiceImpl) Create(ctx context.Context, userID, tourID, tourDateID int64, roomID *int64, peopleCount int) (int64, error) {
+func (s *OrderServiceImpl) Create(ctx context.Context, userID, tourID, tourDateID int64, roomID *int64, peopleCount int, totalPrice float64) (int64, error) {
 	// Проверка существования пользователя
 	user, err := s.userRepo.GetByID(ctx, userID)
 	if err != nil {
@@ -87,10 +87,15 @@ func (s *OrderServiceImpl) Create(ctx context.Context, userID, tourID, tourDateI
 		}
 	}
 
-	// Подсчет общей стоимости
-	price, err := s.CalculatePrice(ctx, tourID, tourDateID, roomID, peopleCount)
-	if err != nil {
-		return 0, fmt.Errorf("ошибка при расчете стоимости: %w", err)
+	// Используем переданную цену, если она указана, иначе рассчитываем
+	price := totalPrice
+	if price <= 0 {
+		// Подсчет общей стоимости
+		calculatedPrice, err := s.CalculatePrice(ctx, tourID, tourDateID, roomID, peopleCount)
+		if err != nil {
+			return 0, fmt.Errorf("ошибка при расчете стоимости: %w", err)
+		}
+		price = calculatedPrice
 	}
 
 	// Создаем заказ
@@ -286,10 +291,12 @@ func (s *OrderServiceImpl) CalculatePrice(ctx context.Context, tourID, tourDateI
 		}
 
 		// Вычисляем продолжительность пребывания на основе дат тура
+		// Количество ночей всегда на 1 меньше, чем количество дней
 		duration := tour.Duration
+		nights := duration - 1 // Исправлено: количество ночей на 1 меньше, чем дней
 
-		// Добавляем стоимость номера за весь период пребывания
-		roomPrice = room.Price * float64(duration)
+		// Добавляем стоимость номера за весь период пребывания (ночи)
+		roomPrice = room.Price * float64(nights)
 	}
 
 	return basePrice + roomPrice, nil

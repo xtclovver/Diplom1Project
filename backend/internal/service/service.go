@@ -82,7 +82,7 @@ type HotelService interface {
 
 // OrderService интерфейс для работы с заказами
 type OrderService interface {
-	Create(ctx context.Context, userID, tourID, tourDateID int64, roomID *int64, peopleCount int) (int64, error)
+	Create(ctx context.Context, userID, tourID, tourDateID int64, roomID *int64, peopleCount int, totalPrice float64) (int64, error)
 	GetByID(ctx context.Context, id int64) (*domain.Order, error)
 	Update(ctx context.Context, order *domain.Order) error
 	Delete(ctx context.Context, id int64) error

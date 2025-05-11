@@ -811,10 +811,11 @@ func (h *Handler) changePassword(c *gin.Context) {
 // --- Order handlers ---
 
 type createOrderInput struct {
-	TourID      int64  `json:"tour_id" binding:"required"`
-	TourDateID  int64  `json:"tour_date_id" binding:"required"`
-	RoomID      *int64 `json:"room_id"` // Optional room selection
-	PeopleCount int    `json:"people_count" binding:"required,gt=0"`
+	TourID      int64   `json:"tour_id" binding:"required"`
+	TourDateID  int64   `json:"tour_date_id" binding:"required"`
+	RoomID      *int64  `json:"room_id"` // Optional room selection
+	PeopleCount int     `json:"people_count" binding:"required,gt=0"`
+	TotalPrice  float64 `json:"total_price"`
 }
 
 // @Summary Create a new order
@@ -841,7 +842,7 @@ func (h *Handler) createOrder(c *gin.Context) {
 		return
 	}
 
-	orderID, err := h.services.Order.Create(c.Request.Context(), user.ID, input.TourID, input.TourDateID, input.RoomID, input.PeopleCount)
+	orderID, err := h.services.Order.Create(c.Request.Context(), user.ID, input.TourID, input.TourDateID, input.RoomID, input.PeopleCount, input.TotalPrice)
 	if err != nil {
 		// TODO: Handle specific service errors (e.g., insufficient availability, invalid IDs)
 		newErrorResponse(c, http.StatusInternalServerError, err.Error())

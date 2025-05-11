@@ -101,6 +101,32 @@
   color: #333;
 }
 
+.discount-item {
+  margin-top: 10px;
+  padding-top: 5px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.discount-value {
+  font-weight: 600;
+  color: #e53935; /* красный цвет для скидки */
+}
+
+.note-item {
+  margin-top: 10px;
+  padding-top: 5px;
+  border-top: 1px dashed #e0e0e0;
+}
+
+.summary-note {
+  font-size: 12px;
+  color: #757575;
+  font-style: italic;
+  display: block;
+  width: 100%;
+  text-align: right;
+}
+
 .special-requests p {
   margin: 0;
   color: #666;

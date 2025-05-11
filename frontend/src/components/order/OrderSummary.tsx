@@ -138,7 +138,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
       }
       
       const diffTime = Math.abs(end.getTime() - start.getTime());
-      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1; // +1 чтобы учесть день отъезда
+      return Math.ceil(diffTime / (1000 * 60 * 60 * 24)); // Убираем +1, чтобы соответствовать логике BookingPage
     } catch (error) {
       console.error("Ошибка при расчете длительности тура:", error);
       return tour.duration || 1;
@@ -167,16 +167,59 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
     }
   };
   
+  console.log('OrderSummary - Исходные данные:', {
+    tour,
+    tourDate,
+    selectedRoom,
+    orderData
+  });
+
   // Рассчитываем базовую стоимость тура с учетом модификатора цены
   const baseTourCost = (tour.base_price || 0) * (tourDate?.priceModifier || 1);
-  
-  // Рассчитываем стоимость проживания за все дни
-  const roomCost = selectedRoom ? selectedRoom.price * (calculateDays() - 1) : 0; // -1 день, т.к. отель обычно бронируется на ночи
   
   // Общая стоимость тура для всех участников
   const totalTourCost = baseTourCost * (orderData.peopleCount || 0);
   
+  // Рассчитываем стоимость проживания
   const days = calculateDays();
+  const nights = days - 1; // Количество ночей
+  
+  // Стоимость проживания за все ночи
+  const roomCost = selectedRoom ? selectedRoom.price * nights : 0;
+  
+  // Полная расчетная стоимость (тур + проживание)
+  const calculatedTotal = totalTourCost + roomCost;
+  
+  // Фактическая стоимость заказа (может содержать скидку)
+  const finalPrice = !isNaN(orderData.totalPrice) && orderData.totalPrice > 0
+    ? orderData.totalPrice
+    : calculatedTotal;
+  
+  // Скидка (если есть)
+  const discount = calculatedTotal > finalPrice ? calculatedTotal - finalPrice : 0;
+  
+  // Индикатор, что данные могут быть неполными (из истории заказов)
+  const isFromOrderHistory = selectedRoom && 
+    !isNaN(orderData.totalPrice) && 
+    Math.abs(orderData.totalPrice - calculatedTotal) > 1 && // Небольшая погрешность для округления
+    !discount; // Нет явной скидки, но есть расхождение
+  
+  // Отладочный вывод для проверки расчетов
+  console.log('OrderSummary - Детали расчета:', {
+    tourBaseCost: baseTourCost,
+    peopleCount: orderData.peopleCount,
+    totalTourCost,
+    days,
+    nights,
+    roomPricePerNight: selectedRoom?.price,
+    roomPriceCalculation: `${selectedRoom?.price || 0} × ${nights} = ${roomCost}`,
+    roomCost,
+    calculatedTotal,
+    orderDataTotalPrice: orderData.totalPrice,
+    finalPrice,
+    discount,
+    isFromOrderHistory
+  });
   
   return (
     <div className="order-summary">
@@ -250,19 +293,44 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({
         <h4>Детализация стоимости</h4>
         <div className="summary-item">
           <span className="summary-label">Базовая стоимость тура:</span>
-          <span className="summary-value">{isNaN(baseTourCost) ? '0' : baseTourCost.toLocaleString()} ₽ × {orderData.peopleCount || 0}</span>
+          <span className="summary-value">{isNaN(baseTourCost) ? '0' : baseTourCost.toLocaleString()} ₽ × {orderData.peopleCount || 0} {getPeopleText(orderData.peopleCount || 0)}</span>
+        </div>
+        <div className="summary-item">
+          <span className="summary-label">Общая стоимость тура:</span>
+          <span className="summary-value">{isNaN(totalTourCost) ? '0' : totalTourCost.toLocaleString()} ₽</span>
         </div>
         {selectedRoom && (
-          <div className="summary-item">
-            <span className="summary-label">Проживание за {days-1} {getDaysText(days-1)}:</span>
-            <span className="summary-value">{isNaN(roomCost) ? '0' : roomCost.toLocaleString()} ₽</span>
+          <>
+            <div className="summary-item">
+              <span className="summary-label">Проживание:</span>
+              <span className="summary-value">{isNaN(selectedRoom.price) ? '0' : selectedRoom.price.toLocaleString()} ₽ за ночь × {nights} {nights === 1 ? 'ночь' : nights >= 2 && nights <= 4 ? 'ночи' : 'ночей'}</span>
+            </div>
+            <div className="summary-item">
+              <span className="summary-label">Общая стоимость проживания:</span>
+              <span className="summary-value">{isNaN(roomCost) ? '0' : roomCost.toLocaleString()} ₽</span>
+            </div>
+          </>
+        )}
+        
+        {discount > 0 && (
+          <div className="summary-item discount-item">
+            <span className="summary-label">Скидка:</span>
+            <span className="summary-value discount-value">- {discount.toLocaleString()} ₽</span>
+          </div>
+        )}
+        
+        {isFromOrderHistory && (
+          <div className="summary-item note-item">
+            <span className="summary-note">
+              * Фактическая цена может отличаться из-за акций и других факторов на момент бронирования
+            </span>
           </div>
         )}
       </div>
       
       <div className="total-price">
         <span className="total-label">Итого:</span>
-        <span className="total-value">{isNaN(orderData.totalPrice) ? '0' : orderData.totalPrice.toLocaleString()} ₽</span>
+        <span className="total-value">{isNaN(finalPrice) ? '0' : finalPrice.toLocaleString()} ₽</span>
       </div>
       
       {(onConfirm || onEdit) && (
