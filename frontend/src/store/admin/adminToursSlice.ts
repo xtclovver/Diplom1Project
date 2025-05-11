@@ -67,7 +67,10 @@ export const fetchTours = createAsyncThunk(
         return response.data.map((tour: any) => ({
           ...tour,
           basePrice: tour.basePrice || tour.base_price, // Поддержка обоих форматов полей
-          base_price: tour.basePrice || tour.base_price // Дублируем для обратной совместимости
+          base_price: tour.basePrice || tour.base_price, // Дублируем для обратной совместимости
+          isActive: tour.isActive !== undefined ? tour.isActive : 
+                    tour.is_active !== undefined ? tour.is_active : true, // Поддержка обоих форматов активности
+          imageUrl: tour.imageUrl || tour.image_url || '' // Поддержка обоих форматов URL изображения
         }));
       } else if (response.data && (Array.isArray(response.data.tours) || Array.isArray(response.data.data))) {
         // Возврат массива из полей tours или data
@@ -75,7 +78,10 @@ export const fetchTours = createAsyncThunk(
         return toursData.map((tour: any) => ({
           ...tour,
           basePrice: tour.basePrice || tour.base_price,
-          base_price: tour.basePrice || tour.base_price
+          base_price: tour.basePrice || tour.base_price,
+          isActive: tour.isActive !== undefined ? tour.isActive : 
+                    tour.is_active !== undefined ? tour.is_active : true, // Поддержка обоих форматов активности
+          imageUrl: tour.imageUrl || tour.image_url || '' // Поддержка обоих форматов URL изображения
         }));
       } else {
         console.error('[AdminTours] Неожиданная структура ответа API:', response.data);

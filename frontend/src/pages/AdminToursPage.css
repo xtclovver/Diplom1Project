@@ -1,32 +1,86 @@
+/* Специальные стили для страницы туров */
+.admin-tours-page .profile-container {
+  max-width: 1600px;
+  width: 100%;
+  margin: 0 auto;
+  padding: 0 20px;
+}
+
+.admin-tours-page .profile-sidebar {
+  width: 250px;
+  min-width: 250px;
+  padding-right: 30px;
+}
+
+.admin-tours-page .profile-content {
+  flex: 1;
+  max-width: calc(100% - 250px);
+}
+
+/* Стили для таблицы, чтобы использовать все доступное пространство */
+.admin-tours-page .admin-tours-container {
+  width: 100%;
+  padding: 0;
+}
+
+/* Отображение изображения тура в таблице */
+.tour-image-preview {
+  width: 50px;
+  height: 50px;
+  border-radius: 4px;
+  object-fit: cover;
+  border: 1px solid #ddd;
+}
+
 .admin-tours-container {
   width: 100%;
   padding: 0;
   background-color: #f9f9f9;
   border-radius: 8px;
   overflow: hidden;
+  margin-bottom: 50px;
 }
 
 /* Заголовок страницы */
 .profile-hero {
   background-color: #0c395f;
-  padding: 30px 0;
+  background-image: linear-gradient(135deg, #0c395f 0%, #1976d2 100%);
+  padding: 40px 0;
   color: white;
   margin-bottom: 30px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .profile-hero h1 {
-  font-size: 2rem;
+  font-size: 2.2rem;
   margin: 0;
   font-weight: 600;
 }
 
 .profile-subtitle {
-  margin-top: 8px;
-  opacity: 0.8;
-  font-size: 1rem;
+  margin-top: 10px;
+  opacity: 0.9;
+  font-size: 1.1rem;
 }
 
 /* Адаптивная верстка */
+@media (max-width: 992px) {
+  .admin-tours-page .profile-container {
+    flex-direction: column;
+  }
+  
+  .admin-tours-page .profile-sidebar,
+  .admin-tours-page .profile-content {
+    width: 100%;
+    max-width: 100%;
+  }
+  
+  .admin-tours-page .profile-sidebar {
+    margin-bottom: 20px;
+    padding-right: 0;
+  }
+}
+
 @media (max-width: 768px) {
   .profile-sidebar {
     margin-bottom: 20px;
@@ -46,46 +100,68 @@
   background-color: #e3f2fd;
   color: #0077cc;
   font-weight: 500;
+  border-left: 3px solid #0077cc;
 }
 
 /* Исправление некоторых стилей для админ-интерфейса */
 .admin-tours-container .admin-tours-container {
   max-width: none;
-  padding: 20px;
+  padding: 25px;
   background-color: white;
   box-shadow: none;
+  border-radius: 12px;
 }
 
 .admin-tours-container .admin-tours {
-  padding: 10px;
+  padding: 0;
+}
+
+/* Растягиваем таблицу на всю ширину */
+.profile-content {
+  width: 100%;
+  max-width: 1400px;
 }
 
 .admin-tours-container .admin-header {
-  border-bottom: 1px solid #eee;
-  padding-bottom: 15px;
-  margin-bottom: 20px;
+  border-bottom: 1px solid #e0e0e0;
+  padding-bottom: 20px;
+  margin-bottom: 25px;
 }
 
 .admin-tours-container .admin-table-container {
-  box-shadow: none;
-  border-radius: 0;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+  border-radius: 8px;
+  overflow: hidden;
 }
 
 .admin-tours-container .admin-alert {
-  margin-top: 10px;
-  margin-bottom: 20px;
+  margin-top: 15px;
+  margin-bottom: 25px;
 }
 
 @media (max-width: 768px) {
   .admin-tours-container {
-    padding: 15px;
+    padding: 0;
   }
   
-  .admin-tours-container .admin-tours {
-    padding: 0;
+  .admin-tours-container .admin-tours-container {
+    padding: 15px;
+    border-radius: 0;
   }
   
   .admin-tours-container .admin-table {
     font-size: 14px;
+  }
+  
+  .profile-hero {
+    padding: 30px 0;
+  }
+  
+  .profile-hero h1 {
+    font-size: 1.8rem;
+  }
+  
+  .profile-subtitle {
+    font-size: 1rem;
   }
 } 

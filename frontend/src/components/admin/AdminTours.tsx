@@ -71,7 +71,18 @@ const AdminTours: React.FC = () => {
 
   // Загрузка данных при монтировании компонента
   useEffect(() => {
-    dispatch(fetchTours() as any);
+    dispatch(fetchTours() as any)
+      .then((action: any) => {
+        if (action.payload && Array.isArray(action.payload)) {
+          console.log('[AdminTours] Загруженные туры:', action.payload);
+          console.log('[AdminTours] URL изображений:', action.payload.map((t: any) => ({
+            id: t.id,
+            name: t.name,
+            imageUrl: t.imageUrl,
+            image_url: (t as any).image_url
+          })));
+        }
+      });
     fetchCities();
   }, [dispatch]);
   
@@ -145,7 +156,7 @@ const AdminTours: React.FC = () => {
       description: tour.description,
       basePrice: tour.basePrice,
       cityId: tour.cityId,
-      imageUrl: tour.imageUrl,
+      imageUrl: tour.imageUrl || (tour as any).image_url || '',
       duration: tour.duration,
       isActive: tour.isActive
     });
@@ -287,6 +298,17 @@ const AdminTours: React.FC = () => {
     return city ? city.name : 'Не указан';
   };
   
+  const getImageUrl = (tour: any): string => {
+    // Пробуем получить URL изображения из разных возможных источников
+    const url = tour.imageUrl || (tour as any).image_url || '';
+    console.log(`[AdminTours] imageUrl для тура ${tour.id}:`, {
+      imageUrl: tour.imageUrl,
+      image_url: (tour as any).image_url,
+      resultUrl: url
+    });
+    return url;
+  };
+  
   // Рендеринг интерфейса
   // 1. Отображение сообщения об ошибке/успехе
   const renderNotifications = () => (
@@ -374,13 +396,45 @@ const AdminTours: React.FC = () => {
         
         <div className="form-group">
           <label htmlFor="imageUrl">URL изображения</label>
-          <input
-            type="text"
-            id="imageUrl"
-            name="imageUrl"
-            value={formData.imageUrl}
-            onChange={handleInputChange}
-          />
+          <div className="image-url-input-group">
+            <input
+              type="text"
+              id="imageUrl"
+              name="imageUrl"
+              value={formData.imageUrl}
+              onChange={handleInputChange}
+              placeholder="Например: /images/tours/sochi_ski.jpg"
+            />
+            {formData.imageUrl && (
+              <button 
+                type="button" 
+                className="copy-url-button"
+                onClick={() => {
+                  const fullUrl = formData.imageUrl.startsWith('http') 
+                    ? formData.imageUrl 
+                    : `${window.location.origin}${formData.imageUrl}`;
+                  navigator.clipboard.writeText(fullUrl);
+                  alert('URL скопирован в буфер обмена');
+                }}
+                title="Скопировать полный URL"
+              >
+                <span className="copy-icon">📋</span>
+              </button>
+            )}
+          </div>
+          {formData.imageUrl && (
+            <div className="image-preview">
+              <img 
+                src={formData.imageUrl.startsWith('http') ? formData.imageUrl : `${formData.imageUrl}`} 
+                alt="Предпросмотр изображения тура"
+                onError={(e) => {
+                  (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
+                  (e.target as HTMLImageElement).style.opacity = '0.5';
+                }} 
+              />
+            </div>
+          )}
+          <small className="form-hint">Укажите относительный путь к изображению, например, из БД: /images/tours/sochi_ski.jpg</small>
         </div>
         
         <div className="form-group checkbox-group">
@@ -444,6 +498,7 @@ const AdminTours: React.FC = () => {
             <tr>
               <th>ID</th>
               <th>Название</th>
+              <th>Изображение</th>
               <th>Город</th>
               <th>Цена</th>
               <th>Продолжительность</th>
@@ -454,11 +509,11 @@ const AdminTours: React.FC = () => {
           <tbody>
             {loading ? (
               <tr>
-                <td colSpan={7} className="loading-cell">Загрузка...</td>
+                <td colSpan={8} className="loading-cell">Загрузка...</td>
               </tr>
             ) : filteredTours.length === 0 ? (
               <tr>
-                <td colSpan={7} className="empty-cell">
+                <td colSpan={8} className="empty-cell">
                   {searchQuery ? 'Туры не найдены' : 'Список туров пуст'}
                 </td>
               </tr>
@@ -467,8 +522,26 @@ const AdminTours: React.FC = () => {
                 <tr key={tour.id} className={tour.isActive ? 'active-row' : 'inactive-row'}>
                   <td>{tour.id}</td>
                   <td>{tour.name}</td>
+                  <td>
+                    {getImageUrl(tour) ? (
+                      <div className="image-cell" title={`URL: ${getImageUrl(tour)}`}>
+                        <img 
+                          src={getImageUrl(tour).startsWith('http') ? getImageUrl(tour) : `${getImageUrl(tour)}`} 
+                          alt={tour.name}
+                          className="tour-image-preview"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).src = '/images/placeholder.jpg';
+                            (e.target as HTMLImageElement).style.opacity = '0.5';
+                          }}
+                        />
+                        <span className="image-url-tooltip">{getImageUrl(tour)}</span>
+                      </div>
+                    ) : (
+                      <span className="no-image">Нет фото</span>
+                    )}
+                  </td>
                   <td>{tour.city?.name || getCityName(tour.cityId)}</td>
-                  <td>{tour.basePrice?.toLocaleString('ru') || (tour as any).base_price?.toLocaleString('ru')} ₽</td>
+                  <td className="price-cell">{tour.basePrice?.toLocaleString('ru') || (tour as any).base_price?.toLocaleString('ru')} ₽</td>
                   <td>{tour.duration} {tour.duration === 1 ? 'день' : tour.duration < 5 ? 'дня' : 'дней'}</td>
                   <td>
                     <span className={`status-badge ${tour.isActive ? 'active' : 'inactive'}`}>

@@ -46,11 +46,11 @@ const AdminToursPage: React.FC = () => {
   }
   
   return (
-    <div className="profile-page">
+    <div className="profile-page admin-tours-page">
       <div className="profile-hero">
         <div className="container">
           <h1>Управление турами</h1>
-          <p className="profile-subtitle">Создавайте, редактируйте и удаляйте туры</p>
+          <p className="profile-subtitle">Создавайте, редактируйте и удаляйте туры в системе</p>
         </div>
       </div>
       
