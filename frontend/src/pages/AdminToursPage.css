@@ -1,6 +1,59 @@
 .admin-tours-container {
+  width: 100%;
   padding: 0;
+  background-color: #f9f9f9;
+  border-radius: 8px;
   overflow: hidden;
+}
+
+/* Заголовок страницы */
+.profile-hero {
+  background-color: #0c395f;
+  padding: 30px 0;
+  color: white;
+  margin-bottom: 30px;
+}
+
+.profile-hero h1 {
+  font-size: 2rem;
+  margin: 0;
+  font-weight: 600;
+}
+
+.profile-subtitle {
+  margin-top: 8px;
+  opacity: 0.8;
+  font-size: 1rem;
+}
+
+/* Адаптивная верстка */
+@media (max-width: 768px) {
+  .profile-sidebar {
+    margin-bottom: 20px;
+  }
+  
+  .profile-content {
+    padding: 0;
+  }
+  
+  .admin-tours-container .admin-tours-container {
+    padding: 10px;
+  }
+}
+
+/* Активный пункт меню */
+.menu-item.active {
+  background-color: #e3f2fd;
+  color: #0077cc;
+  font-weight: 500;
+}
+
+/* Исправление некоторых стилей для админ-интерфейса */
+.admin-tours-container .admin-tours-container {
+  max-width: none;
+  padding: 20px;
+  background-color: white;
+  box-shadow: none;
 }
 
 .admin-tours-container .admin-tours {
