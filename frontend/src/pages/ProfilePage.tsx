@@ -37,6 +37,24 @@ const ProfilePage: React.FC = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [formErrors, setFormErrors] = useState<Record<string, string>>({});
   
+  // Проверка, является ли пользователь администратором
+  const isUserAdmin = (): boolean => {
+    if (!user) return false;
+    
+    // Проверяем разные варианты структуры объекта пользователя
+    if (user.role && user.role.name === 'admin') return true;
+    if (user.role && user.role.name === 'админ') return true;
+    if (user.roleId === 1) return true;
+    if (user.username === 'admin') return true;
+    if (user.role === 'admin') return true;
+    
+    // Если в консоли видим, что пользователь - админ, но выше проверки не проходят,
+    // добавьте вывод объекта user в консоль и дополните условия
+    console.log('[ProfilePage] Проверка администратора:', user);
+    
+    return false;
+  };
+  
   useEffect(() => {
     console.log('[ProfilePage] Проверка аутентификации:', isAuthenticated);
     if (!isAuthenticated) {
@@ -45,10 +63,15 @@ const ProfilePage: React.FC = () => {
       return;
     }
     
-    // Загружаем данные пользователя
-    console.log('[ProfilePage] Запрос данных пользователя');
-    dispatch(getUserProfile());
-  }, [dispatch, navigate, isAuthenticated]);
+    // Загружаем данные пользователя только если их еще нет
+    if (!user && !loading) {
+      console.log('[ProfilePage] Отсутствуют данные пользователя, запрашиваем их');
+      dispatch(getUserProfile());
+    } else {
+      console.log('[ProfilePage] Данные пользователя уже загружены или загружаются:', 
+        user ? 'данные есть' : 'загрузка в процессе');
+    }
+  }, [dispatch, navigate, isAuthenticated, user, loading]);
   
   useEffect(() => {
     console.log('[ProfilePage] Обновление данных пользователя в форме:', user);
@@ -216,6 +239,21 @@ const ProfilePage: React.FC = () => {
             <button className="menu-item active">Профиль</button>
             <button className="menu-item" onClick={() => navigate('/orders')}>История заказов</button>
             <button className="menu-item" onClick={() => navigate('/support')}>Техподдержка</button>
+            
+            {/* Добавляем раздел Администрирование для администраторов с улучшенной проверкой */}
+            {isUserAdmin() && (
+              <div className="menu-group">
+                <div className="menu-group-title">Администрирование</div>
+                <div className="menu-group-items">
+                  <button 
+                    className="menu-item submenu-item" 
+                    onClick={() => navigate('/admin/tours')}
+                  >
+                    Управление турами
+                  </button>
+                </div>
+              </div>
+            )}
           </div>
         </div>
         

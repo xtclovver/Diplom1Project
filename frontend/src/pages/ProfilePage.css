@@ -86,6 +86,53 @@
   border-left: 3px solid var(--accent-color, #2196f3);
 }
 
+/* Стили для групп меню */
+.menu-group {
+  margin-top: 5px;
+}
+
+.menu-group-title {
+  padding: 15px 20px 10px;
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text-color, #555);
+  border-bottom: 1px solid #f0f0f0;
+  background-color: #f8f8f8;
+  position: relative;
+}
+
+.menu-group-title::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  top: 0;
+  bottom: 0;
+  width: 3px;
+  background-color: var(--accent-color, #ff7a00);
+}
+
+.menu-group-items {
+  padding: 0;
+}
+
+.menu-item.submenu-item {
+  padding-left: 30px;
+  font-size: 14px;
+  position: relative;
+}
+
+.menu-item.submenu-item::before {
+  content: '•';
+  position: absolute;
+  left: 15px;
+  color: var(--accent-color, #ff7a00);
+}
+
+.menu-item.submenu-item:hover, .menu-item.submenu-item.active {
+  background-color: #fff6ea;
+  color: var(--accent-color, #ff7a00);
+}
+
 .profile-content {
   flex: 1;
   background-color: white;

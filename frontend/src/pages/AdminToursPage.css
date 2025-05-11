@@ -1,0 +1,38 @@
+.admin-tours-container {
+  padding: 0;
+  overflow: hidden;
+}
+
+.admin-tours-container .admin-tours {
+  padding: 10px;
+}
+
+.admin-tours-container .admin-header {
+  border-bottom: 1px solid #eee;
+  padding-bottom: 15px;
+  margin-bottom: 20px;
+}
+
+.admin-tours-container .admin-table-container {
+  box-shadow: none;
+  border-radius: 0;
+}
+
+.admin-tours-container .admin-alert {
+  margin-top: 10px;
+  margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+  .admin-tours-container {
+    padding: 15px;
+  }
+  
+  .admin-tours-container .admin-tours {
+    padding: 0;
+  }
+  
+  .admin-tours-container .admin-table {
+    font-size: 14px;
+  }
+} 

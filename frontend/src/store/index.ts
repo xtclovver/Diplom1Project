@@ -3,13 +3,15 @@ import toursReducer from './tours/toursSlice';
 import ordersReducer from './orders/ordersSlice';
 import authReducer from './auth/authSlice';
 import supportReducer from './support/supportSlice';
+import adminToursReducer from './admin/adminToursSlice';
 
 const store = configureStore({
   reducer: {
     tours: toursReducer,
     orders: ordersReducer,
     auth: authReducer,
-    support: supportReducer
+    support: supportReducer,
+    adminTours: adminToursReducer
   },
   // Отключаем middleware SerializableStateInvariantMiddleware в development
   middleware: (getDefaultMiddleware) =>

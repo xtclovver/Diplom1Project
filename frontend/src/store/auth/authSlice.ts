@@ -292,8 +292,15 @@ export const getUserProfile = createAsyncThunk<
   void
 >(
   'auth/getUserProfile',
-  async (_, { rejectWithValue }) => {
+  async (_, { rejectWithValue, getState }) => {
     try {
+      // Проверяем, не загружены ли уже данные пользователя
+      const state: any = getState();
+      if (state.auth.user && state.auth.isAuthenticated) {
+        console.log('[Auth] Данные пользователя уже загружены, пропускаем запрос');
+        return state.auth.user;
+      }
+      
       console.log('[Auth] Начат запрос данных пользователя');
       // Запрос данных пользователя через API
       const response = await authService.getCurrentUser();

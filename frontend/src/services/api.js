@@ -243,6 +243,25 @@ export const adminService = {
   },
   
   // Туры
+  getAllTours: (page = 1, size = 50) => {
+    console.log('[Admin API] Запрос всех туров для админ-панели');
+    return api.get('/admin/tours', { params: { page, size } })
+      .then(response => {
+        console.log('[Admin API] Успешный ответ при получении туров');
+        return response;
+      })
+      .catch(error => {
+        console.error('[Admin API] Ошибка при загрузке туров:', error.response?.data || error.message);
+        
+        // Если сервер ещё не поддерживает админский эндпоинт, используем обычный
+        if (error.response?.status === 404) {
+          console.log('[Admin API] Fallback на обычный эндпоинт /tours');
+          return api.get('/tours', { params: { page, size } });
+        }
+        throw error;
+      });
+  },
+  
   createTour: (tourData) => {
     return api.post('/admin/tours', tourData);
   },

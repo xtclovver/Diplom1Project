@@ -37,7 +37,28 @@ export const login = createAsyncThunk(
       };
     } catch (error) {
       console.error('[Auth JS] Ошибка входа:', error);
-      return rejectWithValue(error.response?.data?.message || 'Не удалось войти');
+      
+      // Улучшенная обработка ошибок
+      if (error.response) {
+        console.error('[Auth JS] Детали ошибки:', { 
+          status: error.response.status, 
+          data: error.response.data 
+        });
+        
+        // Обработка разных статус-кодов
+        if (error.response.status === 401) {
+          return rejectWithValue('Неверное имя пользователя или пароль');
+        } else if (error.response.status === 400) {
+          const errorMessage = error.response.data?.error || 'Неверные данные для входа';
+          return rejectWithValue(errorMessage);
+        } else if (error.response.status === 429) {
+          return rejectWithValue('Слишком много попыток входа. Пожалуйста, попробуйте позже');
+        } else if (error.response.status >= 500) {
+          return rejectWithValue('Ошибка сервера. Пожалуйста, попробуйте позже');
+        }
+      }
+      
+      return rejectWithValue(error.response?.data?.message || error.message || 'Не удалось войти');
     }
   }
 );

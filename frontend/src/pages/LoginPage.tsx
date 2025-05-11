@@ -49,6 +49,13 @@ const LoginPage: React.FC = () => {
     }
     
     console.log('[LoginPage] Начало процесса авторизации');
+    
+    // Очищаем все старые токены перед попыткой входа
+    console.log('[LoginPage] Очистка локального хранилища перед входом');
+    localStorage.removeItem('accessToken');
+    localStorage.removeItem('refreshToken');
+    localStorage.removeItem('token');
+    
     setLoading(true);
     setError('');
     

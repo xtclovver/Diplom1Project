@@ -87,9 +87,11 @@ BACKEND_PID=$!
 echo "Ожидание запуска бэкенда..."
 sleep 5
 
-# Проверяем, запустился ли бэкенд
-if ! ps | grep "/app/api" | grep -v grep > /dev/null; then
-    echo "ОШИБКА: Бэкенд не запустился!"
+# Проверяем, запустился ли бэкенд и продолжает работать
+if ps -p $BACKEND_PID > /dev/null; then
+    echo "Бэкенд успешно запущен с PID $BACKEND_PID"
+else
+    echo "ОШИБКА: Бэкенд не запустился или завершился!"
     echo "Активные процессы:"
     ps
     exit 1
@@ -98,31 +100,6 @@ fi
 # Проверяем, слушает ли бэкенд порт
 echo "Проверка слушающих портов:"
 netstat -tulpn || echo "Команда netstat недоступна"
-
-# Проверка доступности бэкенда
-echo "Проверка доступности бэкенда:"
-BACKEND_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${BACKEND_PORT}/api/health || \
-                  curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${BACKEND_PORT}/api/countries)
-if [ "$BACKEND_HEALTH" != "200" ]; then
-    echo "ПРЕДУПРЕЖДЕНИЕ: Бэкенд не отвечает корректно (код $BACKEND_HEALTH)"
-    # Не завершаем работу, так как эндпоинт может быть другим
-else
-    echo "Бэкенд отвечает кодом $BACKEND_HEALTH"
-fi
-
-# Даём немного времени для инициализации
-sleep 2
-
-# Проверяем доступность API через Nginx
-echo "Проверка доступности через Nginx:"
-PROXY_HEALTH=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${NGINX_PORT}/api/health || \
-               curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:${NGINX_PORT}/api/countries)
-if [ "$PROXY_HEALTH" != "200" ]; then
-    echo "ПРЕДУПРЕЖДЕНИЕ: API через Nginx не отвечает корректно (код $PROXY_HEALTH)"
-    # Не завершаем работу, так как и этот эндпоинт может быть другим
-else
-    echo "API через Nginx отвечает кодом $PROXY_HEALTH"
-fi
 
 # Сообщаем Cloud Run что сервис готов к работе
 echo "Сервис успешно запущен на порту ${NGINX_PORT}"

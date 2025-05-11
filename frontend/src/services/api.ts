@@ -272,40 +272,99 @@ export const adminService = {
   getAllUsers: (page = 1, size = 10) => {
     return api.get('/admin/users', { params: { page, size } });
   },
-  getUserById: (id: string | number) => { // Уточнил тип id
+  getUserById: (id: number) => {
     return api.get(`/admin/users/${id}`);
   },
-  updateUser: (id: string | number, userData: any) => { // Типизируйте userData
+  updateUser: (id: number, userData: any) => {
     return api.put(`/admin/users/${id}`, userData);
   },
-  deleteUser: (id: string | number) => {
+  deleteUser: (id: number) => {
     return api.delete(`/admin/users/${id}`);
   },
+  
   // Туры
-  createTour: (tourData: any) => { // Типизируйте tourData
+  getAllTours: (page = 1, size = 50) => {
+    console.log('[Admin API] Запрос всех туров для админ-панели');
+    // Исправляем URL на /admin/tours вместо /tours
+    return api.get('/admin/tours', { params: { page, size } })
+      .then(response => {
+        console.log('[Admin API] Успешный ответ при получении туров. Формат:', 
+          Array.isArray(response.data) ? 'Массив' : 
+          (response.data && response.data.tours ? 'Объект с полем tours' : 
+          (response.data && response.data.data ? 'Объект с полем data' : 'Другой формат')));
+        return response;
+      })
+      .catch(error => {
+        console.error('[Admin API] Ошибка при загрузке туров:', error.response?.data || error.message);
+        
+        // Если сервер ещё не поддерживает админский эндпоинт, используем обычный
+        if (error.response?.status === 404) {
+          console.log('[Admin API] Fallback на обычный эндпоинт /tours');
+          return api.get('/tours', { params: { page, size } })
+            .then(response => {
+              console.log('[Admin API] Успешный ответ от fallback /tours. Формат:', 
+                Array.isArray(response.data) ? 'Массив' : 
+                (response.data && response.data.tours ? 'Объект с полем tours' : 
+                (response.data && response.data.data ? 'Объект с полем data' : 'Другой формат')));
+              return response;
+            });
+        }
+        throw error;
+      });
+  },
+  
+  createTour: (tourData: any) => {
     return api.post('/admin/tours', tourData);
   },
-  updateTour: (id: string | number, tourData: any) => { // Типизируйте tourData
+  
+  updateTour: (id: number, tourData: any) => {
     return api.put(`/admin/tours/${id}`, tourData);
   },
-  deleteTour: (id: string | number) => {
+  
+  deleteTour: (id: number) => {
     return api.delete(`/admin/tours/${id}`);
   },
+  
+  // Даты туров
+  getTourDates: (tourId: number) => {
+    return api.get(`/tours/${tourId}/dates`);
+  },
+  
+  addTourDate: (tourId: number, tourDateData: any) => {
+    return api.post(`/admin/tours/${tourId}/dates`, tourDateData);
+  },
+  
+  updateTourDate: (tourId: number, dateId: number, tourDateData: any) => {
+    return api.put(`/admin/tours/${tourId}/dates/${dateId}`, tourDateData);
+  },
+  
+  deleteTourDate: (tourId: number, dateId: number) => {
+    return api.delete(`/admin/tours/${tourId}/dates/${dateId}`);
+  },
+  
   // Отели
-  createHotel: (hotelData: any) => { // Типизируйте hotelData
+  getAllHotels: (page = 1, size = 50) => {
+    return api.get('/hotels', { params: { page, size } });
+  },
+  
+  createHotel: (hotelData: any) => {
     return api.post('/admin/hotels', hotelData);
   },
-  updateHotel: (id: string | number, hotelData: any) => { // Типизируйте hotelData
+  
+  updateHotel: (id: number, hotelData: any) => {
     return api.put(`/admin/hotels/${id}`, hotelData);
   },
-  deleteHotel: (id: string | number) => {
+  
+  deleteHotel: (id: number) => {
     return api.delete(`/admin/hotels/${id}`);
   },
+  
   // Заказы
   getAllOrders: (filters = {}, page = 1, size = 10) => {
     return api.get('/admin/orders', { params: { ...filters, page, size } });
   },
-  updateOrderStatus: (id: string | number, status: string) => { // Типизируйте status
+  
+  updateOrderStatus: (id: number, status: string) => {
     return api.put(`/admin/orders/${id}/status`, { status });
   }
 };
