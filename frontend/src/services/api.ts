@@ -327,19 +327,90 @@ export const adminService = {
   
   // Даты туров
   getTourDates: (tourId: number) => {
-    return api.get(`/tours/${tourId}/dates`);
+    console.log(`[Admin API] Запрос дат для тура ${tourId}`);
+    return api.get(`/tours/${tourId}/dates`)
+      .then(response => {
+        console.log(`[Admin API] Успешно получены даты для тура ${tourId}:`, 
+          Array.isArray(response.data) ? `Массив (${response.data.length} элементов)` : 
+          (response.data && response.data.dates ? `Объект с полем dates (${response.data.dates.length} элементов)` : 
+          (response.data && response.data.data ? `Объект с полем data (${response.data.data.length} элементов)` : 'Другой формат')));
+        return response;
+      })
+      .catch(error => {
+        console.error(`[Admin API] Ошибка при загрузке дат для тура ${tourId}:`, 
+          error.response?.status, error.response?.data);
+        
+        // Если эндпоинт не существует, вернем пустой массив вместо ошибки
+        if (error.response?.status === 404) {
+          console.log(`[Admin API] Эндпоинт дат не существует для тура ${tourId}, возвращаем пустой массив`);
+          return { data: [] };
+        }
+        
+        throw error;
+      });
   },
   
   addTourDate: (tourId: number, tourDateData: any) => {
-    return api.post(`/admin/tours/${tourId}/dates`, tourDateData);
+    console.log(`[Admin API] Добавление даты для тура ${tourId}:`, tourDateData);
+    return api.post(`/admin/tours/${tourId}/dates`, tourDateData)
+      .then(response => {
+        console.log(`[Admin API] Успешно добавлена дата для тура ${tourId}:`, response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error(`[Admin API] Ошибка при добавлении даты для тура ${tourId}:`, 
+          error.response?.status, error.response?.data);
+        
+        // Если admin API не поддерживается, используем обычный API
+        if (error.response?.status === 404) {
+          console.log(`[Admin API] Fallback на обычный эндпоинт для добавления даты тура ${tourId}`);
+          return api.post(`/tours/${tourId}/dates`, tourDateData);
+        }
+        
+        throw error;
+      });
   },
   
   updateTourDate: (tourId: number, dateId: number, tourDateData: any) => {
-    return api.put(`/admin/tours/${tourId}/dates/${dateId}`, tourDateData);
+    console.log(`[Admin API] Обновление даты ${dateId} для тура ${tourId}:`, tourDateData);
+    return api.put(`/admin/tours/${tourId}/dates/${dateId}`, tourDateData)
+      .then(response => {
+        console.log(`[Admin API] Успешно обновлена дата ${dateId} для тура ${tourId}:`, response.data);
+        return response;
+      })
+      .catch(error => {
+        console.error(`[Admin API] Ошибка при обновлении даты ${dateId} для тура ${tourId}:`, 
+          error.response?.status, error.response?.data);
+        
+        // Если admin API не поддерживается, используем обычный API
+        if (error.response?.status === 404) {
+          console.log(`[Admin API] Fallback на обычный эндпоинт для обновления даты ${dateId} тура ${tourId}`);
+          return api.put(`/tours/${tourId}/dates/${dateId}`, tourDateData);
+        }
+        
+        throw error;
+      });
   },
   
   deleteTourDate: (tourId: number, dateId: number) => {
-    return api.delete(`/admin/tours/${tourId}/dates/${dateId}`);
+    console.log(`[Admin API] Удаление даты ${dateId} для тура ${tourId}`);
+    return api.delete(`/admin/tours/${tourId}/dates/${dateId}`)
+      .then(response => {
+        console.log(`[Admin API] Успешно удалена дата ${dateId} для тура ${tourId}`);
+        return response;
+      })
+      .catch(error => {
+        console.error(`[Admin API] Ошибка при удалении даты ${dateId} для тура ${tourId}:`, 
+          error.response?.status, error.response?.data);
+        
+        // Если admin API не поддерживается, используем обычный API
+        if (error.response?.status === 404) {
+          console.log(`[Admin API] Fallback на обычный эндпоинт для удаления даты ${dateId} тура ${tourId}`);
+          return api.delete(`/tours/${tourId}/dates/${dateId}`);
+        }
+        
+        throw error;
+      });
   },
   
   // Отели

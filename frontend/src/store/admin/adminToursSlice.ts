@@ -1,6 +1,10 @@
 import { createSlice, createAsyncThunk, PayloadAction } from '@reduxjs/toolkit';
 import { adminService } from '../../services/api';
 
+// Проверим импортированный сервис
+console.log('[AdminToursSlice] Импортированный adminService:', adminService);
+console.log('[AdminToursSlice] Методы adminService:', Object.keys(adminService));
+
 // Типы для работы с турами
 interface Tour {
   id?: number;
@@ -46,6 +50,18 @@ const initialState: AdminToursState = {
   loading: false,
   error: null,
   success: null
+};
+
+// Вспомогательная функция для преобразования snake_case в camelCase
+const normalizeTourDate = (date: any) => {
+  return {
+    id: date.id,
+    tourId: date.tourId || date.tour_id,
+    startDate: date.startDate || date.start_date,
+    endDate: date.endDate || date.end_date,
+    availability: date.availability,
+    priceModifier: date.priceModifier || date.price_modifier
+  };
 };
 
 // Асинхронные операции
@@ -141,10 +157,84 @@ export const deleteTour = createAsyncThunk(
 export const fetchTourDates = createAsyncThunk(
   'adminTours/fetchTourDates',
   async (tourId: number, { rejectWithValue }) => {
+    console.log(`[AdminToursSlice] Запрос дат для тура с ID ${tourId}`);
     try {
+      // Проверяем существование adminService и его метода
+      if (!adminService || typeof adminService.getTourDates !== 'function') {
+        console.error('[AdminToursSlice] adminService.getTourDates не является функцией:', adminService);
+        console.log('[AdminToursSlice] Используем прямой API запрос вместо adminService.getTourDates');
+        
+        // Используем прямой запрос к API
+        const axios = await import('axios');
+        const api = axios.default.create({
+          baseURL: process.env.REACT_APP_API_URL || '/api',
+          headers: { 'Content-Type': 'application/json' }
+        });
+        
+        // Добавляем токен авторизации
+        const token = localStorage.getItem('accessToken') || localStorage.getItem('token');
+        if (token) {
+          api.defaults.headers.common['Authorization'] = `Bearer ${token}`;
+        }
+        
+        try {
+          const response = await api.get(`/tours/${tourId}/dates`);
+          console.log(`[AdminToursSlice] Успешный прямой запрос дат для тура ${tourId}:`, response.data);
+          
+          if (Array.isArray(response.data)) {
+            // Нормализуем формат данных
+            const normalizedData = response.data.map(normalizeTourDate);
+            console.log(`[AdminToursSlice] Нормализованные данные дат:`, normalizedData);
+            return normalizedData;
+          } else if (response.data && response.data.data && Array.isArray(response.data.data)) {
+            const normalizedData = response.data.data.map(normalizeTourDate);
+            return normalizedData;
+          } else if (response.data && response.data.dates && Array.isArray(response.data.dates)) {
+            const normalizedData = response.data.dates.map(normalizeTourDate);
+            return normalizedData;
+          } else {
+            console.warn('[AdminToursSlice] Неожиданный формат данных при прямом запросе:', response.data);
+            return [];
+          }
+        } catch (directApiError: any) {
+          console.error('[AdminToursSlice] Ошибка прямого API запроса:', directApiError);
+          return [];
+        }
+      }
+      
       const response = await adminService.getTourDates(tourId);
-      return response.data;
+      console.log(`[AdminToursSlice] Получен ответ для дат тура ${tourId}:`, response);
+      
+      // Обработка разных форматов ответа
+      if (response && response.data) {
+        // Если данные - массив, возвращаем как есть после нормализации
+        if (Array.isArray(response.data)) {
+          console.log(`[AdminToursSlice] Получено ${response.data.length} дат для тура ${tourId}`);
+          const normalizedData = response.data.map(normalizeTourDate);
+          return normalizedData;
+        }
+        // Если данные содержат поле dates или data - массив
+        else if (response.data.dates && Array.isArray(response.data.dates)) {
+          console.log(`[AdminToursSlice] Получено ${response.data.dates.length} дат в поле dates`);
+          const normalizedData = response.data.dates.map(normalizeTourDate);
+          return normalizedData;
+        }
+        else if (response.data.data && Array.isArray(response.data.data)) {
+          console.log(`[AdminToursSlice] Получено ${response.data.data.length} дат в поле data`);
+          const normalizedData = response.data.data.map(normalizeTourDate);
+          return normalizedData;
+        }
+        // Пустой массив, если данные не соответствуют ожидаемому формату
+        else {
+          console.error('[AdminToursSlice] Неожиданный формат данных:', response.data);
+          return [];
+        }
+      }
+      
+      console.warn('[AdminToursSlice] Пустой ответ при получении дат тура');
+      return [];
     } catch (error: any) {
+      console.error('[AdminToursSlice] Ошибка при загрузке дат тура:', error);
       return rejectWithValue(error.response?.data?.message || 'Не удалось загрузить даты тура');
     }
   }
@@ -156,6 +246,10 @@ export const addTourDate = createAsyncThunk(
   async (tourDateData: TourDate, { rejectWithValue }) => {
     try {
       const response = await adminService.addTourDate(tourDateData.tourId, tourDateData);
+      // Нормализуем ответ
+      if (response.data) {
+        return normalizeTourDate(response.data);
+      }
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось добавить дату тура');
@@ -177,6 +271,10 @@ export const updateTourDate = createAsyncThunk(
         tourDateData.id, 
         tourDateData
       );
+      // Нормализуем ответ
+      if (response.data) {
+        return normalizeTourDate(response.data);
+      }
       return response.data;
     } catch (error: any) {
       return rejectWithValue(error.response?.data?.message || 'Не удалось обновить дату тура');

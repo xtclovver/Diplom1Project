@@ -190,14 +190,38 @@ const AdminTours: React.FC = () => {
   
   // Обработчики операций с датами туров
   const handleViewTourDates = (tourId: number) => {
+    console.log(`[AdminTours] Просмотр дат тура с ID ${tourId}`);
     setCurrentTourId(tourId);
     setViewMode('dates');
-    dispatch(fetchTourDates(tourId) as any)
-      .then((action: any) => {
-        if (action.payload) {
-          setSelectedTourDates(action.payload);
-        }
-      });
+    
+    try {
+      dispatch(fetchTourDates(tourId) as any)
+        .then((action: any) => {
+          console.log('[AdminTours] Результат запроса дат тура:', action);
+          if (action.payload) {
+            console.log('[AdminTours] Загруженные даты:', action.payload);
+            if (Array.isArray(action.payload)) {
+              setSelectedTourDates(action.payload);
+            } else {
+              console.error('[AdminTours] Неожиданный формат данных:', action.payload);
+              setSelectedTourDates([]);
+            }
+          } else if (action.error) {
+            console.error('[AdminTours] Ошибка при загрузке дат тура:', action.error);
+            setSelectedTourDates([]);
+          } else {
+            console.error('[AdminTours] Пустой ответ при загрузке дат тура');
+            setSelectedTourDates([]);
+          }
+        })
+        .catch((error: any) => {
+          console.error('[AdminTours] Ошибка при загрузке дат тура:', error);
+          setSelectedTourDates([]);
+        });
+    } catch (error) {
+      console.error('[AdminTours] Исключение при загрузке дат тура:', error);
+      setSelectedTourDates([]);
+    }
   };
   
   const handleAddDateClick = () => {
@@ -219,37 +243,104 @@ const AdminTours: React.FC = () => {
     setIsCreatingDate(false);
     setIsEditingDate(true);
     setCurrentDateId(date.id);
+    
+    // Обрабатываем разные форматы полей (camelCase и snake_case)
     setDateFormData({
-      startDate: date.startDate,
-      endDate: date.endDate,
+      startDate: date.startDate || date.start_date,
+      endDate: date.endDate || date.end_date,
       availability: date.availability,
-      priceModifier: date.priceModifier
+      priceModifier: date.priceModifier || date.price_modifier
+    });
+    
+    console.log('[AdminTours] Редактирование даты:', {
+      id: date.id,
+      исходные_данные: date,
+      startDate: date.startDate || date.start_date,
+      endDate: date.endDate || date.end_date,
+      availability: date.availability,
+      priceModifier: date.priceModifier || date.price_modifier
     });
   };
   
   const handleSaveDate = (e: React.FormEvent) => {
     e.preventDefault();
     
-    if (!currentTourId) return;
+    if (!currentTourId) {
+      console.error('[AdminTours] Ошибка: отсутствует ID тура для сохранения даты');
+      return;
+    }
+    
+    console.log(`[AdminTours] Сохранение даты для тура ${currentTourId}:`, dateFormData);
     
     const dateData = {
       ...dateFormData,
       tourId: currentTourId
     };
     
-    if (isCreatingDate) {
-      dispatch(addTourDate(dateData) as any);
-    } else {
-      dispatch(updateTourDate({ ...dateData, id: currentDateId } as any) as any);
+    try {
+      if (isCreatingDate) {
+        console.log(`[AdminTours] Создание новой даты для тура ${currentTourId}`);
+        dispatch(addTourDate(dateData) as any)
+          .then((action: any) => {
+            console.log('[AdminTours] Результат создания даты:', action);
+            if (action.type.endsWith('/fulfilled')) {
+              setIsEditingDate(false);
+              // Обновляем список дат
+              dispatch(fetchTourDates(currentTourId) as any)
+                .then((action: any) => {
+                  if (action.payload && Array.isArray(action.payload)) {
+                    setSelectedTourDates(action.payload);
+                  }
+                });
+            }
+          })
+          .catch((error: any) => {
+            console.error('[AdminTours] Ошибка при создании даты тура:', error);
+          });
+      } else {
+        console.log(`[AdminTours] Обновление даты ${currentDateId} для тура ${currentTourId}`);
+        dispatch(updateTourDate({ ...dateData, id: currentDateId } as any) as any)
+          .then((action: any) => {
+            console.log('[AdminTours] Результат обновления даты:', action);
+            if (action.type.endsWith('/fulfilled')) {
+              setIsEditingDate(false);
+              // Обновляем список дат
+              dispatch(fetchTourDates(currentTourId) as any)
+                .then((action: any) => {
+                  if (action.payload && Array.isArray(action.payload)) {
+                    setSelectedTourDates(action.payload);
+                  }
+                });
+            }
+          })
+          .catch((error: any) => {
+            console.error('[AdminTours] Ошибка при обновлении даты тура:', error);
+          });
+      }
+    } catch (error) {
+      console.error('[AdminTours] Критическая ошибка при сохранении даты тура:', error);
     }
-    
-    setIsEditingDate(false);
   };
   
   const handleDeleteDate = (dateId: number) => {
     if (!currentTourId || !window.confirm('Вы уверены, что хотите удалить эту дату?')) return;
     
-    dispatch(deleteTourDate({ tourId: currentTourId, dateId }) as any);
+    dispatch(deleteTourDate({ tourId: currentTourId, dateId }) as any)
+      .then((action: any) => {
+        console.log('[AdminTours] Результат удаления даты:', action);
+        if (action.type.endsWith('/fulfilled')) {
+          // Обновляем список дат
+          dispatch(fetchTourDates(currentTourId) as any)
+            .then((action: any) => {
+              if (action.payload && Array.isArray(action.payload)) {
+                setSelectedTourDates(action.payload);
+              }
+            });
+        }
+      })
+      .catch((error: any) => {
+        console.error('[AdminTours] Ошибка при удалении даты тура:', error);
+      });
   };
   
   const handleCancelDateEdit = () => {
@@ -307,6 +398,24 @@ const AdminTours: React.FC = () => {
       resultUrl: url
     });
     return url;
+  };
+  
+  // Вспомогательная функция для безопасного получения значений из разных форматов
+  const getDateValue = (date: any, camelCase: string, snakeCase: string) => {
+    if (date[camelCase] !== undefined) return date[camelCase];
+    if (date[snakeCase] !== undefined) return date[snakeCase];
+    return null;
+  };
+
+  // Форматирование даты из строки ISO в локальный формат
+  const formatDate = (isoDate: string) => {
+    try {
+      if (!isoDate) return 'Не указана';
+      return new Date(isoDate).toLocaleDateString('ru');
+    } catch (e) {
+      console.error('[AdminTours] Ошибка форматирования даты:', e, isoDate);
+      return 'Ошибка формата';
+    }
   };
   
   // Рендеринг интерфейса
@@ -658,6 +767,30 @@ const AdminTours: React.FC = () => {
   const renderDatesList = () => {
     const tour = tours.find(t => t.id === currentTourId);
     
+    // Проверка наличия текущего тура
+    if (!currentTourId || !tour) {
+      console.error('[AdminTours] Ошибка: не найден тур с ID', currentTourId);
+      return (
+        <div className="tour-dates-container">
+          <div className="admin-header">
+            <button
+              className="admin-button back-button"
+              onClick={handleBackToTours}
+            >
+              ← Назад к списку туров
+            </button>
+            <h2>Ошибка: тур не найден</h2>
+          </div>
+          <div className="admin-error">
+            Не удалось загрузить информацию о туре. Пожалуйста, вернитесь к списку туров и попробуйте снова.
+          </div>
+        </div>
+      );
+    }
+
+    // Проверяем, что selectedTourDates - это массив
+    const validDates = Array.isArray(selectedTourDates) ? selectedTourDates : [];
+    
     return (
       <div className="tour-dates-container">
         <div className="admin-header">
@@ -697,51 +830,68 @@ const AdminTours: React.FC = () => {
               <tbody>
                 {loading ? (
                   <tr>
-                    <td colSpan={7} className="loading-cell">Загрузка...</td>
-                  </tr>
-                ) : selectedTourDates.length === 0 ? (
-                  <tr>
-                    <td colSpan={7} className="empty-cell">Даты для этого тура не найдены</td>
+                    <td colSpan={7} className="loading-cell">Загрузка дат тура...</td>
                   </tr>
                 ) : (
-                  selectedTourDates.map(date => {
-                    const tour = tours.find(t => t.id === currentTourId);
-                    const basePrice = tour?.basePrice || (tour as any)?.base_price || 0;
-                    const finalPrice = basePrice * date.priceModifier;
-                    
-                    return (
-                      <tr key={date.id}>
-                        <td>{date.id}</td>
-                        <td>{new Date(date.startDate).toLocaleDateString('ru')}</td>
-                        <td>{new Date(date.endDate).toLocaleDateString('ru')}</td>
-                        <td>{date.availability}</td>
-                        <td>
-                          {date.priceModifier === 1 
-                            ? '1.0 (нет изменений)' 
-                            : date.priceModifier > 1 
-                            ? `${date.priceModifier.toFixed(1)} (+${((date.priceModifier - 1) * 100).toFixed(0)}%)` 
-                            : `${date.priceModifier.toFixed(1)} (-${((1 - date.priceModifier) * 100).toFixed(0)}%)`}
-                        </td>
-                        <td>{finalPrice.toLocaleString('ru')} ₽</td>
-                        <td className="actions-cell">
-                          <button
-                            className="table-button edit-button"
-                            onClick={() => handleEditDateClick(date)}
-                            title="Редактировать дату"
-                          >
-                            Редактировать
-                          </button>
-                          <button
-                            className="table-button delete-button"
-                            onClick={() => handleDeleteDate(date.id)}
-                            title="Удалить дату"
-                          >
-                            Удалить
-                          </button>
-                        </td>
-                      </tr>
-                    );
-                  })
+                  validDates.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} className="empty-cell">
+                        Даты для этого тура не найдены. Нажмите кнопку "Добавить дату", чтобы создать новую дату тура.
+                      </td>
+                    </tr>
+                  ) : (
+                    validDates.map(date => {
+                      try {
+                        const basePrice = tour?.basePrice || (tour as any)?.base_price || 0;
+                        const startDate = getDateValue(date, 'startDate', 'start_date');
+                        const endDate = getDateValue(date, 'endDate', 'end_date');
+                        const priceModifier = getDateValue(date, 'priceModifier', 'price_modifier') || 1;
+                        const finalPrice = basePrice * priceModifier;
+                        
+                        return (
+                          <tr key={date.id}>
+                            <td>{date.id}</td>
+                            <td>{formatDate(startDate)}</td>
+                            <td>{formatDate(endDate)}</td>
+                            <td>{date.availability}</td>
+                            <td>
+                              {priceModifier === 1 
+                                ? '1.0 (нет изменений)' 
+                                : priceModifier > 1 
+                                ? `${priceModifier.toFixed(1)} (+${((priceModifier - 1) * 100).toFixed(0)}%)` 
+                                : `${priceModifier.toFixed(1)} (-${((1 - priceModifier) * 100).toFixed(0)}%)`}
+                            </td>
+                            <td>{finalPrice.toLocaleString('ru')} ₽</td>
+                            <td className="actions-cell">
+                              <button
+                                className="table-button edit-button"
+                                onClick={() => handleEditDateClick(date)}
+                                title="Редактировать дату"
+                              >
+                                Редактировать
+                              </button>
+                              <button
+                                className="table-button delete-button"
+                                onClick={() => handleDeleteDate(date.id)}
+                                title="Удалить дату"
+                              >
+                                Удалить
+                              </button>
+                            </td>
+                          </tr>
+                        );
+                      } catch (err) {
+                        console.error('[AdminTours] Ошибка отрисовки даты тура:', err, date);
+                        return (
+                          <tr key={date.id || 'error'}>
+                            <td colSpan={7} className="error-cell">
+                              Ошибка отображения даты тура ID: {date.id || 'неизвестно'}
+                            </td>
+                          </tr>
+                        );
+                      }
+                    })
+                  )
                 )}
               </tbody>
             </table>
